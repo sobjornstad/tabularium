@@ -1,0 +1,6 @@
+*.un~
+*.pyc
+*.db
+*.html
+ui/forms/
+nogit/
