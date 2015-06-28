@@ -1,22 +1,12 @@
 # if true, display a warning that you're editing your actual data file rather
 # than a programming test file
-IS_PRODUCTION = True
+IS_PRODUCTION = False
 
 # where the database file is
 if IS_PRODUCTION:
     DATABASE_FILENAME = "/home/soren/cabinet/records.db"
 else:
     DATABASE_FILENAME = "test.db"
-
-# how many columns to optimize the display for
-SCREEN_WIDTH = 80
-
-# the title displayed at the top of the screen
-if not IS_PRODUCTION:
-    TITLE = "TEST -- "
-else:
-    TITLE = "  "
-TITLE += "Records Project Paper Augmentation Software"
 
 # the password needed to access the software
 PASSWORD = ''
