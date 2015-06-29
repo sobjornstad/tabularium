@@ -59,9 +59,9 @@
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="searchIncrementalCheck">
+         <widget class="QCheckBox" name="regexCheckbox">
           <property name="text">
-           <string>Inc&amp;remental</string>
+           <string>Rege&amp;x</string>
           </property>
          </widget>
         </item>

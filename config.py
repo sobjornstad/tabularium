@@ -6,7 +6,8 @@ IS_PRODUCTION = False
 if IS_PRODUCTION:
     DATABASE_FILENAME = "/home/soren/cabinet/records.db"
 else:
-    DATABASE_FILENAME = "test.db"
+    DATABASE_FILENAME = "records.db"
+    #DATABASE_FILENAME = "test.db"
 
 # the password needed to access the software
 PASSWORD = ''
