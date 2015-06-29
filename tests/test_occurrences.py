@@ -10,16 +10,20 @@ class OccTests(utils.DbTestCase):
         e1 = Entry.makeNew("Kathariana")
         e2 = Entry.makeNew("Melgreth, Maudia")
         n1 = Notebook('CB', 2, '2015-01-01', '2015-02-01')
-        o1 = Occurrence(e1, '25', n1)
+        o1 = Occurrence.makeNew(e1, n1, '25', 0)
 
         assert o1.getEntry() == e1
         assert o1.getNotebook() == n1
-        assert o1.getPage() == '25'
+        assert o1.getRef() == ('25', 0)
         oid = o1.getOid()
 
         o1.setEntry(e2)
-        oNew = Occurrence.byId(oid)
+        oNew = Occurrence(oid)
         assert oNew.getEntry() == e2
+
+        o1.setRef('25-27', 1)
+        oNew = Occurrence(oid)
+        assert oNew.getRef() == ('25-27', 1)
 
         # fetchForEntry
         occs = fetchForEntry(e2)

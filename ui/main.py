@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
         occs = entry.getOccurrences()
         for i in occs:
             nbook = i.getNotebook()
-            occStr = "%s%s.%s" % (nbook.getType(), nbook.getNum(), i.getPage())
+            occStr = "%s%s.%s" % (nbook.getType(), nbook.getNum(), i.getRef()[0])
             self.form.occurrencesList.addItem(occStr)
 
 

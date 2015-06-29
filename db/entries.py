@@ -22,8 +22,6 @@ class Entry(object):
                 d.cursor.fetchall()[0]
         self._eid = eid
 
-        self.isModified = False
-
     @classmethod
     def makeNew(cls, name, sortkey=None, classification=0):
         """
@@ -44,6 +42,7 @@ class Entry(object):
               (eid, name, sortkey, classification, dAdded, dEdited) 
               VALUES (null, ?, ?, ?, ?, ?)'''
         d.cursor.execute(q, (name, sortkey, classification, dAdded, dEdited))
+        d.checkAutosave()
         eid = d.cursor.lastrowid
         return cls(eid)
 

@@ -74,7 +74,7 @@ class DbTests(utils.DbTestCase):
 
         # fetching occurrences
         n1 = db.notebooks.Notebook('CB', 2, '2015-01-01', '2015-02-01')
-        o1 = db.occurrences.Occurrence(e1, '25', n1)
+        o1 = db.occurrences.Occurrence.makeNew(e1, n1, '25', 0)
         l = e1.getOccurrences()
         assert len(l) == 1
         assert l[0].getEntry() == e1

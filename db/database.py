@@ -63,7 +63,7 @@ def forceSave():
 def makeDatabase(fname):
     connection = sqlite.connect(fname)
     cursor = connection.cursor()
-    cursor.execute('CREATE TABLE occurrences (oid INTEGER PRIMARY KEY, page TEXT, nid INTEGER, eid INTEGER)') #page must be text to support 'see's and such
+    cursor.execute('CREATE TABLE occurrences (oid INTEGER PRIMARY KEY, eid INTEGER, nid INTEGER, ref TEXT, type INTEGER, dEdited TEXT, dAdded TEXT)')
     cursor.execute('CREATE TABLE entries (eid INTEGER PRIMARY KEY, name TEXT, sortkey TEXT, classification INTEGER, dEdited TEXT, dAdded TEXT)')
     cursor.execute('CREATE TABLE notebooks (nid INTEGER PRIMARY KEY, ntype TEXT, nnum INTEGER, dopened DATE, dclosed DATE)')
     cursor.execute('CREATE TABLE events (evid INTEGER PRIMARY KEY, nid INTEGER, event TEXT, special INTEGER, sequence INTEGER)')
