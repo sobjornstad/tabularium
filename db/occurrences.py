@@ -31,7 +31,7 @@ class Occurrence(object):
         d.cursor.execute(query, (oid,))
         page, nid, eid = d.cursor.fetchall()[0]
 
-        entry = entries.Entry.byId(eid)
+        entry = entries.Entry(eid)
         notebook = notebooks.Notebook.byId(nid)
         return cls(entry, page, notebook, oid)
 

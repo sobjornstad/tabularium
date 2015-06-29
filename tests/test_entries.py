@@ -9,18 +9,27 @@ class DbTests(utils.DbTestCase):
     def testObject(self):
         e1Name = "Maudi (Maudlin)"
         e2Name = "Katerina (Maudlin)"
-        e1 = Entry(e1Name)
-        e2 = Entry(e2Name)
+        e1 = Entry.makeNew(e1Name)
+        e2 = Entry.makeNew(e2Name, "ZKaterina", 5)
 
         # nothing else in the db yet, so this is quite clear
         assert e1.getEid() == 1
         assert e2.getEid() == 2
         assert e1.getName() == e1Name
         assert e2.getName() == e2Name
+        assert e1.getSortKey() == e1.getName()
+        assert e2.getSortKey() == "ZKaterina"
+        assert e1.getClassification() == 0
+        assert e2.getClassification() == 5
 
         newName = "Maudia (Maudlin)"
         e1.setName(newName)
         assert e1.getName() == newName
+        assert e1.getSortKey() == e1Name # not automatically changed
+        e1.setSortKey(newName)
+        assert e1.getSortKey() == e1.getName()
+        e1.setClassification(4)
+        assert e1.getClassification() == 4
 
         assert e1 != e2
         anotherE = e1
@@ -30,11 +39,11 @@ class DbTests(utils.DbTestCase):
         e1Name = "Maudi (Maudlin)"
         e2Name = "Katerina (Maudlin)"
         e3Name = "Katharina (Maudlin)"
-        e1 = Entry(e1Name)
-        e2 = Entry(e2Name)
-        with self.assertRaises(DuplicateError):
-            e3 = Entry(e2Name)
-        e3 = Entry(e3Name)
+        e1 = Entry.makeNew(e1Name)
+        e2 = Entry.makeNew(e2Name)
+        e3 = Entry.makeNew(e2Name)
+        assert e3 is None
+        e3 = Entry.makeNew(e3Name)
 
         # test single entry
         e1eid = e1.getEid()
@@ -55,8 +64,8 @@ class DbTests(utils.DbTestCase):
         assert len(obj) == 1
         assert obj[0].getName() == newName
 
-        # test byId
-        assert Entry.byId(e1eid).getEid() == e1.getEid()
+        # test fetching by id
+        assert Entry(e1eid).getEid() == e1.getEid()
 
         # test allEntries
         assert len(allEntries()) == 3
@@ -71,7 +80,7 @@ class DbTests(utils.DbTestCase):
         assert l[0].getEntry() == e1
 
         # test delete
-        assert Entry.byId(e1eid)
+        assert Entry(e1eid)
         e1.delete()
         with self.assertRaises(IndexError):
-            Entry.byId(e1eid)
+            Entry(e1eid)

@@ -12,18 +12,45 @@ class DuplicateError(Exception):
 
 
 class Entry(object):
-    """
-    Represents a single entry in the database. As entries are quite simple,
-    this class is also quite simple!
-    """
+    "Represents a single entry in the database."
 
-    def __init__(self, name, eid=None):
-        self._name = name
+    def __init__(self, eid):
+        q = 'SELECT name, sortkey, classification, dEdited, dAdded ' \
+                'FROM entries WHERE eid=?'
+        d.cursor.execute(q, (eid,))
+        self._name, self._sk, self._clf, self._de, self._da = \
+                d.cursor.fetchall()[0]
         self._eid = eid
-        self.dump()
+
+        self.isModified = False
+
+    @classmethod
+    def makeNew(cls, name, sortkey=None, classification=0):
+        """
+        Create a new entry record in the database, then create and return an
+        Entry object from it. Return None and do not touch the database if an
+        entry by given name already exists.
+        """
+        if sortkey is None:
+            sortkey = name
+
+        if nameExists(name):
+            return None
+
+        dAdded  = '2015-06-01' # obviously fetch the actual ones later
+        dEdited = dAdded
+
+        q = '''INSERT INTO entries
+              (eid, name, sortkey, classification, dAdded, dEdited) 
+              VALUES (null, ?, ?, ?, ?, ?)'''
+        d.cursor.execute(q, (name, sortkey, classification, dAdded, dEdited))
+        eid = d.cursor.lastrowid
+        return cls(eid)
+
 
     def __eq__(self, other):
-        return self._eid == other._eid and self._name == other._name
+        return (self._eid == other._eid and self._name == other._name and
+                self._clf == other._clf and self._sk == other._sk)
     def __ne__(self, other):
         return not self.__eq__(other)
 
@@ -31,9 +58,23 @@ class Entry(object):
         return self._name
     def getEid(self):
         return self._eid
+    def getSortKey(self):
+        return self._sk
+    def getClassification(self):
+        return self._clf
 
     def setName(self, name):
+        """
+        Change the name of this entry. Note that this does NOT change the sort
+        key -- that needs to be done separately!
+        """
         self._name = name
+        self.dump()
+    def setSortKey(self, sk):
+        self._sk = sk
+        self.dump()
+    def setClassification(self, clf):
+        self._clf = clf
         self.dump()
 
     def getOccurrences(self):
@@ -48,22 +89,16 @@ class Entry(object):
         d.checkAutosave()
 
     def dump(self):
-        if self._eid:
-            d.cursor.execute('UPDATE entries SET name=? WHERE eid=?',
-                    (self._name, self._eid))
-        else:
-            if nameExists(self._name):
-                raise DuplicateError()
-            d.cursor.execute('INSERT INTO entries (eid, name) VALUES (?,?)',
-                    (self._eid, self._name))
-            self._eid = d.cursor.lastrowid
+        # no longer need to check if eid exists, initial write handled in makeNew
+        dEdited  = '2015-06-29' # obviously fetch the actual ones later
+
+        q = '''UPDATE entries
+               SET name=?, sortkey=?, classification=?, dAdded=?, dEdited=?
+               WHERE eid=?'''
+        d.cursor.execute(q, (self._name, self._sk, self._clf, self._da,
+                dEdited, self._eid))
         d.checkAutosave()
 
-    @classmethod
-    def byId(cls, eid):
-        d.cursor.execute('SELECT name FROM entries WHERE eid=?', (eid,))
-        name = d.cursor.fetchall()[0][0]
-        return cls(name, eid)
 
 def nameExists(name):
     """
@@ -82,18 +117,18 @@ def find(search):
     there are no matches.
     """
 
-    query = 'SELECT eid, name FROM entries WHERE name LIKE ?'
+    query = 'SELECT eid FROM entries WHERE name LIKE ?'
     d.cursor.execute(query, (search,))
     results = d.cursor.fetchall()
-    return [Entry(r[1], r[0]) for r in results]
+    return [Entry(r[0]) for r in results]
 
 def allEntries():
     """
     Return a list of all entries in the database.
     """
 
-    d.cursor.execute('SELECT eid, name FROM entries')
-    return [Entry(i[1], i[0]) for i in d.cursor.fetchall()]
+    d.cursor.execute('SELECT eid FROM entries')
+    return [Entry(i[0]) for i in d.cursor.fetchall()]
 
 
 def percentageWrap(search):

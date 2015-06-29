@@ -7,8 +7,8 @@ from db.occurrences import *
 
 class OccTests(utils.DbTestCase):
     def testObject(self):
-        e1 = Entry("Kathariana")
-        e2 = Entry("Melgreth, Maudia")
+        e1 = Entry.makeNew("Kathariana")
+        e2 = Entry.makeNew("Melgreth, Maudia")
         n1 = Notebook('CB', 2, '2015-01-01', '2015-02-01')
         o1 = Occurrence(e1, '25', n1)
 
