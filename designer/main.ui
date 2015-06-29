@@ -138,6 +138,22 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QLabel" name="nearbyLabel">
+            <property name="text">
+             <string>Near&amp;by</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <property name="buddy">
+             <cstring>nearbyList</cstring>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="nearbyList"/>
+          </item>
          </layout>
         </item>
        </layout>

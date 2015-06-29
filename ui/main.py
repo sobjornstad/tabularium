@@ -27,6 +27,14 @@ class MainWindow(QMainWindow):
         self.fillEntries()
         self.fillOccurrences()
 
+        self.inspectOptions = {}
+        items = [self.form.showAddedCheck, self.form.showEnteredCheck,
+                 self.form.showNearbyCheck, self.form.showDiaryCheck]
+        for i in items:
+            i.setChecked(True)
+            i.toggled.connect(self.onChangeInspectionOptions)
+        self.onChangeInspectionOptions()
+
     def fillEntries(self):
         """
         Fill the Entries list box with all entries that match the current
@@ -58,7 +66,14 @@ class MainWindow(QMainWindow):
             occStr = "%s%s.%s" % (nbook.getType(), nbook.getNum(), i.getRef()[0])
             self.form.occurrencesList.addItem(occStr)
 
+    def onChangeInspectionOptions(self):
+        val = not self.form.showNearbyCheck.isChecked()
+        self.form.nearbyList.setHidden(val)
+        self.form.nearbyLabel.setHidden(val)
 
+        self.inspectOptions['ed'] = self.form.showEnteredCheck.isChecked()
+        self.inspectOptions['ad'] = self.form.showAddedCheck.isChecked()
+        self.inspectOptions['diary'] = self.form.showDiaryCheck.isChecked()
 
     def onSearch(self):
         self.search = unicode(self.form.searchBox.text())
