@@ -36,7 +36,7 @@ class MainWindow(QMainWindow):
         self.form.entriesList.clear()
         self.form.occurrencesList.clear()
         entries = db.entries.find(db.entries.percentageWrap(self.search))
-        entries.sort(key=lambda i: i.getName().lower())
+        entries.sort(key=lambda i: i.getSortKey().lower())
         for i in entries:
             self.form.entriesList.addItem(i.getName())
 
