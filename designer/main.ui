@@ -75,7 +75,7 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,3,3">
         <item>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
