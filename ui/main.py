@@ -11,6 +11,7 @@ import db.database
 import db.entries
 
 class MainWindow(QMainWindow):
+    ### Application lifecycle functions ###
     def __init__(self):
         QMainWindow.__init__(self)
         self.form = Ui_MainWindow()
@@ -43,18 +44,15 @@ class MainWindow(QMainWindow):
         self.form.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
         self.onChangeSearchOptions()
 
-    ### Reset functions: since more or less needs to be reset for each, do a
-    ### sort of cascade.
-    def _resetForEntry(self):
-        self.form.entriesList.clear()
-        self._resetForOccurrence()
-    def _resetForOccurrence(self):
-        self.form.occurrencesList.clear()
-        self._resetForNearby()
-    def _resetForNearby(self):
-        self.form.nearbyList.clear()
-        self.form.inspectBox.clear()
+    def initDb(self):
+        db.database.connect(config.DATABASE_FILENAME)
 
+    def quit(self):
+        db.database.close()
+        sys.exit(0)
+
+
+    ### Setting, resetting, and filling the data windows ###
     def fillEntries(self):
         """
         Fill the Entries list box with all entries that match the current
@@ -64,11 +62,6 @@ class MainWindow(QMainWindow):
         self._resetForEntry()
         entries = db.entries.find(db.entries.percentageWrap(self.search))
         self._fillListWidgetWithEntries(self.form.entriesList, entries)
-
-    def _fillListWidgetWithEntries(self, widget, entries):
-        entries.sort(key=lambda i: i.getSortKey().lower())
-        for i in entries:
-            widget.addItem(i.getName())
 
     def fillOccurrences(self):
         """
@@ -125,6 +118,13 @@ class MainWindow(QMainWindow):
         else:
             self.form.nearbyList.addItem("(No entries nearby)")
 
+    def _fillListWidgetWithEntries(self, widget, entries):
+        entries.sort(key=lambda i: i.getSortKey().lower())
+        for i in entries:
+            widget.addItem(i.getName())
+
+
+    ### Checkbox / options handling ###
     def onChangeInspectionOptions(self):
         val = not self.form.showNearbyCheck.isChecked()
         self.form.nearbyList.setHidden(val)
@@ -148,16 +148,25 @@ class MainWindow(QMainWindow):
             self.form.searchBox.textChanged.disconnect()
 
 
+    ### Other action functions ###
     def onSearch(self):
         self.search = unicode(self.form.searchBox.text())
         self.fillEntries()
 
-    def initDb(self):
-        db.database.connect(config.DATABASE_FILENAME)
 
-    def quit(self):
-        db.database.close()
-        sys.exit(0)
+    ### UTILITIES ###
+    ### Reset functions: since more or less needs to be reset for each, do a
+    ### sort of cascade.
+    def _resetForEntry(self):
+        self.form.entriesList.clear()
+        self._resetForOccurrence()
+    def _resetForOccurrence(self):
+        self.form.occurrencesList.clear()
+        self._resetForNearby()
+    def _resetForNearby(self):
+        self.form.nearbyList.clear()
+        self.form.inspectBox.clear()
+
 
 def start():
     app = QApplication(sys.argv)
