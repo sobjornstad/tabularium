@@ -21,6 +21,7 @@ class MainWindow(QMainWindow):
         self.form.searchGoButton.clicked.connect(self.onSearch)
         self.form.searchBox.returnPressed.connect(self.onSearch)
         self.form.entriesList.itemSelectionChanged.connect(self.fillOccurrences)
+        self.form.occurrencesList.itemSelectionChanged.connect(self.fillInspect)
 
         self.initDb()
         self.search = ""
@@ -42,18 +43,32 @@ class MainWindow(QMainWindow):
         self.form.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
         self.onChangeSearchOptions()
 
+    ### Reset functions: since more or less needs to be reset for each, do a
+    ### sort of cascade.
+    def _resetForEntry(self):
+        self.form.entriesList.clear()
+        self._resetForOccurrence()
+    def _resetForOccurrence(self):
+        self.form.occurrencesList.clear()
+        self._resetForNearby()
+    def _resetForNearby(self):
+        self.form.nearbyList.clear()
+        self.form.inspectBox.clear()
+
     def fillEntries(self):
         """
         Fill the Entries list box with all entries that match the current
         search and limit criteria. (Right now limits are ignored.)
         """
 
-        self.form.entriesList.clear()
-        self.form.occurrencesList.clear()
+        self._resetForEntry()
         entries = db.entries.find(db.entries.percentageWrap(self.search))
+        self._fillListWidgetWithEntries(self.form.entriesList, entries)
+
+    def _fillListWidgetWithEntries(self, widget, entries):
         entries.sort(key=lambda i: i.getSortKey().lower())
         for i in entries:
-            self.form.entriesList.addItem(i.getName())
+            widget.addItem(i.getName())
 
     def fillOccurrences(self):
         """
@@ -61,17 +76,54 @@ class MainWindow(QMainWindow):
         assuming they match limit criteria. (Right now limits are ignored.)
         """
 
-        self.form.occurrencesList.clear()
+        self._resetForOccurrence()
         if not self.form.entriesList.currentItem():
             return
 
         search = unicode(self.form.entriesList.currentItem().text())
         entry = db.entries.find(search)[0]
-        occs = entry.getOccurrences()
-        for i in occs:
+        self.currentOccs = entry.getOccurrences() # hold onto objects for reference
+        for i in self.currentOccs:
             nbook = i.getNotebook()
             occStr = "%s%s.%s" % (nbook.getType(), nbook.getNum(), i.getRef()[0])
             self.form.occurrencesList.addItem(occStr)
+
+    def fillInspect(self):
+        """
+        Dig up the inspection information and fill the boxes with it.
+        """
+
+        self._resetForNearby()
+
+        # fetch inspection info
+        # the actual occurrence
+        row = self.form.occurrencesList.currentRow()
+        occ = self.currentOccs[row]
+        nbook = occ.getNotebook()
+        occStr = "<b>%s%s.%s</b><br>" % (
+                nbook.getType(), nbook.getNum(), occ.getRef()[0])
+        # the added and edited dates
+        daStr = "Entered %s<br>" % occ.getAddedDate()
+        deStr = "Modified %s<br>" % occ.getEditedDate()
+        # during diary time...
+        # we cannot yet do this, as events are unimplemented. that's the idea.
+
+        s = "<center>"
+        s += occStr # name of occurrence
+        s += daStr # added date
+        s += deStr # edited date
+        s += ""
+        s += "" # during diary time
+        s += "" # dates of diary
+        s += "</center>"
+        self.form.inspectBox.setHtml(s)
+
+        # fill nearby list
+        nearby = occ.getNearby()
+        if nearby:
+            self._fillListWidgetWithEntries(self.form.nearbyList, nearby)
+        else:
+            self.form.nearbyList.addItem("(No entries nearby)")
 
     def onChangeInspectionOptions(self):
         val = not self.form.showNearbyCheck.isChecked()

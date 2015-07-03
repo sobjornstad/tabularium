@@ -61,6 +61,10 @@ class Occurrence(object):
         return (self._ref, self._type)
     def getOid(self):
         return self._oid
+    def getAddedDate(self):
+        return self._da
+    def getEditedDate(self):
+        return self._de
 
     #TODO: error-checking
     def setRef(self, ref, type):
