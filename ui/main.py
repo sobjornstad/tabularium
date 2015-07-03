@@ -27,7 +27,6 @@ class MainWindow(QMainWindow):
         self.initDb()
         self.search = ""
         self.fillEntries()
-        self.fillOccurrences()
 
         self.inspectOptions = {}
         items = [self.form.showAddedCheck, self.form.showEnteredCheck,
