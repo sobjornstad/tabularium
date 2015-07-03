@@ -127,7 +127,7 @@ class Occurrence(object):
 
         q = '''SELECT oid FROM occurrences
                WHERE nid = ? AND (type = 0 OR type = 1)
-                   AND ref BETWEEN ? AND ?'''
+                   AND CAST(ref as integer) BETWEEN ? AND ?'''
         d.cursor.execute(q, (self._notebook.getNid(), pageStart, pageEnd))
         occs = [Occurrence(i[0]) for i in d.cursor.fetchall()]
 
