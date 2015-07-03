@@ -59,6 +59,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QCheckBox" name="incrementalCheckbox">
+          <property name="text">
+           <string>Incre&amp;mental</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QCheckBox" name="regexCheckbox">
           <property name="text">
            <string>Rege&amp;x</string>

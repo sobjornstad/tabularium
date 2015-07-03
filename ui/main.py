@@ -35,6 +35,13 @@ class MainWindow(QMainWindow):
             i.toggled.connect(self.onChangeInspectionOptions)
         self.onChangeInspectionOptions()
 
+        self.searchOptions = {}
+        self.form.incrementalCheckbox.setChecked(True) # later, get from prefs?
+        self.form.regexCheckbox.setChecked(False) # ditto
+        self.form.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
+        self.form.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
+        self.onChangeSearchOptions()
+
     def fillEntries(self):
         """
         Fill the Entries list box with all entries that match the current
@@ -74,6 +81,20 @@ class MainWindow(QMainWindow):
         self.inspectOptions['ed'] = self.form.showEnteredCheck.isChecked()
         self.inspectOptions['ad'] = self.form.showAddedCheck.isChecked()
         self.inspectOptions['diary'] = self.form.showDiaryCheck.isChecked()
+
+    def onChangeSearchOptions(self):
+        doRegex = self.form.regexCheckbox.isChecked()
+        doIncremental = self.form.incrementalCheckbox.isChecked()
+
+        self.searchOptions['regex'] = doRegex
+        self.searchOptions['incremental'] = doIncremental
+
+        if doIncremental:
+            self.form.searchBox.textChanged.connect(self.onSearch)
+            self.onSearch() # immediately update based on current content
+        else:
+            self.form.searchBox.textChanged.disconnect()
+
 
     def onSearch(self):
         self.search = unicode(self.form.searchBox.text())
