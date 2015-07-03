@@ -14,7 +14,7 @@ saveInterval = 60
 def connect(fname, autosaveInterval=60):
     global connection, cursor, lastSavedTime, saveInterval
     connection = sqlite.connect(fname)
-    connection.text_factory = str # fix for some weird Unicode error
+    connection.text_factory = unicode # fix for some weird Unicode error
     cursor = connection.cursor()
     lastSavedTime = time.time()
     saveInterval = autosaveInterval
