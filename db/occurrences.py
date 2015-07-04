@@ -93,7 +93,7 @@ class Occurrence(object):
         Find all occurrences that are in the same notebook/source and within
         /nearRange/ pages/indices of it. Eventually /nearRange/ should be part
         of the source options; for now this will ordinarily use the default
-        value of 1. Returns a list of Entry objects.
+        value of 1.
 
         If the current occurrence is a redirect and thus has no logical result
         for this operation, or if the range or other data is otherwise invalid
@@ -104,6 +104,8 @@ class Occurrence(object):
         but is not currently always capable of finding ranges themselves in
         nearby queries. (SQL BETWEEN does successfully find the entry when one
         of the top or bottom range numbers is actually in the string.)
+
+        Returns a list of Entry objects.
         """
 
         if not (self._type == 1 or self._type == 0):
@@ -131,7 +133,7 @@ class Occurrence(object):
         d.cursor.execute(q, (self._notebook.getNid(), pageStart, pageEnd))
         occs = [Occurrence(i[0]) for i in d.cursor.fetchall()]
 
-        # fetch list of unique entries nearby
+        # fetch list of entries nearby
         entries = [i.getEntry() for i in occs]
         entries.sort(key=lambda i: i._sk)
 

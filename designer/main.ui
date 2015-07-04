@@ -763,17 +763,17 @@
   </action>
   <action name="actionFollow_Nearby_Entry">
    <property name="text">
-    <string>Follow Nearby Entry</string>
+    <string>&amp;Follow Nearby Entry</string>
    </property>
   </action>
   <action name="actionSource_notes">
    <property name="text">
-    <string>Source notes...</string>
+    <string>&amp;Source notes...</string>
    </property>
   </action>
   <action name="actionDiary_notes">
    <property name="text">
-    <string>Diary notes...</string>
+    <string>&amp;Diary notes...</string>
    </property>
   </action>
   <action name="actionManage_sources">

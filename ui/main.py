@@ -13,18 +13,26 @@ import db.entries
 class MainWindow(QMainWindow):
     ### Application lifecycle functions ###
     def __init__(self):
+        # set up form and window
         QMainWindow.__init__(self)
         self.form = Ui_MainWindow()
         self.form.setupUi(self)
         sf = self.form
 
-        sf.actionQuit.triggered.connect(self.quit)
-
+        # connect buttons and signals
         sf.searchGoButton.clicked.connect(self.onSearch)
         sf.searchBox.returnPressed.connect(self.onReturnInSearch)
         sf.entriesList.itemSelectionChanged.connect(self.fillOccurrences)
         sf.occurrencesList.itemSelectionChanged.connect(self.fillInspect)
 
+        # connect menu check functions (for enable/disable)
+        sf.menuInspect.aboutToShow.connect(self.checkInspectMenu)
+
+        # connect menu actions
+        sf.actionQuit.triggered.connect(self.quit)
+        sf.actionFollow_Nearby_Entry.triggered.connect(self.onInspect_FollowNearby)
+
+        # initialize db and set up searching and entries
         self.initDb()
         self.search = ""
         self.searchOptions = {}
@@ -35,6 +43,7 @@ class MainWindow(QMainWindow):
         self.onChangeSearchOptions()
         self.fillEntries()
 
+        # set up inspection options
         self.inspectOptions = {}
         items = [sf.showAddedCheck, sf.showEnteredCheck,
                  sf.showNearbyCheck, sf.showDiaryCheck]
@@ -149,6 +158,25 @@ class MainWindow(QMainWindow):
         else:
             self.form.searchBox.textChanged.disconnect()
 
+
+    ### Functions from the menu ###
+    def onInspect_FollowNearby(self):
+        # NOTE: This can select other, longer, entries, as it %-pads. I'm not
+        # sure if this is a problem, as it won't select *shorter* ones, and the
+        # shortest one is the top one and will be chosen.
+        entryName = unicode(self.form.nearbyList.currentItem().text())
+        self.form.searchBox.setText(entryName)
+        self.onSearch()
+        self._selectFirstAndFocus(self.form.entriesList)
+        #TODO: Ideally we would autoselect the occurrence that was nearby,
+        #      but that's a LOT more work, so not right away.
+
+
+    ### Menu check functions ###
+    def checkInspectMenu(self):
+        sf = self.form
+        ifCondition = sf.nearbyList.currentRow() != -1
+        sf.actionFollow_Nearby_Entry.setEnabled(ifCondition)
 
     ### Other action functions ###
     def onReturnInSearch(self):
