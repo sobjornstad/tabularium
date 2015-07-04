@@ -16,27 +16,28 @@ class MainWindow(QMainWindow):
         QMainWindow.__init__(self)
         self.form = Ui_MainWindow()
         self.form.setupUi(self)
+        sf = self.form
 
-        self.form.actionQuit.triggered.connect(self.quit)
+        sf.actionQuit.triggered.connect(self.quit)
 
-        self.form.searchGoButton.clicked.connect(self.onSearch)
-        self.form.searchBox.returnPressed.connect(self.onSearch)
-        self.form.entriesList.itemSelectionChanged.connect(self.fillOccurrences)
-        self.form.occurrencesList.itemSelectionChanged.connect(self.fillInspect)
+        sf.searchGoButton.clicked.connect(self.onSearch)
+        sf.searchBox.returnPressed.connect(self.onReturnInSearch)
+        sf.entriesList.itemSelectionChanged.connect(self.fillOccurrences)
+        sf.occurrencesList.itemSelectionChanged.connect(self.fillInspect)
 
         self.initDb()
         self.search = ""
         self.searchOptions = {}
-        self.form.incrementalCheckbox.setChecked(True) # later, get from prefs?
-        self.form.regexCheckbox.setChecked(False) # ditto
-        self.form.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
-        self.form.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
+        sf.incrementalCheckbox.setChecked(True) # later, get from prefs?
+        sf.regexCheckbox.setChecked(False) # ditto
+        sf.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
+        sf.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
         self.onChangeSearchOptions()
         self.fillEntries()
 
         self.inspectOptions = {}
-        items = [self.form.showAddedCheck, self.form.showEnteredCheck,
-                 self.form.showNearbyCheck, self.form.showDiaryCheck]
+        items = [sf.showAddedCheck, sf.showEnteredCheck,
+                 sf.showNearbyCheck, sf.showDiaryCheck]
         for i in items:
             i.setChecked(True)
             i.toggled.connect(self.onChangeInspectionOptions)
@@ -150,6 +151,11 @@ class MainWindow(QMainWindow):
 
 
     ### Other action functions ###
+    def onReturnInSearch(self):
+        if self.searchOptions['incremental']:
+            self._selectFirstAndFocus(self.form.entriesList)
+        else:
+            self.onSearch()
     def onSearch(self):
         self.search = unicode(self.form.searchBox.text())
         self.fillEntries()
@@ -167,6 +173,10 @@ class MainWindow(QMainWindow):
     def _resetForNearby(self):
         self.form.nearbyList.clear()
         self.form.inspectBox.clear()
+
+    def _selectFirstAndFocus(self, widget):
+        widget.setCurrentRow(0)
+        widget.setFocus()
 
 
 def start():
