@@ -26,6 +26,12 @@ class MainWindow(QMainWindow):
 
         self.initDb()
         self.search = ""
+        self.searchOptions = {}
+        self.form.incrementalCheckbox.setChecked(True) # later, get from prefs?
+        self.form.regexCheckbox.setChecked(False) # ditto
+        self.form.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
+        self.form.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
+        self.onChangeSearchOptions()
         self.fillEntries()
 
         self.inspectOptions = {}
@@ -35,13 +41,6 @@ class MainWindow(QMainWindow):
             i.setChecked(True)
             i.toggled.connect(self.onChangeInspectionOptions)
         self.onChangeInspectionOptions()
-
-        self.searchOptions = {}
-        self.form.incrementalCheckbox.setChecked(True) # later, get from prefs?
-        self.form.regexCheckbox.setChecked(False) # ditto
-        self.form.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
-        self.form.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
-        self.onChangeSearchOptions()
 
     def initDb(self):
         db.database.connect(config.DATABASE_FILENAME)
@@ -59,7 +58,10 @@ class MainWindow(QMainWindow):
         """
 
         self._resetForEntry()
-        entries = db.entries.find(db.entries.percentageWrap(self.search))
+        if self.searchOptions['regex']:
+            entries = db.entries.find(self.search, True)
+        else:
+            entries = db.entries.find(db.entries.percentageWrap(self.search))
         self._fillListWidgetWithEntries(self.form.entriesList, entries)
 
     def fillOccurrences(self):

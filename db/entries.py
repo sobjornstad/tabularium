@@ -110,13 +110,17 @@ def nameExists(name):
     else:
         return False
 
-def find(search):
+def find(search, regex=False):
     """
     Return a list of Entry objects matching the given glob, or empty list if
-    there are no matches.
+    there are no matches. If regex option is True, use search with SQLite's
+    REGEXP option and Python regular expression syntax.
     """
 
-    query = 'SELECT eid FROM entries WHERE name LIKE ?'
+    if regex:
+        query = "SELECT eid FROM entries WHERE name REGEXP ?"
+    else:
+        query = 'SELECT eid FROM entries WHERE name LIKE ?'
     d.cursor.execute(query, (search,))
     results = d.cursor.fetchall()
     return [Entry(r[0]) for r in results]

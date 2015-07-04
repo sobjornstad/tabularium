@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
+import re
 import sqlite3 as sqlite
 import time
 import sys
@@ -18,6 +19,7 @@ def connect(fname, autosaveInterval=60):
     cursor = connection.cursor()
     lastSavedTime = time.time()
     saveInterval = autosaveInterval
+    regexSetup()
 def openDbConnect(conn):
     """
     This function pulls an open connection into the database module's namespace
@@ -35,6 +37,15 @@ def openDbConnect(conn):
     connection = conn
     cursor = connection.cursor()
     lastSavedTime = time.time()
+    regexSetup()
+
+def regexSetup():
+    # http://stackoverflow.com/questions/5071601/
+    # how-do-i-use-regex-in-a-sqlite-query
+    def regexMatch(expr, item):
+        # note: use .search(), not match, or it searches only at start of str
+        return re.search(expr, item) is not None
+    connection.create_function("REGEXP", 2, regexMatch)
 
 def close():
     forceSave()
@@ -57,6 +68,7 @@ def forceSave():
     global lastSavedTime
     connection.commit()
     lastSavedTime = time.time()
+
 
 
 #### to be called without a database open ####
