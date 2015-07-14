@@ -3,6 +3,7 @@
 
 import db.database as d
 import occurrences
+import re
 
 class DuplicateError(Exception):
     def __init__(self):
@@ -136,3 +137,19 @@ def allEntries():
 
 def percentageWrap(search):
     return "%" + search + "%"
+
+def sortKeyTransform(e):
+    """
+    Perform some automatic transformations on an entry name string, which are
+    common issues requiring the specification of a sort key. Returns a string
+    to serve as the key.
+    """
+
+    e = re.sub(r'\"(.*?)\"', r'\1', e)     # quotations
+    e = re.sub(r'_(.*?)_', r'\1', e)       # underlines/"italics"
+    e = re.sub(r'^[tT]he *(.*)', r'\1', e) # "the"
+    e = re.sub(r"^'(.*)", r'\1', e)        # apostrophes
+    e = re.sub(r"^#(.*)", r'\1', e)        # hashes
+    e = re.sub(r"^/(.*)", r'\1', e)        # slashes
+
+    return e

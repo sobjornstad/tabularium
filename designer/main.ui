@@ -243,7 +243,7 @@
                <item>
                 <widget class="QCheckBox" name="entriesNamesCheck">
                  <property name="text">
-                  <string>Names</string>
+                  <string>People</string>
                  </property>
                 </widget>
                </item>
@@ -271,7 +271,7 @@
                <item>
                 <widget class="QCheckBox" name="entriesCommonsCheck">
                  <property name="text">
-                  <string>Commons</string>
+                  <string>Ordinary</string>
                  </property>
                 </widget>
                </item>
@@ -715,20 +715,32 @@
    <property name="text">
     <string>Add...</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+E, A</string>
+   </property>
   </action>
   <action name="actionAdd_Redirect_To">
    <property name="text">
     <string>Add Redirect To...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E, R</string>
    </property>
   </action>
   <action name="actionAdd_Multiple">
    <property name="text">
     <string>Add Multiple...</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+E, M</string>
+   </property>
   </action>
   <action name="actionNew_based_on">
    <property name="text">
     <string>Add Based On...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E, B</string>
    </property>
   </action>
   <action name="actionMove_to_entry">

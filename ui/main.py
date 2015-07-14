@@ -10,6 +10,9 @@ import config
 import db.database
 import db.entries
 
+import ui.addentry
+import ui.addoccurrence
+
 class MainWindow(QMainWindow):
     ### Application lifecycle functions ###
     def __init__(self):
@@ -29,8 +32,7 @@ class MainWindow(QMainWindow):
         sf.menuInspect.aboutToShow.connect(self.checkInspectMenu)
 
         # connect menu actions
-        sf.actionQuit.triggered.connect(self.quit)
-        sf.actionFollow_Nearby_Entry.triggered.connect(self.onInspect_FollowNearby)
+        self._setupMenus()
 
         # initialize db and set up searching and entries
         self.initDb()
@@ -84,8 +86,7 @@ class MainWindow(QMainWindow):
         if not self.form.entriesList.currentItem():
             return
 
-        search = unicode(self.form.entriesList.currentItem().text())
-        entry = db.entries.find(search)[0]
+        entry = self._fetchCurrentEntry()
         self.currentOccs = entry.getOccurrences() # hold onto objects for reference
         for i in self.currentOccs:
             nbook = i.getNotebook()
@@ -160,6 +161,13 @@ class MainWindow(QMainWindow):
 
 
     ### Functions from the menu ###
+    def _setupMenus(self):
+        sf = self.form
+        sf.actionQuit.triggered.connect(self.quit)
+        sf.actionFollow_Nearby_Entry.triggered.connect(self.onInspect_FollowNearby)
+        sf.actionAdd.triggered.connect(self.onAddEntry)
+        sf.actionNew_based_on.triggered.connect(self.onAddEntryBasedOn)
+
     def onInspect_FollowNearby(self):
         # NOTE: This can select other, longer, entries, as it %-pads. I'm not
         # sure if this is a problem, as it won't select *shorter* ones, and the
@@ -171,6 +179,22 @@ class MainWindow(QMainWindow):
         #TODO: Ideally we would autoselect the occurrence that was nearby,
         #      but that's a LOT more work, so not right away.
 
+    def onAddEntry(self, entryName=None):
+        ae = ui.addentry.AddEntryWindow(self)
+        if entryName:
+            ae.initializeSortKeyCheck(entryName)
+        ae.exec_()
+    def onAddEntryBasedOn(self):
+        #TODO: This doesn't preserve classification
+        entry = self._fetchCurrentEntry()
+        self.onAddEntry(entry.getName())
+
+
+
+    def onAddOccurrence(self):
+        # Anna-Christina's window
+        ac = ui.addoccurrence.AddOccWindow(self, entry)
+        ac.exec_()
 
     ### Menu check functions ###
     def checkInspectMenu(self):
@@ -190,6 +214,11 @@ class MainWindow(QMainWindow):
 
 
     ### UTILITIES ###
+    ### Database access functions
+    def _fetchCurrentEntry(self):
+        search = unicode(self.form.entriesList.currentItem().text())
+        return db.entries.find(search)[0]
+
     ### Reset functions: since more or less needs to be reset for each, do a
     ### sort of cascade.
     def _resetForEntry(self):
