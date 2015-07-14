@@ -29,6 +29,7 @@ class MainWindow(QMainWindow):
         sf.occurrencesList.itemSelectionChanged.connect(self.fillInspect)
 
         # connect menu check functions (for enable/disable)
+        sf.menuEntry.aboutToShow.connect(self.checkEntryMenu)
         sf.menuInspect.aboutToShow.connect(self.checkInspectMenu)
 
         # connect menu actions
@@ -197,6 +198,14 @@ class MainWindow(QMainWindow):
         ac.exec_()
 
     ### Menu check functions ###
+    def checkEntryMenu(self):
+        sf = self.form
+        ifCondition = sf.entriesList.currentRow() != -1
+        sf.actionNew_based_on.setEnabled(ifCondition)
+        sf.actionAdd_Redirect_To.setEnabled(ifCondition)
+        sf.actionEdit.setEnabled(ifCondition)
+        sf.actionMerge_into.setEnabled(ifCondition)
+        sf.actionDelete.setEnabled(ifCondition)
     def checkInspectMenu(self):
         sf = self.form
         ifCondition = sf.nearbyList.currentRow() != -1
@@ -216,8 +225,16 @@ class MainWindow(QMainWindow):
     ### UTILITIES ###
     ### Database access functions
     def _fetchCurrentEntry(self):
-        search = unicode(self.form.entriesList.currentItem().text())
-        return db.entries.find(search)[0]
+        """
+        Get an Entry object for the currently selected entry. Return None if
+        nothing is selected.
+        """
+        try:
+            search = unicode(self.form.entriesList.currentItem().text())
+        except AttributeError:
+            return None
+        else:
+            return db.entries.find(search)[0]
 
     ### Reset functions: since more or less needs to be reset for each, do a
     ### sort of cascade.
