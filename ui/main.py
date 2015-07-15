@@ -12,6 +12,7 @@ import db.entries
 
 import ui.addentry
 import ui.addoccurrence
+import ui.sourcemanager
 
 class MainWindow(QMainWindow):
     ### Application lifecycle functions ###
@@ -171,6 +172,7 @@ class MainWindow(QMainWindow):
         sf.actionFollow_Nearby_Entry.triggered.connect(self.onInspect_FollowNearby)
         sf.actionAdd.triggered.connect(self.onAddEntry)
         sf.actionNew_based_on.triggered.connect(self.onAddEntryBasedOn)
+        sf.actionManage_sources.triggered.connect(self.onManageSources)
 
     def onInspect_FollowNearby(self):
         # NOTE: This can select other, longer, entries, as it %-pads. I'm not
@@ -193,12 +195,14 @@ class MainWindow(QMainWindow):
         entry = self._fetchCurrentEntry()
         self.onAddEntry(entry.getName())
 
-
-
     def onAddOccurrence(self):
         # Anna-Christina's window
         ac = ui.addoccurrence.AddOccWindow(self, entry)
         ac.exec_()
+
+    def onManageSources(self):
+        ms = ui.sourcemanager.SourceManager(self)
+        ms.exec_()
 
     ### Menu check functions ###
     def checkEntryMenu(self):
