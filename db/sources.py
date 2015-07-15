@@ -6,10 +6,17 @@ import json
 
 class DuplicateError(Exception):
     def __init__(self, what):
-        "Argument /what/: 'source name', 'source abbreviation'"
-        self.msg = "That %s is already used." % what
+        "Argument /what/: 'name', 'abbreviation'"
+        self.msg = "That source %s is already used for a different source." % what
     def __str__(self):
         return self.msg
+class InvalidRangeError(Exception):
+    def __init__(self, what):
+        "Argument /what/: 'reference', 'volume' limit"
+        self.msg = "That %s range ends lower than it begins." % what
+    def __str__(self):
+        return self.msg
+
 
 class Source(object):
     def __init__(self, sid):
@@ -28,19 +35,26 @@ class Source(object):
         by this name or with this abbreviation already exists, raise
         DuplicateError and leave db untouched.
 
-        Types:
-        name: str
-        volval: int tuple (lower valid, upper valid)
-        pageval: int tuple (lower valid, upper valid)
-        nearrange: int
-        abbrev: str
-        stype: int; see consts.py sourceTypes
+        TYPES:
+        name      : str
+        volval    : int tuple (lower valid, upper valid) [*]
+        pageval   : int tuple (lower valid, upper valid)
+        nearrange : int
+        abbrev    : str
+        stype     : int; see consts.py's sourceTypes{}
+
+        [*] A volval of (1,1) indicates this is a single-volume source.
+            See self.isSingleVol().
         """
 
         if sourceExists(name):
-            raise DuplicateError('source name')
+            raise DuplicateError('name')
         if abbrevUsed(abbrev):
-            raise DuplicateError('source abbreviation')
+            raise DuplicateError('abbreviation')
+        if volval[0] > volval[1]:
+            raise InvalidRangeError('volume')
+        if pageval[0] > pageval[1]:
+            raise InvalidRangeError('page')
 
         q = """INSERT INTO sources
                (sid, name, volval, pageval, nearrange, abbrev, stype)
@@ -69,6 +83,12 @@ class Source(object):
         return self._abbrev
     def getStype(self):
         return self._stype
+    def getValVol(self):
+        return self._volval
+    def getValPage(self):
+        return self._pageval
+    def isSingleVol(self):
+        return self._volval == (1,1)
 
     def nearbySpread(self, num):
         return (num - self._nearrange, num + self._nearrange)
@@ -77,23 +97,35 @@ class Source(object):
     def isValidPage(self, num):
         return self._pageval[0] <= num <= self._pageval[1]
 
+    #TODO: Make sure that we can't trounce on existing valid occurrences by
+    # changing valid vols/pages. But occurrences need to be working first!
     def setName(self, name):
-        self._name = name
-        self.dump()
+        if self._name != name:
+            if sourceExists(name):
+                raise DuplicateError('name')
+            self._name = name
+            self.dump()
     def setValidVol(self, tup):
         assert isinstance(tup, tuple) # in case we forget
+        if tup[0] > tup[1]:
+            raise InvalidRangeError('volume')
         self._volval = tup
         self.dump()
     def setValidPage(self, tup):
         assert isinstance(tup, tuple)
+        if tup[0] > tup[1]:
+            raise InvalidRangeError('page')
         self._pageval = tup
         self.dump()
     def setNearbyRange(self, r):
         self._nearrange = r
         self.dump()
     def setAbbrev(self, abb):
-        self._abbrev = abb
-        self.dump()
+        if self._abbrev != abb:
+            if abbrevUsed(abb):
+                raise DuplicateError('abbreviation')
+            self._abbrev = abb
+            self.dump()
     def setStype(self, stype):
         self._stype = stype
         self.dump()

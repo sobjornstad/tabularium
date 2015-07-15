@@ -32,3 +32,20 @@ class SourceTests(utils.DbTestCase):
         s2 = Source.makeNew('Turticular Book', (1,20), (1,240), 3, 'TB',
                 sourceTypes['notebooktype'])
         assert allSources() == [s1, s2]
+
+    def testInvalidData(self):
+        s1 = Source.makeNew('Chronic Book', (10,100), (44,80), 25, 'CD',
+                sourceTypes['other'])
+        s2 = Source.makeNew('Turticular Book', (1,20), (1,240), 3, 'TB',
+                sourceTypes['notebooktype'])
+        with self.assertRaises(DuplicateError):
+            Source.makeNew('Chronic Book', (10,100), (44,80), 25, 'CB',
+                    sourceTypes['other'])
+            Source.makeNew('Foobar Book', (10,100), (44,80), 25, 'HQ',
+                    sourceTypes['other'])
+
+        with self.assertRaises(InvalidRangeError):
+            Source.makeNew('Mathematical Fool', (10,1), (44,80), 25, 'PX',
+                    sourceTypes['other'])
+            Source.makeNew('Mathematical Fool', (10,30), (44,2), 25, 'PC',
+                    sourceTypes['other'])
