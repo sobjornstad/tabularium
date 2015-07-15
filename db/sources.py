@@ -130,6 +130,23 @@ class Source(object):
         self._stype = stype
         self.dump()
 
+    def delete(self):
+        """
+        PSEUDOCODE IMPLEMENTATION: can't do this yet, pending (#TODO) a feature
+        to zap any entries with no occurrences, and the changeover of
+        occurrences from notebooks to volumes.
+
+        display "here be dragons" warning message
+        queries = (
+            "DELETE * FROM volumes WHERE sid=?"
+            "DELETE * FROM occurrences WHERE sid=?"
+            "DELETE * FROM sources WHERE sid=?"
+            )
+        execute queries
+        run orphaned entry cleanup
+        """
+        pass
+
     def dump(self):
         q = """UPDATE sources SET name=?, volval=?, pageval=?, nearrange=?,
                abbrev=?, stype=?
