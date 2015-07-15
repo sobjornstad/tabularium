@@ -85,6 +85,7 @@ class Entry(object):
         return occurrences.fetchForEntry(self)
 
     def delete(self):
+        d.cursor.execute('DELETE FROM occurrences WHERE eid=?', (self._eid,))
         d.cursor.execute('DELETE FROM entries WHERE eid=?', (self._eid,))
         d.checkAutosave()
 

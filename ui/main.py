@@ -162,6 +162,9 @@ class MainWindow(QMainWindow):
 
 
     ### Functions from the menu ###
+    #TODO: When returning from a menu like "add entry," make sure the view is
+    # updated. This is harder than just running _resetForEntry(), though, as
+    # we don't want to wipe out the user's selection.
     def _setupMenus(self):
         sf = self.form
         sf.actionQuit.triggered.connect(self.quit)

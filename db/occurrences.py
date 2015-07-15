@@ -163,3 +163,79 @@ def parseRange(val):
         return None
 
     return (bottom, top)
+
+def parseUnifiedFormat(s):
+    """
+    Parse a string in Unified Occurrence Format (UOF) into Occurrence objects
+    and return a list thereof. UOF works as follows.
+
+    A simple occurrence in UOF consists of the *source*, *volume* (if
+    applicable), and *page* (or index number). Some examples of valid simple
+    occurrences in UOF:
+
+    CB1.56
+    CB 1.56
+    CB: 1.56
+    CB:1 . 56
+    RT 2378 (if RT is single-volume)
+    RT 0.2378
+    The Invisible Man 58
+    The 160th Book: 45
+
+    The rules:
+    The general format looks like `SOURCENAME:VOLNUMBER.PAGENUMBER`.
+
+    * There may be spaces or no spaces before or after the colon and period.
+    * The volume number and point may be omitted if the source is single-volume
+      (or you can write in volume 0, but that's generally silly).
+    * The colon may be omitted entirely so long as the source name does not
+      contain any numbers. If there are numbers in the source name, the parser
+      would otherwise be unable to figure out where the source name ended and
+      the the page number began. If there are multiple numbers separated by at
+      least one space and no colon, the string is invalid UOF.
+    
+
+    Multiple occurrences can be entered at once:
+
+    CB:{1.56, 5.78}
+    CB {1.56,5 .78,}
+    CB 1.56 | CB 5.78 | CB 12.56
+    CB {1.56, 5.78} | CB 12.56
+    RT 2378 | The Invisible Man {56, 78}
+    The 160th Book: 45 | TB2.162
+
+    Rules:
+    * To enter multiple page numbers within the same source and volume, OR
+      multiple volumes and page numbers within the same source, place the page
+      or volume and page references in braces, separating them with a comma. A
+      trailing comma inside the braces may optionally be used.
+    * To enter multiple whole sources, or as a more verbose way of entering
+      multiple pages within the same source, place a pipe (|) character between
+      the references, with optional (but suggested for readability) spaces on
+      either side.
+
+
+    Finally, you may want to enter a range or a redirect. Examples:
+    CB 15.45-56
+    CB 15.45–6
+    CB 15.45--56
+    CB 15. see Other Entry
+
+    Rules:
+    * Ranges are specified with '-', '--', or '–' (literal en-dash). There
+      can be spaces at the sides, but not between the dashes of the double
+      dash.
+    * Redirects are specified with the keyword 'see' followed by a space and
+      the entry to redirect to.
+
+    And this is valid UOF, though not a very likely/good way of doing things...
+    CB{15.26--7,2    . 18, 4.see    Other Entry} |The 2nd Book of    : 45
+    """
+    #TODO: Ensure that source names cannot contain pipes or braces
+
+    #TODO: Sources, I'm afraid, need to be implemented before we can do
+    # this properly.
+
+    uniqueSections = [i.strip() for i in s.split('|')]
+    for i in uniqueSections:
+        pass

@@ -87,7 +87,7 @@ class AddEntryWindow(QDialog):
         if existingEntry:
             utils.informationBox("Entry already exists; adding occurrences.",
                     "Entry exists")
-            entry = existingEntry
+            entry = existingEntry[0]
         else:
             newSk = unicode(self.form.sortKeyBox.text())
             classif = self._getSelectedClassif()

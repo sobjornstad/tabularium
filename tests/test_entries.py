@@ -81,6 +81,19 @@ class DbTests(utils.DbTestCase):
 
         # test delete
         assert Entry(e1eid)
+
+        # occurrence that should be deleted
+        e1occs = e1.getOccurrences()
+        oids = [i.getOid() for i in e1occs]
+        assert db.occurrences.Occurrence(oids[0])
+        # occurrence that should NOT be deleted
+        o2 = db.occurrences.Occurrence.makeNew(e2, n1, '22', 0)
+
         e1.delete()
         with self.assertRaises(IndexError):
             Entry(e1eid)
+        # the occurrence should be deleted too
+        d.cursor.execute('SELECT oid FROM occurrences WHERE oid=?', (oids[0],))
+        with self.assertRaises(IndexError):
+            d.cursor.fetchall()[0]
+        assert db.occurrences.Occurrence(o2.getOid())

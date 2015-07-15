@@ -76,3 +76,9 @@ class OccTests(utils.DbTestCase):
         assert r == entryOrder
 
         ### test none returns for invalid entries?
+
+    def testUnifiedFormat(self):
+        """
+        Tests should match the docstring documenting UOF in the
+        parseUnifiedFormat() function.
+        """

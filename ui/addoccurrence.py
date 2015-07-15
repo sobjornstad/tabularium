@@ -13,7 +13,7 @@ class AddOccWindow(QDialog):
         self.parent = parent # may be mw or entry dialog
         self.entry = entry
 
-        self.form.entryBox.setText(self.entry)
+        self.form.entryBox.setText(self.entry.getName())
 
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
@@ -24,5 +24,8 @@ class AddOccWindow(QDialog):
         super(AddOccWindow, self).accept()
 
     def reject(self):
-        # delete the ENTRY as well if it was a new one and has no occs.
+        if not self.entry.getOccurrences():
+            # entry was new and had no occurrences; delete so we're not left
+            # with a blank entry in the db
+            self.entry.delete()
         super(AddOccWindow, self).reject()
