@@ -199,6 +199,7 @@ def parseUnifiedFormat(s):
 
     CB:{1.56, 5.78}
     CB {1.56,5 .78,}
+    CB{1.56}
     CB 1.56 | CB 5.78 | CB 12.56
     CB {1.56, 5.78} | CB 12.56
     RT 2378 | The Invisible Man {56, 78}
@@ -208,7 +209,8 @@ def parseUnifiedFormat(s):
     * To enter multiple page numbers within the same source and volume, OR
       multiple volumes and page numbers within the same source, place the page
       or volume and page references in braces, separating them with a comma. A
-      trailing comma inside the braces may optionally be used.
+      trailing comma inside the braces may optionally be used. (Braces are also
+      legal with a single occurrence.)
     * To enter multiple whole sources, or as a more verbose way of entering
       multiple pages within the same source, place a pipe (|) character between
       the references, with optional (but suggested for readability) spaces on
