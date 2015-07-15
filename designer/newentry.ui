@@ -24,7 +24,7 @@
        <item row="3" column="0" rowspan="2">
         <widget class="QLabel" name="label_3">
          <property name="text">
-          <string>&amp;Classification</string>
+          <string>Classification</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
@@ -192,7 +192,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>Remove sorting distractions from the sort key.</string>
+          <string>Remove sorting distractions (&quot;the&quot;, punctuation, etc.) from the sort key.</string>
          </property>
          <property name="text">
           <string>&amp;Wash</string>
@@ -251,7 +251,7 @@
        <item>
         <widget class="QPushButton" name="cancelButton">
          <property name="text">
-          <string>Cancel</string>
+          <string>&amp;Cancel</string>
          </property>
         </widget>
        </item>

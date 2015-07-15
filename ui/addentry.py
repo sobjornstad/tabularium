@@ -12,12 +12,21 @@ import db.entries
 import db.consts
 
 class FocusGrabberField(QLineEdit):
+    """
+    This subclass, used for the sort key box, does nothing at the moment, but I
+    may want to add an "autowash" option in the future; that was the original
+    motivation.
+
+    I'm very amused that I ended up with 'window().wash()'.
+    """
+
     def __init__(self, parent=None):
         super(FocusGrabberField, self).__init__(parent)
 
     def focusInEvent(self, event):
-        #self.window().maybeTransformSortKey()
+        #self.window().wash()
         QLineEdit.focusInEvent(self, QFocusEvent(QtCore.QEvent.FocusIn))
+
 
 class AddEntryWindow(QDialog):
     def __init__(self, parent):
@@ -33,7 +42,7 @@ class AddEntryWindow(QDialog):
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
         self.form.copyButton.clicked.connect(self.onCopy)
-        self.form.washButton.clicked.connect(self.maybeTransformSortKey)
+        self.form.washButton.clicked.connect(self.wash)
 
     def initializeSortKeyCheck(self, value=""):
         """
@@ -57,7 +66,7 @@ class AddEntryWindow(QDialog):
             self.form.sortKeyBox.setText(newName)
         self.oldName = newName # update oldName regardless
 
-    def maybeTransformSortKey(self):
+    def wash(self):
         nameEntered = unicode(self.form.sortKeyBox.text())
         sk = db.entries.sortKeyTransform(nameEntered)
         self.form.sortKeyBox.setText(sk)
@@ -87,7 +96,6 @@ class AddEntryWindow(QDialog):
         super(AddEntryWindow, self).accept()
         ac = ui.addoccurrence.AddOccWindow(self, entry)
         ac.exec_()
-
 
     def _getSelectedClassif(self):
         """
