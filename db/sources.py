@@ -2,6 +2,7 @@
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
 import db.database as d
+import db.consts
 import json
 
 class DuplicateError(Exception):
@@ -16,6 +17,13 @@ class InvalidRangeError(Exception):
         self.msg = "That %s range ends lower than it begins." % what
     def __str__(self):
         return self.msg
+class DiaryExistsError(Exception):
+    def __init__(self, conflicting):
+        self.conflicts = conflicting
+        pass
+    def __str__(self):
+        return "You can only have one diary source. Yours is named '%s'." % \
+                self.conflicts
 
 
 class Source(object):
@@ -55,6 +63,12 @@ class Source(object):
             raise InvalidRangeError('volume')
         if pageval[0] > pageval[1]:
             raise InvalidRangeError('page')
+        if stype == db.consts.sourceTypes['diary']:
+            d.cursor.execute("SELECT name FROM sources WHERE stype = ?",
+                    (db.consts.sourceTypes['diary'],))
+            existing = d.cursor.fetchall()[0]
+            if existing:
+                raise DiaryExistsError(str(existing[0]))
 
         q = """INSERT INTO sources
                (sid, name, volval, pageval, nearrange, abbrev, stype)
@@ -126,9 +140,6 @@ class Source(object):
                 raise DuplicateError('abbreviation')
             self._abbrev = abb
             self.dump()
-    def setStype(self, stype):
-        self._stype = stype
-        self.dump()
 
     def delete(self):
         """

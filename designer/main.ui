@@ -609,6 +609,7 @@
     <addaction name="actionClassify_Entryies"/>
     <addaction name="actionEntry_Merge_Tool"/>
     <addaction name="actionInvalid_Redirect_Check"/>
+    <addaction name="actionMass_Deletion_Tool"/>
     <addaction name="actionProper_Name_Conflict_Tool"/>
     <addaction name="actionSort_Check_Tool"/>
    </widget>
@@ -831,6 +832,11 @@
   <action name="actionSort_Check_Tool">
    <property name="text">
     <string>Sort Check Tool...</string>
+   </property>
+  </action>
+  <action name="actionMass_Deletion_Tool">
+   <property name="text">
+    <string>Mass Deletion Tool...</string>
    </property>
   </action>
  </widget>

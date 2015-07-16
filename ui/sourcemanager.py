@@ -27,6 +27,7 @@ class SourceManager(QDialog):
 
     def renderTable(self):
         t = self.form.sourceTable
+        t.clear()
         t.setColumnCount(4)
         t.setHorizontalHeaderLabels(["Name", "Abbrev", "Type", "Volumes"])
 
@@ -38,10 +39,12 @@ class SourceManager(QDialog):
             t.setItem(row, 1, QTableWidgetItem(robj.getAbbrev()))
             t.setItem(row, 2, QTableWidgetItem(
                       db.consts.sourceTypesFriendlyReversed[robj.getStype()]))
-            t.setItem(row, 3, QTableWidgetItem("Not Findable")) # TODO
+            t.setItem(row, 3, QTableWidgetItem("Not Implemented")) # TODO
         t.resizeColumnsToContents()
+        t.sortItems(0)
 
     def onNew(self):
+        #TODO: fix display getting corrupted if we cancel
         nsd = NewSourceDialog(self)
         nsd.exec_()
         self.renderTable()
@@ -103,6 +106,7 @@ class NewSourceDialog(QDialog):
         self.isEditing = True
 
     def accept(self):
+        #TODO: PREVENT BLANK ENTRIES
         sf = self.form
 
         newName = unicode(sf.nameBox.text()).strip()
@@ -130,6 +134,8 @@ class NewSourceDialog(QDialog):
         except db.sources.DuplicateError as e:
             ui.utils.errorBox(str(e))
         except db.sources.InvalidRangeError as e:
+            ui.utils.errorBox(str(e))
+        except db.sources.DiaryExistsError as e:
             ui.utils.errorBox(str(e))
         else:
             super(NewSourceDialog, self).accept()
