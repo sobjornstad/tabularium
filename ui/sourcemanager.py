@@ -2,7 +2,8 @@
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QDialog, QLineEdit, QTableWidgetItem
+from PyQt4.QtGui import QDialog, QLineEdit, QTableWidgetItem, QStandardItem
+from PyQt4.QtCore import QAbstractTableModel
 import forms.managesources
 import forms.newsource
 
@@ -10,6 +11,49 @@ import ui.utils
 import ui.addoccurrence
 import db.consts
 import db.sources
+
+class SourceTableModel(QAbstractTableModel):
+    def __init__(self, parent, *args):
+        QAbstractTableModel.__init__(self)
+        self.parent = parent
+        self.headerdata = ["Name", "Abbrev", "Type", "Volumes"]
+        self.doUpdate()
+
+    def rowCount(self, parent):
+        return len(self.sources)
+    def columnCount(self, parent):
+        return 4
+
+    def doUpdate(self):
+        self.beginResetModel()
+        self.sources = db.sources.allSources()
+        self.endResetModel()
+
+    def data(self, index, role):
+        if role != QtCore.Qt.DisplayRole:
+            return QtCore.QVariant()
+
+        robj = self.sources[index.row()]
+        col = index.column()
+        if col == 0:
+            return robj.getName()
+        elif col == 1:
+            return robj.getAbbrev()
+        elif col == 2:
+            return db.consts.sourceTypesFriendlyReversed[robj.getStype()]
+        elif col == 3:
+            return "NOT IMPLEMENTED" #TODO
+        else:
+            assert False, "Invalid column!"
+            return None
+
+    def headerData(self, col, orientation, role):
+        # note: I don't know why, but if this if-statement is left out, the
+        # headers silently don't show up
+        if role != QtCore.Qt.DisplayRole:
+            return QtCore.QVariant()
+        return QtCore.QVariant(self.headerdata[col])
+
 
 class SourceManager(QDialog):
     def __init__(self, parent):
@@ -23,7 +67,8 @@ class SourceManager(QDialog):
         self.form.editButton.clicked.connect(self.onEdit)
         self.form.deleteButton.clicked.connect(self.onEdit)
 
-        self.renderTable()
+        model = SourceTableModel(self)
+        self.form.sourceTable.setModel(model)
 
     def renderTable(self):
         t = self.form.sourceTable
@@ -44,16 +89,15 @@ class SourceManager(QDialog):
         t.sortItems(0)
 
     def onNew(self):
-        #TODO: fix display getting corrupted if we cancel
         nsd = NewSourceDialog(self)
         nsd.exec_()
-        self.renderTable()
+        self.form.sourceTable.model().doUpdate()
     def onEdit(self):
-        sourceRow = self.form.sourceTable.currentRow()
-        source = self.sources[sourceRow]
+        index = self.form.sourceTable.selectionModel().selectedRows()[0]
+        source = self.form.sourceTable.model().sources[index.row()]
         nsd = NewSourceDialog(self, source)
         nsd.exec_()
-        self.renderTable()
+        self.form.sourceTable.model().doUpdate()
     def onDelete(self):
         pass
 

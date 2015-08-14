@@ -66,7 +66,7 @@ class Source(object):
         if stype == db.consts.sourceTypes['diary']:
             d.cursor.execute("SELECT name FROM sources WHERE stype = ?",
                     (db.consts.sourceTypes['diary'],))
-            existing = d.cursor.fetchall()[0]
+            existing = d.cursor.fetchall()
             if existing:
                 raise DiaryExistsError(str(existing[0]))
 

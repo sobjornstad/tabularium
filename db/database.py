@@ -80,7 +80,7 @@ def makeDatabase(fname):
     cursor.execute('CREATE TABLE notebooks (nid INTEGER PRIMARY KEY, ntype TEXT, nnum INTEGER, dopened DATE, dclosed DATE)')
     cursor.execute('CREATE TABLE events (evid INTEGER PRIMARY KEY, nid INTEGER, event TEXT, special INTEGER, sequence INTEGER)')
     cursor.execute('CREATE TABLE sources (sid INTEGER PRIMARY KEY, name TEXT, volval TEXT, pageval TEXT, nearrange INTEGER, abbrev TEXT, stype INTEGER)')
-    cursor.execute('CREATE TABLE volumes (vid INTEGER PRIMARY KEY, sid INTEGER, num INTEGER, notes TEXT , dopened TEXT, dclosed TEXT)')
+    cursor.execute('CREATE TABLE volumes (vid INTEGER PRIMARY KEY, sid INTEGER, num INTEGER, notes TEXT)')
     return connection
 
 if __name__ == "__main__":

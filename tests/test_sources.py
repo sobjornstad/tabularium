@@ -7,11 +7,11 @@ from db.sources import *
 class SourceTests(utils.DbTestCase):
     def testObject(self):
         s1 = Source.makeNew('Chronic Book', (10,100), (44,80), 25, 'CD',
-                sourceTypes['other'])
+                sourceTypes['diary'])
         assert s1.getName() == 'Chronic Book'
 
         s1.setName('Chrono Book')
-        s1.setStype(sourceTypes['diary'])
+        #s1.setStype(sourceTypes['diary']) # not implemented
         s1.setAbbrev('CB')
         s1.setValidVol((1, 100))
         s1.setValidPage((4, 80))
