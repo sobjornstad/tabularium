@@ -45,8 +45,8 @@ class Source(object):
 
         TYPES:
         name      : str
-        volval    : int tuple (lower valid, upper valid) [*]
-        pageval   : int tuple (lower valid, upper valid)
+        volval    : int tuple inclusive (lower valid, upper valid) [*]
+        pageval   : int tuple inclusive (lower valid, upper valid)
         nearrange : int
         abbrev    : str
         stype     : int; see consts.py's sourceTypes{}
@@ -89,6 +89,8 @@ class Source(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def getSid(self):
+        return self._sid
     def getName(self):
         return self._name
     def getNearbyRange(self):
@@ -97,9 +99,9 @@ class Source(object):
         return self._abbrev
     def getStype(self):
         return self._stype
-    def getValVol(self):
+    def getVolVal(self):
         return self._volval
-    def getValPage(self):
+    def getPageVal(self):
         return self._pageval
     def isSingleVol(self):
         return self._volval == (1,1)
@@ -110,6 +112,10 @@ class Source(object):
         return self._volval[0] <= num <= self._volval[1]
     def isValidPage(self, num):
         return self._pageval[0] <= num <= self._pageval[1]
+    def volExists(self, num):
+        q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
+        d.cursor.execute(q, (self._sid, num))
+        return True if d.cursor.fetchall() else False
 
     #TODO: Make sure that we can't trounce on existing valid occurrences by
     # changing valid vols/pages. But occurrences need to be working first!

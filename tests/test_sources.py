@@ -17,6 +17,9 @@ class SourceTests(utils.DbTestCase):
         s1.setValidPage((4, 80))
         s1.setNearbyRange(2)
 
+        assert s1.getSid() == 1
+        assert s1.getVolVal() == (1, 100)
+        assert s1.getPageVal() == (4, 80)
         assert s1.getName() == 'Chrono Book'
         assert s1.getStype() == sourceTypes['diary']
         assert s1.getAbbrev() == 'CB'
@@ -25,6 +28,18 @@ class SourceTests(utils.DbTestCase):
         assert not s1.isValidVol(5000)
         assert s1.isValidPage(26)
         assert not s1.isValidPage(9001)
+
+        # errors
+        with self.assertRaises(DiaryExistsError):
+            s2 = Source.makeNew('New Diary', (10,100), (44,80), 25, 'CC',
+                    sourceTypes['diary'])
+        with self.assertRaises(DuplicateError):
+            s2 = Source.makeNew('Chronic Books', (10,100), (44,80), 25, 'CH',
+                    sourceTypes['book'])
+            s3 = Source.makeNew('Chronic Books', (10,100), (44,80), 25, 'CH',
+                    sourceTypes['book'])
+
+
 
     def testFetchAll(self):
         s1 = Source.makeNew('Chronic Book', (10,100), (44,80), 25, 'CD',
