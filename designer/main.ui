@@ -686,6 +686,9 @@
    <property name="text">
     <string>Quit</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
   </action>
   <action name="actionUndo">
    <property name="text">
@@ -793,10 +796,16 @@
    <property name="text">
     <string>Manage sources...</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+S, S</string>
+   </property>
   </action>
   <action name="actionManage_volumes">
    <property name="text">
     <string>Manage volumes...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S, V</string>
    </property>
   </action>
   <action name="actionNotes">

@@ -65,7 +65,7 @@ class SourceManager(QDialog):
         self.form.closeButton.clicked.connect(self.reject)
         self.form.newButton.clicked.connect(self.onNew)
         self.form.editButton.clicked.connect(self.onEdit)
-        #self.form.deleteButton.clicked.connect(self.onEdit)
+        self.form.deleteButton.clicked.connect(self.onDelete)
 
         model = SourceTableModel(self)
         self.form.sourceTable.setModel(model)
@@ -108,6 +108,10 @@ class NewSourceDialog(QDialog):
         self.form = forms.newsource.Ui_Dialog()
         self.form.setupUi(self)
         self.parent = parent
+
+        for i in db.consts.sourceTypesKeys:
+            self.form.typeCombo.addItem(i)
+
         if not editSource:
             self.isEditing = False
         else:
@@ -115,8 +119,6 @@ class NewSourceDialog(QDialog):
             self.source = editSource
             self.fillForEdit()
 
-        for i in db.consts.sourceTypesKeys:
-            self.form.typeCombo.addItem(i)
         self.checkVolumeEnable()
         self.form.multVolCheckbox.stateChanged.connect(self.checkVolumeEnable)
 
@@ -124,28 +126,28 @@ class NewSourceDialog(QDialog):
         self.form.addButton.clicked.connect(self.accept)
 
     def checkVolumeEnable(self):
-        if self.form.multVolCheckbox.isChecked():
-            self.form.valVolStart.setEnabled(True)
-            self.form.valVolStop.setEnabled(True)
-        else:
-            self.form.valVolStart.setEnabled(False)
-            self.form.valVolStop.setEnabled(False)
+        sf = self.form
+        for i in (sf.valVolStart, sf.valVolStop, sf.valVolLabel):
+            i.setEnabled(self.form.multVolCheckbox.isChecked())
+        if not self.form.multVolCheckbox.isChecked():
+            sf.valVolStart.setValue(1)
+            sf.valVolStop.setValue(1)
 
     def fillForEdit(self):
         source = self.source
         self.setWindowTitle("Edit Source")
         self.form.addButton.setText("&Save")
-        self.form.typeCombo.setEnabled(False)
         self.form.nameBox.setText(source.getName())
         self.form.abbrevBox.setText(source.getAbbrev())
         self.form.typeCombo.setCurrentIndex(
                 db.consts.sourceTypesKeys.index(
                 db.consts.sourceTypesFriendlyReversed[source.getStype()]))
+        self.form.typeCombo.setEnabled(False)
         self.form.multVolCheckbox.setChecked(not source.isSingleVol())
-        self.form.valVolStart.setValue(source.getValVol()[0])
-        self.form.valVolStop.setValue(source.getValVol()[1])
-        self.form.valRefStart.setValue(source.getValPage()[0])
-        self.form.valRefStop.setValue(source.getValPage()[1])
+        self.form.valVolStart.setValue(source.getVolVal()[0])
+        self.form.valVolStop.setValue(source.getVolVal()[1])
+        self.form.valRefStart.setValue(source.getPageVal()[0])
+        self.form.valRefStop.setValue(source.getPageVal()[1])
         self.form.nearbyRange.setValue(source.getNearbyRange())
         self.isEditing = True
 

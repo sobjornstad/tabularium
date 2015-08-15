@@ -93,7 +93,7 @@ class Volume(object):
         return self._dclosed
     def getFormattedDopened(self):
         return self._dopened.strftime(db.consts.DATE_FORMAT)
-    def getFormattedDopened(self):
+    def getFormattedDclosed(self):
         return self._dclosed.strftime(db.consts.DATE_FORMAT)
 
     def setDopened(self, date):
@@ -129,3 +129,48 @@ def allVolumes():
     d.cursor.execute('SELECT vid FROM volumes')
     vs = [Volume(vid[0]) for vid in d.cursor.fetchall()]
     return vs
+
+def volumesInSource(source):
+    sid = source.getSid()
+    d.cursor.execute('SELECT vid FROM volumes WHERE sid=?', (sid,))
+    return [Volume(vid[0]) for vid in d.cursor.fetchall()]
+
+def volExists(source, num):
+    sid = source.getSid()
+    q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
+    d.cursor.execute(q, (sid, num))
+    return True if d.cursor.fetchall() else False
+
+def findNextDopened(source):
+    """
+    Try to guess, or at least come close to, the date the user would like a new
+    volume of a source to be opened on: we'll find when the last one was closed
+    and pick the day after that.
+
+    If there are no volumes of that source yet, return the current date.
+
+    Return value is a datetime.date.
+    """
+    d.cursor.execute('''SELECT dclosed FROM volumes
+                        WHERE num=(SELECT MAX(num) FROM volumes)
+                        AND sid=?''', (source.getSid(),))
+    try:
+        return (dateDeserializer(d.cursor.fetchall()[0][0]) +
+                datetime.timedelta(days=1))
+    except IndexError:
+        return datetime.date.today()
+
+def findNextOpenVol(source):
+    """
+    Return the next volume number that is not used for /source/. If the source
+    is not multi-volume, return 0. If no volumes currently exist, return 1.
+    """
+    if source.isSingleVol():
+        return 0
+    d.cursor.execute('SELECT MAX(num) FROM volumes WHERE sid=?',
+                     (source.getSid(),))
+    try:
+        return d.cursor.fetchall()[0][0] + 1
+    except (IndexError, TypeError):
+        # unsupported operand types: NoneType and int
+        return 1

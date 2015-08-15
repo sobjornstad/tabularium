@@ -177,7 +177,7 @@
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QLabel" name="label_4">
+        <widget class="QLabel" name="valVolLabel">
          <property name="text">
           <string>Valid &amp;volumes</string>
          </property>

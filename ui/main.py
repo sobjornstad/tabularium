@@ -4,6 +4,7 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog
 from forms.main import Ui_MainWindow
+import sqlite3
 import sys
 
 import config
@@ -13,6 +14,7 @@ import db.entries
 import ui.addentry
 import ui.addoccurrence
 import ui.sourcemanager
+import ui.volmanager
 
 class MainWindow(QMainWindow):
     ### Application lifecycle functions ###
@@ -73,7 +75,11 @@ class MainWindow(QMainWindow):
 
         self._resetForEntry()
         if self.searchOptions['regex']:
-            entries = db.entries.find(self.search, True)
+            try:
+                entries = db.entries.find(self.search, True)
+            except sqlite3.OperationalError:
+                # regex in search box is invalid
+                entries = []
         else:
             entries = db.entries.find(db.entries.percentageWrap(self.search))
         self._fillListWidgetWithEntries(self.form.entriesList, entries)
@@ -173,6 +179,7 @@ class MainWindow(QMainWindow):
         sf.actionAdd.triggered.connect(self.onAddEntry)
         sf.actionNew_based_on.triggered.connect(self.onAddEntryBasedOn)
         sf.actionManage_sources.triggered.connect(self.onManageSources)
+        sf.actionManage_volumes.triggered.connect(self.onManageVolumes)
 
     def onInspect_FollowNearby(self):
         # NOTE: This can select other, longer, entries, as it %-pads. I'm not
@@ -203,6 +210,9 @@ class MainWindow(QMainWindow):
     def onManageSources(self):
         ms = ui.sourcemanager.SourceManager(self)
         ms.exec_()
+    def onManageVolumes(self):
+        mv = ui.volmanager.VolumeManager(self)
+        mv.exec_()
 
     ### Menu check functions ###
     def checkEntryMenu(self):

@@ -8,7 +8,7 @@ import json
 class DuplicateError(Exception):
     def __init__(self, what):
         "Argument /what/: 'name', 'abbreviation'"
-        self.msg = "That source %s is already used for a different source." % what
+        self.msg = "That %s is already used for a different source." % what
     def __str__(self):
         return self.msg
 class InvalidRangeError(Exception):
@@ -68,7 +68,7 @@ class Source(object):
                     (db.consts.sourceTypes['diary'],))
             existing = d.cursor.fetchall()
             if existing:
-                raise DiaryExistsError(str(existing[0]))
+                raise DiaryExistsError(existing[0][0])
 
         q = """INSERT INTO sources
                (sid, name, volval, pageval, nearrange, abbrev, stype)
@@ -174,6 +174,11 @@ class Source(object):
         d.checkAutosave()
 
 
+def byName(name):
+    q = 'SELECT sid FROM sources WHERE name = ?'
+    d.cursor.execute(q, (name,))
+    return Source(d.cursor.fetchall()[0][0])
+
 def sourceExists(name):
     q = 'SELECT sid FROM sources WHERE name = ?'
     d.cursor.execute(q, (name,))
@@ -184,7 +189,9 @@ def abbrevUsed(name):
     d.cursor.execute(q, (name,))
     return True if d.cursor.fetchall() else False
 
-def allSources():
+def allSources(includeSingleVolSources=True):
     d.cursor.execute('SELECT sid FROM sources')
-    ss = [Source(sid[0]) for sid in d.cursor.fetchall()]
-    return ss
+    sources = [Source(sid[0]) for sid in d.cursor.fetchall()]
+    if not includeSingleVolSources:
+        sources = [source for source in sources if source.getVolVal() != (1,1)]
+    return sources
