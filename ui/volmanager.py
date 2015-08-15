@@ -9,8 +9,9 @@ from PyQt4.QtCore import QAbstractTableModel
 import forms.managevols
 import forms.newsource
 
-import ui.utils
 import ui.addoccurrence
+import ui.editnotes
+import ui.utils
 import db.consts
 import db.sources
 import db.volumes
@@ -114,7 +115,9 @@ class VolumeManager(QDialog):
     def onDelete(self):
         pass
     def onNotes(self):
-        pass
+        nd = ui.editnotes.NotesBrowser(self)
+        nd.exec_()
+
 
     def _currentVolume(self):
         """
