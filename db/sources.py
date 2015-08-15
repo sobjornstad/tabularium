@@ -3,6 +3,7 @@
 
 import db.database as d
 import db.consts
+import db.volumes
 import json
 
 class DuplicateError(Exception):
@@ -77,8 +78,12 @@ class Source(object):
                nearrange, abbrev, stype))
         d.checkAutosave()
         sid = d.cursor.lastrowid
-        return cls(sid)
+        sourceObj = cls(sid)
 
+        # before returning, add a dummy volume if this is a single-vol source
+        if volval == (1,1):
+            db.volumes.Volume.makeNew(sourceObj, 1, "", creatingDummy=True)
+        return sourceObj
 
     def __eq__(self, other):
         return (self._sid == other._sid and self._name == other._name and

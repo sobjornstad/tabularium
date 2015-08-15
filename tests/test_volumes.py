@@ -10,12 +10,12 @@ class VolumeTests(utils.DbTestCase):
     def testObject(self):
         s1 = Source.makeNew('Chronic Book', (1,100), (5,80), 25, 'CD',
                 sourceTypes['diary'])
-        s2 = Source.makeNew('The Complete Otter Language Grammar',
-                            (1,1), (5,80), 25, 'COLG', sourceTypes['book'])
         v1 = Volume.makeNew(s1, 1, "This is volume 1.",
                             date(2015, 6, 1), date(2015, 7, 6))
         v2 = Volume.makeNew(s1, 2, "This is volume 2.",
                             date(2015, 7, 7), date(2015, 8, 10))
+        s2 = Source.makeNew('The Complete Otter Language Grammar',
+                            (1,1), (5,80), 25, 'COLG', sourceTypes['book'])
 
         # creation error-checking
         with self.assertRaises(DuplicateError):
@@ -48,3 +48,9 @@ class VolumeTests(utils.DbTestCase):
         assert reFetchVol.getDclosed() == date(2015, 8, 9)
         assert reFetchVol.getNotes() == "That was a *very* eventful two days..."
         assert reFetchVol.getNum() == 3
+
+        assert len(allVolumes()) == 3 # v1 and v2 plus dummy volume for s2
+        assert len(volumesInSource(s2)) == 1
+        assert volumesInSource(s2)[0].getNum() == 1
+        assert volumesInSource(s2)[0].getSource() == s2
+        assert volumesInSource(s2)[0].getNotes() == ""

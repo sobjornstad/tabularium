@@ -37,7 +37,8 @@ class Volume(object):
         self._vid = vid
 
     @classmethod
-    def makeNew(cls, source, num, notes, dopened=None, dclosed=None):
+    def makeNew(cls, source, num, notes, dopened=None, dclosed=None,
+            creatingDummy=False):
         """
         Create a new volume in the db and return a Volume object. If a volume
         in this source with this number already exists, raise DuplicateError.
@@ -49,6 +50,10 @@ class Volume(object):
         items. If not specified, they will be filled as None and displayed in
         an appropriate manner later.
 
+        If creatingDummy, override SingleVolumeError as long as we're creating
+        volume 1. This parameter should be used only by the makeNew class
+        method of Source.
+
         source  : Source
         num     : integer volume number
         notes   : str
@@ -56,7 +61,7 @@ class Volume(object):
         dclosed : datetime.date
         """
 
-        if source.isSingleVol():
+        if source.isSingleVol() and not (creatingDummy and num == 1):
             raise SingleVolumeError(source.getName())
         if not source.isValidVol(num):
             raise ValidationError(source.getName(), source.getVolVal())
