@@ -99,7 +99,15 @@ class Volume(object):
         if self._dclosed is None:
             return None
         return self._dclosed.strftime(db.consts.DATE_FORMAT)
+    def hasDates(self):
+        return (self._dclosed is not None and self._dopened is not None)
 
+    def setNum(self, num):
+        if self._num != num:
+            if volExists(self._source, num):
+                raise DuplicateError(self._source, num)
+            self._num = num
+            self.dump()
     def setDopened(self, date):
         if self._dopened != date:
             self._dopened = date

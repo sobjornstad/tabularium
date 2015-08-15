@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
+import datetime
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QDialog, QLineEdit, QTableWidgetItem, QStandardItem
 from PyQt4.QtCore import QAbstractTableModel
@@ -73,11 +75,17 @@ class VolumeManager(QDialog):
 
         self.volModel = VolumeTableModel(self)
         self.form.volTable.setModel(self.volModel)
+        self.sm = self.form.volTable.selectionModel()
+        self.sm.selectionChanged.connect(self.checkButtonEnablement)
 
         self.fillSources()
         self.fillVolumes()
         self.form.sourceList.itemSelectionChanged.connect(self.fillVolumes)
 
+    def checkButtonEnablement(self):
+        sf = self.form
+        for i in (sf.editButton, sf.deleteButton, sf.notesButton):
+            i.setEnabled(self.sm.hasSelection())
 
     def fillSources(self):
         sources = db.sources.allSources(includeSingleVolSources=False)
@@ -90,24 +98,32 @@ class VolumeManager(QDialog):
             self.volModel.replaceData(vols)
         else:
             self.volModel.replaceData([])
+        self.checkButtonEnablement()
 
     def onNew(self):
         nvd = NewVolumeDialog(self, self._currentSource())
         nvd.exec_()
         self.fillVolumes()
     def onEdit(self):
-        # not changed
-        source = self._currentVolume()
-        nsd = NewSourceDialog(self, source)
-        nsd.exec_()
-        self.form.sourceTable.model().doUpdate()
+        vol = self._currentVolume()
+        if vol is None:
+            return
+        nvd = NewVolumeDialog(self, self._currentSource(), editVol=vol)
+        nvd.exec_()
+        self.fillVolumes()
     def onDelete(self):
         pass
     def onNotes(self):
         pass
 
     def _currentVolume(self):
-        index = self.form.volTable.selectionModel().selectedRows()[0]
+        """
+        Return the Volume currently selected, or None if there is no selection.
+        """
+        try:
+            index = self.form.volTable.selectionModel().selectedRows()[0]
+        except IndexError:
+            return None
         volume = self.volModel.vols[index.row()]
         return volume
 
@@ -128,13 +144,6 @@ class NewVolumeDialog(QDialog):
         self.parent = parent
         self.source = source
 
-        #if not editVol:
-            #self.isEditing = False
-        #else:
-            #self.isEditing = True
-            #self.source = editVol
-            #self.fillForEdit()
-
         # connect buttons
         self.form.cancelButton.clicked.connect(self.reject)
         self.form.createButton.clicked.connect(self.accept)
@@ -154,33 +163,40 @@ class NewVolumeDialog(QDialog):
         self.form.dOpenedEdit.setDate(defaultDate)
         self.form.dClosedEdit.setDate(defaultDate)
 
+        if not editVol:
+            self.isEditing = False
+        else:
+            self.isEditing = True
+            self.volume = editVol
+            self.fillForEdit()
+
 
     def checkUseDates(self):
         for i in (self.form.dOpenedEdit, self.form.dClosedEdit,
                   self.form.dOpenedLabel, self.form.dClosedLabel):
             i.setEnabled(self.form.useDateCheck.isChecked())
 
-    #def fillForEdit(self):
-    #    source = self.source
-    #    self.setWindowTitle("Edit Source")
-    #    self.form.addButton.setText("&Save")
-    #    self.form.typeCombo.setEnabled(False)
-    #    self.form.nameBox.setText(source.getName())
-    #    self.form.abbrevBox.setText(source.getAbbrev())
-    #    self.form.typeCombo.setCurrentIndex(
-    #            db.consts.sourceTypesKeys.index(
-    #            db.consts.sourceTypesFriendlyReversed[source.getStype()]))
-    #    self.form.multVolCheckbox.setChecked(not source.isSingleVol())
-    #    self.form.valVolStart.setValue(source.getValVol()[0])
-    #    self.form.valVolStop.setValue(source.getValVol()[1])
-    #    self.form.valRefStart.setValue(source.getValPage()[0])
-    #    self.form.valRefStop.setValue(source.getValPage()[1])
-    #    self.form.nearbyRange.setValue(source.getNearbyRange())
-    #    self.isEditing = True
+    def fillForEdit(self):
+        self.setWindowTitle("Edit Volume")
+        self.form.createButton.setText("&Save")
+        self.form.volNumSpin.setValue(self.volume.getNum())
+
+        if self.volume.hasDates():
+            self.form.useDateCheck.setChecked(True)
+            self.form.dOpenedEdit.setDate(self.volume.getDopened())
+            self.form.dClosedEdit.setDate(self.volume.getDclosed())
+        else:
+            self.form.useDateCheck.setChecked(False)
+            self.form.dOpenedEdit.setDate(datetime.date.today())
+            self.form.dClosedEdit.setDate(datetime.date.today())
 
     def accept(self):
         num = self.form.volNumSpin.value()
-        if db.volumes.volExists(self.source, num):
+        # volExists is the only check we need to do, as the other errors
+        # (SingleVolume and Validation) should be prevented from occurring
+        # by the interface.
+        if num != self.volume.getNum() and \
+                db.volumes.volExists(self.source, num):
             ui.utils.errorBox("That volume already exists for this source. "
                               "Maybe you mistyped the number or chose the "
                               "wrong source?", "Volume exists")
@@ -194,7 +210,13 @@ class NewVolumeDialog(QDialog):
 
         try:
             # we start with an empty notes field here
-            db.volumes.Volume.makeNew(self.source, num, "", dOpened, dClosed)
+            if self.isEditing:
+                self.volume.setNum(num)
+                self.volume.setDopened(dOpened)
+                self.volume.setDclosed(dClosed)
+            else:
+                db.volumes.Volume.makeNew(
+                        self.source, num, "", dOpened, dClosed)
         except:
             raise
         else:

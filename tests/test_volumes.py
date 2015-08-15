@@ -40,6 +40,11 @@ class VolumeTests(utils.DbTestCase):
         v1.setDopened(date(2015, 8, 8))
         v1.setDclosed(date(2015, 8, 9))
         v1.setNotes("That was a *very* eventful two days...")
-        assert v1.getDopened() == date(2015, 8, 8)
-        assert v1.getDclosed() == date(2015, 8, 9)
-        assert v1.getNotes() == "That was a *very* eventful two days..."
+        with self.assertRaises(DuplicateError):
+            v1.setNum(2)
+        v1.setNum(3)
+        reFetchVol = Volume(1)
+        assert reFetchVol.getDopened() == date(2015, 8, 8)
+        assert reFetchVol.getDclosed() == date(2015, 8, 9)
+        assert reFetchVol.getNotes() == "That was a *very* eventful two days..."
+        assert reFetchVol.getNum() == 3
