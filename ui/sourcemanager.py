@@ -11,6 +11,7 @@ import ui.utils
 import ui.addoccurrence
 import db.consts
 import db.sources
+import db.volumes
 
 class SourceTableModel(QAbstractTableModel):
     def __init__(self, parent, *args):
@@ -42,7 +43,10 @@ class SourceTableModel(QAbstractTableModel):
         elif col == 2:
             return db.consts.sourceTypesFriendlyReversed[robj.getStype()]
         elif col == 3:
-            return "NOT IMPLEMENTED" #TODO
+            if robj.isSingleVol():
+                return "(single-volume)"
+            else:
+                return len(db.volumes.volumesInSource(robj))
         else:
             assert False, "Invalid column!"
             return None
@@ -69,24 +73,8 @@ class SourceManager(QDialog):
 
         model = SourceTableModel(self)
         self.form.sourceTable.setModel(model)
+        self.form.sourceTable.resizeColumnsToContents()
 
-    def renderTable(self):
-        t = self.form.sourceTable
-        t.clear()
-        t.setColumnCount(4)
-        t.setHorizontalHeaderLabels(["Name", "Abbrev", "Type", "Volumes"])
-
-        self.sources = db.sources.allSources()
-        t.setRowCount(len(self.sources))
-        for row in range(len(self.sources)):
-            robj = self.sources[row]
-            t.setItem(row, 0, QTableWidgetItem(robj.getName()))
-            t.setItem(row, 1, QTableWidgetItem(robj.getAbbrev()))
-            t.setItem(row, 2, QTableWidgetItem(
-                      db.consts.sourceTypesFriendlyReversed[robj.getStype()]))
-            t.setItem(row, 3, QTableWidgetItem("Not Implemented")) # TODO
-        t.resizeColumnsToContents()
-        t.sortItems(0)
 
     def onNew(self):
         nsd = NewSourceDialog(self)
