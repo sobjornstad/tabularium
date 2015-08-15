@@ -34,9 +34,11 @@ class VolumeTableModel(QAbstractTableModel):
         if col == 0:
             return robj.getNum()
         elif col == 1:
-            return robj.getFormattedDopened()
+            val = robj.getFormattedDopened()
+            return val if val is not None else "N/A"
         elif col == 2:
-            return robj.getFormattedDclosed()
+            val = robj.getFormattedDclosed()
+            return val if val is not None else "N/A"
         elif col == 3:
             return robj.getNotes()
         else:
@@ -188,7 +190,7 @@ class NewVolumeDialog(QDialog):
             dOpened = self.form.dOpenedEdit.date().toPyDate()
             dClosed = self.form.dClosedEdit.date().toPyDate()
         else:
-            dOpened, dClosed = None
+            dOpened, dClosed = None, None
 
         try:
             # we start with an empty notes field here

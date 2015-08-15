@@ -9,17 +9,23 @@ def dateSerializer(obj):
     """
     if hasattr(obj, 'isoformat'):
         return obj.isoformat()
+    elif obj is None:
+        return None
     else:
         raise TypeError, 'Object of type %s with value of %s is not JSON ' \
                 'serializable' % (type(obj), repr(obj))
 
 def dateDeserializer(yyyymmdd):
     """
-    Change a serialized string back into a datetime.date.
+    Change a serialized string back into a datetime.date. Or if None was stored,
+    return None.
     """
     try:
         y, m, d = yyyymmdd.split('-')
         y, m, d = int(y), int(m), int(d)
+    except AttributeError:
+        if yyyymmdd == None:
+            return None
     except ValueError:
         raise
         assert False, "Invalid date serialized to database!"

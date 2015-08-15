@@ -92,8 +92,12 @@ class Volume(object):
     def getDclosed(self):
         return self._dclosed
     def getFormattedDopened(self):
+        if self._dopened is None:
+            return None
         return self._dopened.strftime(db.consts.DATE_FORMAT)
     def getFormattedDclosed(self):
+        if self._dclosed is None:
+            return None
         return self._dclosed.strftime(db.consts.DATE_FORMAT)
 
     def setDopened(self, date):
