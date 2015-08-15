@@ -37,7 +37,6 @@ class NotesBrowser(QDialog):
         self.form.setupUi(self)
         self.parent = parent
 
-
         self.fillTreeWidget()
 
         self.form.closeButton.clicked.connect(self.reject)
@@ -60,9 +59,11 @@ class NotesBrowser(QDialog):
         for source in sources:
             sourceItem = TreeWidgetItem([source.getName()])
             self.form.tree.addTopLevelItem(sourceItem)
-            volumes = db.volumes.volumesInSource(source)
-            for volume in volumes:
-                TreeWidgetItem(sourceItem, ["Volume " + str(volume.getNum())])
+            if not source.isSingleVol():
+                volumes = db.volumes.volumesInSource(source)
+                for volume in volumes:
+                    TreeWidgetItem(sourceItem,
+                                   ["Volume " + str(volume.getNum())])
             sourceItem.sortChildren(0, Qt.AscendingOrder)
         self.form.tree.sortByColumn(0, Qt.AscendingOrder)
 
