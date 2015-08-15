@@ -91,6 +91,10 @@ class Volume(object):
         return self._dopened
     def getDclosed(self):
         return self._dclosed
+    def getFormattedDopened(self):
+        return self._dopened.strftime(db.consts.DATE_FORMAT)
+    def getFormattedDopened(self):
+        return self._dclosed.strftime(db.consts.DATE_FORMAT)
 
     def setDopened(self, date):
         if self._dopened != date:
@@ -119,3 +123,9 @@ class Volume(object):
                          dateSerializer(self._dopened),
                          dateSerializer(self._dclosed), self._vid))
         d.checkAutosave()
+
+
+def allVolumes():
+    d.cursor.execute('SELECT vid FROM volumes')
+    vs = [Volume(vid[0]) for vid in d.cursor.fetchall()]
+    return vs

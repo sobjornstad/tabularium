@@ -65,7 +65,7 @@ class SourceManager(QDialog):
         self.form.closeButton.clicked.connect(self.reject)
         self.form.newButton.clicked.connect(self.onNew)
         self.form.editButton.clicked.connect(self.onEdit)
-        self.form.deleteButton.clicked.connect(self.onEdit)
+        #self.form.deleteButton.clicked.connect(self.onEdit)
 
         model = SourceTableModel(self)
         self.form.sourceTable.setModel(model)
