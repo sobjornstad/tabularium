@@ -13,6 +13,7 @@ import db.entries
 
 import ui.addentry
 import ui.addoccurrence
+import ui.editnotes
 import ui.sourcemanager
 import ui.volmanager
 
@@ -180,6 +181,7 @@ class MainWindow(QMainWindow):
         sf.actionNew_based_on.triggered.connect(self.onAddEntryBasedOn)
         sf.actionManage_sources.triggered.connect(self.onManageSources)
         sf.actionManage_volumes.triggered.connect(self.onManageVolumes)
+        sf.actionNotes.triggered.connect(self.onViewNotes)
 
     def onInspect_FollowNearby(self):
         # NOTE: This can select other, longer, entries, as it %-pads. I'm not
@@ -213,6 +215,9 @@ class MainWindow(QMainWindow):
     def onManageVolumes(self):
         mv = ui.volmanager.VolumeManager(self)
         mv.exec_()
+    def onViewNotes(self):
+        nb = ui.editnotes.NotesBrowser(self)
+        nb.exec_()
 
     ### Menu check functions ###
     def checkEntryMenu(self):

@@ -812,6 +812,9 @@
    <property name="text">
     <string>Notes...</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+S, N</string>
+   </property>
   </action>
   <action name="actionClassify_Entryies">
    <property name="text">
