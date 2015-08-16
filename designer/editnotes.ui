@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,5">
      <item>
       <widget class="QTreeWidget" name="tree">
        <attribute name="headerVisible">
@@ -29,7 +29,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QTextEdit" name="editor"/>
+      <widget class="QTextEdit" name="editor">
+       <property name="autoFormatting">
+        <set>QTextEdit::AutoBulletList</set>
+       </property>
+       <property name="tabStopWidth">
+        <number>25</number>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -47,6 +54,32 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="clearButton">
+       <property name="toolTip">
+        <string>If you screw up the HTML, this will remove all formatting.</string>
+       </property>
+       <property name="text">
+        <string>Clea&amp;r Formatting</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="parseButton">
+       <property name="toolTip">
+        <string>Parse simple HTML entered in the notes editor, displaying it as formatted text.
+Even lists seem to be fishy for some reason, but bold, italic, underline and headings work great.</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">h3 {
+	color: blue;
+}</string>
+       </property>
+       <property name="text">
+        <string>&amp;Parse HTML</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="closeButton">

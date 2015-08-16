@@ -152,6 +152,12 @@ def volumesInSource(source):
     d.cursor.execute('SELECT vid FROM volumes WHERE sid=?', (sid,))
     return [Volume(vid[0]) for vid in d.cursor.fetchall()]
 
+def byNumAndSource(source, num):
+    sid = source.getSid()
+    q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
+    d.cursor.execute(q, (sid, num))
+    return Volume(d.cursor.fetchall()[0][0])
+
 def volExists(source, num):
     sid = source.getSid()
     q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
