@@ -98,8 +98,9 @@ class MainWindow(QMainWindow):
         entry = self._fetchCurrentEntry()
         self.currentOccs = entry.getOccurrences() # hold onto objects for reference
         for i in self.currentOccs:
-            nbook = i.getNotebook()
-            occStr = "%s%s.%s" % (nbook.getType(), nbook.getNum(), i.getRef()[0])
+            vol = i.getVolume()
+            occStr = "%s%s.%s" % (vol.getSource().getAbbrev(), vol.getNum(),
+                                  i.getRef()[0])
             self.form.occurrencesList.addItem(occStr)
 
     def fillInspect(self):
@@ -113,9 +114,9 @@ class MainWindow(QMainWindow):
         # the actual occurrence
         row = self.form.occurrencesList.currentRow()
         occ = self.currentOccs[row]
-        nbook = occ.getNotebook()
+        vol = occ.getVolume()
         occStr = "<b>%s%s.%s</b><br>" % (
-                nbook.getType(), nbook.getNum(), occ.getRef()[0])
+                vol.getSource().getAbbrev(), vol.getNum(), occ.getRef()[0])
         # the added and edited dates
         daStr = "Entered %s<br>" % occ.getAddedDate()
         deStr = "Modified %s<br>" % occ.getEditedDate()

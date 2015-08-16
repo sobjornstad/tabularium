@@ -1,0 +1,100 @@
+TEMPORARY TABLE
+
+SOURCES
+NAME	SID
+CB	1
+TB	2
+RT	3
+
+
+NOTEBOOKS
+NAME	NID	VID	NEEDS TRANSLATION
+CB1	1	1
+CB2	2	2
+CB3	3	3
+CB4	4	4
+CB5	5	5
+CB6	6	6
+CB7	7	7
+CB8	9	8	*
+CB9	13	12	*
+CB10	10	9	*
+CB11	11	10	*
+CB12	12	11	*
+CB13	14	13	*
+CB14	15	14	*
+CB15	16	15	*
+CB16	17	16	*
+CB17	18	17	*
+CB18	19	18	*
+CB19	20	19	*
+CB20	21	20	*
+CB21	22	21	*
+CB22	23	22	*
+CB23	24	23	*
+CB24	25	24	*
+CB25	26	25	*
+CB26	27	26	*
+CB27	28	27	*
+CB28	29	28	*
+CB29	30	29	*
+CB30	31	30	*
+CB31	32	31	*
+TB1	8	32	*
+
+
+SQL:
+BEGIN TRANSACTION;
+UPDATE occurrences SET vid=58 WHERE vid=9;
+UPDATE occurrences SET vid=512 WHERE vid=13;
+UPDATE occurrences SET vid=59 WHERE vid=10;
+UPDATE occurrences SET vid=510 WHERE vid=11;
+UPDATE occurrences SET vid=511 WHERE vid=12;
+UPDATE occurrences SET vid=513 WHERE vid=14;
+UPDATE occurrences SET vid=514 WHERE vid=15;
+UPDATE occurrences SET vid=515 WHERE vid=16;
+UPDATE occurrences SET vid=516 WHERE vid=17;
+UPDATE occurrences SET vid=517 WHERE vid=18;
+UPDATE occurrences SET vid=518 WHERE vid=19;
+UPDATE occurrences SET vid=519 WHERE vid=20;
+UPDATE occurrences SET vid=520 WHERE vid=21;
+UPDATE occurrences SET vid=521 WHERE vid=22;
+UPDATE occurrences SET vid=522 WHERE vid=23;
+UPDATE occurrences SET vid=523 WHERE vid=24;
+UPDATE occurrences SET vid=524 WHERE vid=25;
+UPDATE occurrences SET vid=525 WHERE vid=26;
+UPDATE occurrences SET vid=526 WHERE vid=27;
+UPDATE occurrences SET vid=527 WHERE vid=28;
+UPDATE occurrences SET vid=528 WHERE vid=29;
+UPDATE occurrences SET vid=529 WHERE vid=30;
+UPDATE occurrences SET vid=530 WHERE vid=31;
+UPDATE occurrences SET vid=531 WHERE vid=32;
+UPDATE occurrences SET vid=532 WHERE vid=8;
+
+UPDATE occurrences SET vid=8 WHERE vid=58;
+UPDATE occurrences SET vid=9 WHERE vid=59;
+UPDATE occurrences SET vid=10 WHERE vid=510;
+UPDATE occurrences SET vid=11 WHERE vid=511;
+UPDATE occurrences SET vid=12 WHERE vid=512;
+UPDATE occurrences SET vid=13 WHERE vid=513;
+UPDATE occurrences SET vid=14 WHERE vid=51;  # typing error, but no results, so ok
+UPDATE occurrences SET vid=14 WHERE vid=514;
+UPDATE occurrences SET vid=15 WHERE vid=515;
+UPDATE occurrences SET vid=16 WHERE vid=516;
+UPDATE occurrences SET vid=17 WHERE vid=517;
+UPDATE occurrences SET vid=18 WHERE vid=518;
+UPDATE occurrences SET vid=19 WHERE vid=519;
+UPDATE occurrences SET vid=20 WHERE vid=520;
+UPDATE occurrences SET vid=21 WHERE vid=521;
+UPDATE occurrences SET vid=22 WHERE vid=522;
+UPDATE occurrences SET vid=23 WHERE vid=523;
+UPDATE occurrences SET vid=24 WHERE vid=524;
+UPDATE occurrences SET vid=25 WHERE vid=525;
+UPDATE occurrences SET vid=26 WHERE vid=526;
+UPDATE occurrences SET vid=27 WHERE vid=527;
+UPDATE occurrences SET vid=28 WHERE vid=528;
+UPDATE occurrences SET vid=29 WHERE vid=529;
+UPDATE occurrences SET vid=30 WHERE vid=530;
+UPDATE occurrences SET vid=31 WHERE vid=531;
+UPDATE occurrences SET vid=32 WHERE vid=532;
+COMMIT;

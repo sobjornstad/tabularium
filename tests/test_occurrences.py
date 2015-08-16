@@ -1,20 +1,28 @@
 import utils
 
 import db.database as d
-from db.entries import *
-from db.notebooks import *
+from db.entries import Entry
 from db.occurrences import *
+from db.sources import Source
+from db.volumes import Volume
+from db.consts import sourceTypes
+from datetime import date
 
 class OccTests(utils.DbTestCase):
     def testObject(self):
         e1 = Entry.makeNew("Kathariana")
         e2 = Entry.makeNew("Melgreth, Maudia")
-        n1 = Notebook('CB', 2, '2015-01-01', '2015-02-01')
-        n2 = Notebook('TB', 3, '2015-02-01', '2015-03-01')
-        o1 = Occurrence.makeNew(e1, n1, '25', 0)
+
+        s1 = Source.makeNew('Chronic Book', (1,100), (5,80), 25, 'CD',
+                sourceTypes['diary'])
+        v1 = Volume.makeNew(s1, 1, "This is volume 1.",
+                            date(2015, 6, 1), date(2015, 7, 6))
+        v2 = Volume.makeNew(s1, 2, "This is volume 2.",
+                            date(2015, 7, 7), date(2015, 8, 10))
+        o1 = Occurrence.makeNew(e1, v1, '25', 0)
 
         assert o1.getEntry() == e1
-        assert o1.getNotebook() == n1
+        assert o1.getVolume() == v1
         assert o1.getRef() == ('25', 0)
         oid = o1.getOid()
 
@@ -26,9 +34,9 @@ class OccTests(utils.DbTestCase):
         oNew = Occurrence(oid)
         assert oNew.getRef() == ('25-27', 1)
 
-        o1.setNotebook(n2)
+        o1.setVolume(v2)
         oNew = Occurrence(oid)
-        assert oNew.getNotebook() == n2
+        assert oNew.getVolume() == v2
 
 
         # fetchForEntry
@@ -38,8 +46,12 @@ class OccTests(utils.DbTestCase):
 
     def testNearby(self):
         ### Test proper returns and lack thereof.
-        n1 = Notebook('CB', 2, '2015-01-01', '2015-02-01')
-        n2 = Notebook('TB', 3, '2015-02-01', '2015-03-01')
+        s1 = Source.makeNew('Chronic Book', (1,100), (5,80), 25, 'CD',
+                sourceTypes['diary'])
+        v1 = Volume.makeNew(s1, 1, "This is volume 1.",
+                            date(2015, 6, 1), date(2015, 7, 6))
+        v2 = Volume.makeNew(s1, 2, "This is volume 2.",
+                            date(2015, 7, 7), date(2015, 8, 10))
 
         e1 = Entry.makeNew("Kathariana")
         e2 = Entry.makeNew("Melgreth, Maudia")
@@ -50,15 +62,15 @@ class OccTests(utils.DbTestCase):
         e7 = Entry.makeNew("Kaitlyn Complex")
 
         # we want this set to appear on query of e1
-        o1 = Occurrence.makeNew(e1, n1, '25', 0)
-        o2 = Occurrence.makeNew(e2, n1, '26', 0)
-        o3 = Occurrence.makeNew(e3, n1, '24', 0)
-        o4 = Occurrence.makeNew(e4, n1, '25-28', 0)
+        o1 = Occurrence.makeNew(e1, v1, '25', 0)
+        o2 = Occurrence.makeNew(e2, v1, '26', 0)
+        o3 = Occurrence.makeNew(e3, v1, '24', 0)
+        o4 = Occurrence.makeNew(e4, v1, '25-28', 0)
 
         # but these should not, for various reasons
-        o5 = Occurrence.makeNew(e5, n1, '29', 0) # too far away
-        o6 = Occurrence.makeNew(e6, n2, '25', 0) # wrong notebook
-        o7 = Occurrence.makeNew(e7, n1, '25', 2) # wrong reftype
+        o5 = Occurrence.makeNew(e5, v1, '29', 0) # too far away
+        o6 = Occurrence.makeNew(e6, v2, '25', 0) # wrong notebook
+        o7 = Occurrence.makeNew(e7, v1, '25', 2) # wrong reftype
 
         r = o1.getNearby()
         assert len(r) == 4, len(r)

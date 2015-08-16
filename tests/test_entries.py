@@ -1,9 +1,12 @@
 import utils
+from datetime import date
 
 import db.database as d
 from db.entries import *
 import db.occurrences
-import db.notebooks
+from db.sources import Source
+from db.volumes import Volume
+from db.consts import sourceTypes
 
 class DbTests(utils.DbTestCase):
     def testObject(self):
@@ -73,8 +76,11 @@ class DbTests(utils.DbTestCase):
             assert i == e1 or i == e2 or i == e3
 
         # fetching occurrences
-        n1 = db.notebooks.Notebook('CB', 2, '2015-01-01', '2015-02-01')
-        o1 = db.occurrences.Occurrence.makeNew(e1, n1, '25', 0)
+        s1 = Source.makeNew('Chronic Book', (1,100), (5,80), 25, 'CD',
+                sourceTypes['diary'])
+        v1 = Volume.makeNew(s1, 1, "This is volume 1.",
+                            date(2015, 6, 1), date(2015, 7, 6))
+        o1 = db.occurrences.Occurrence.makeNew(e1, v1, '25', 0)
         l = e1.getOccurrences()
         assert len(l) == 1
         assert l[0].getEntry() == e1
@@ -87,7 +93,7 @@ class DbTests(utils.DbTestCase):
         oids = [i.getOid() for i in e1occs]
         assert db.occurrences.Occurrence(oids[0])
         # occurrence that should NOT be deleted
-        o2 = db.occurrences.Occurrence.makeNew(e2, n1, '22', 0)
+        o2 = db.occurrences.Occurrence.makeNew(e2, v1, '22', 0)
 
         e1.delete()
         with self.assertRaises(IndexError):
