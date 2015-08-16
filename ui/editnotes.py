@@ -7,7 +7,7 @@ import datetime
 import re
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QDialog, QLineEdit, QTreeWidgetItem
+from PyQt4.QtGui import QDialog, QMessageBox, QLineEdit, QTreeWidgetItem
 from PyQt4.QtCore import QAbstractTableModel, Qt
 import forms.editnotes
 
@@ -59,8 +59,11 @@ class NotesBrowser(QDialog):
         super(NotesBrowser, self).reject()
 
     def onClear(self):
-        self.form.editor.setHtml(self.form.editor.toPlainText())
-        self.saveIfModified()
+        r = ui.utils.questionBox("Are you sure you want to clear all "
+                "formatting?", "Clear formatting?")
+        if r == QMessageBox.Yes:
+            self.form.editor.setHtml(self.form.editor.toPlainText())
+            self.saveIfModified()
 
     def onTextChanged(self):
         """
