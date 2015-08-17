@@ -134,10 +134,7 @@ class MainWindow(QMainWindow):
         entry = self._fetchCurrentEntry()
         self.currentOccs = entry.getOccurrences() # hold onto objects for reference
         for i in self.currentOccs:
-            vol = i.getVolume()
-            occStr = "%s%s.%s" % (vol.getSource().getAbbrev(), vol.getNum(),
-                                  i.getRef()[0])
-            self.form.occurrencesList.addItem(occStr)
+            self.form.occurrencesList.addItem(str(i))
 
     def fillInspect(self):
         """
@@ -345,8 +342,8 @@ class MainWindow(QMainWindow):
         """
         As in _fetchCurrentEntry, for the currently selected occurrence.
         """
-        try:
-            search = unicode(self.form.occurrencesList.currentItem().text())
+        #try:
+            #search = unicode(self.form.occurrencesList.currentItem().text())
 
     ### Reset functions: since more or less needs to be reset for each, do a
     ### sort of cascade.

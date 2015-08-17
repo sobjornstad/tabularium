@@ -84,6 +84,18 @@ class Occurrence(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __str__(self):
+        if self._type == refTypes['num'] or self._type == refTypes['range']:
+            return "%s %s.%s" % (self._volume.getSource().getAbbrev(),
+                                 self._volume.getNum(),
+                                 self._ref)
+        elif self._type == refTypes['redir']:
+            source = self._volume.getSource()
+            vol = self._volume.getNum()
+            return '%s %s: see "%s"' % (source.getAbbrev(), vol, self._ref)
+        else:
+            assert False, "invalid reftype in occurrence"
+
     def getEntry(self):
         return self._entry
     def getVolume(self):
@@ -177,6 +189,7 @@ class Occurrence(object):
         entries.sort(key=lambda i: i._sk)
 
         return entries
+
 
 def fetchForEntry(entry):
     """
