@@ -123,6 +123,10 @@ class Occurrence(object):
                 self._ref, self._type, self._de, self._da, self._oid))
         d.checkAutosave()
 
+    def delete(self):
+        d.cursor.execute('DELETE FROM occurrences WHERE oid=?', (self._oid,))
+        d.checkAutosave()
+
     def getNearby(self, nearRange=1):
         """
         Find all occurrences that are in the same volume and within /nearRange/
@@ -370,17 +374,18 @@ def parseUnifiedFormat(s):
             raise InvalidUOFError()
 
         # determine entry type and format refnum
+        ENDASH = u'–' # putting it in a variable fixes Unicode error somehow
         if refnum.startswith('see '):
             # redirect
             reftype = refTypes['redir']
             refnum = refnum.replace('see ', '').strip()
-        elif '--' in refnum or u'–' in refnum or '-' in refnum:
+        elif '--' in refnum or ENDASH in refnum or '-' in refnum:
             # range: normalize delimiter
             reftype = refTypes['range']
             if '--' in refnum:
                 refnum = refnum.replace('--', '-')
-            elif '–' in refnum:
-                refnum = refnum.replace('–', '-')
+            elif ENDASH in refnum:
+                refnum = refnum.replace(ENDASH, '-')
             # convert both to integers
             first, second = refnum.split('-')
             try:
@@ -531,7 +536,7 @@ def _isColonlessValid(s):
     if the numbers are in braces.)
     """
     sNew = re.sub('{.*}', '', s)
-    if re.match(r'.*[0-9]+[^.\-–0-9]+[0-9]+', sNew) is not None:
+    if re.match(u'.*[0-9]+[^.\-–0-9]+[0-9]+', sNew) is not None:
         return False
     else:
         return True

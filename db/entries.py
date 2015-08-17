@@ -101,6 +101,17 @@ class Entry(object):
         d.checkAutosave()
 
 
+def deleteOrphaned():
+    """
+    Find and delete all entries that have no corresponding occurrences. This
+    will usually be run after deleting a volume. The only way I can think of
+    that this situation would happen unintentionally is if someone deleted the
+    last occurrence, which should be disallowed, so it should be safe to
+    run this function whenever you want for cleanup.
+    """
+    d.cursor.execute('''DELETE FROM entries
+                        WHERE eid NOT IN (SELECT eid FROM occurrences)''')
+
 def nameExists(name):
     """
     Check if an entry with the given /name/ already exists in the database.

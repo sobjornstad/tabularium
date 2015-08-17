@@ -32,12 +32,18 @@ class AddOccWindow(QDialog):
         self.form.cancelButton.clicked.connect(self.reject)
 
     def accept(self):
+        """
+        Try to parse the string in the occurrences box; if success, save
+        occurrences to database and close. If failure, show error and leave
+        dialog open for correction or reject().
+        """
         toParse = unicode(self.form.valueBox.text())
         try:
             occs = db.occurrences.makeOccurrencesFromString(toParse, self.entry)
         except db.occurrences.InvalidUOFError:
-            error = "The occurrence string is invalid – please check your " \
+            error = u"The occurrence string is invalid – please check your " \
                     "syntax and try again."
+            raise
         except db.occurrences.NonexistentSourceError as e:
             error = "%s" % e
         except db.occurrences.NonexistentVolumeError as e:

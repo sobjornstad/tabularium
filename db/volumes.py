@@ -4,6 +4,7 @@
 import db.database as d
 import db.consts
 import db.sources
+import db.entries
 import json
 import datetime
 from db.utils import dateSerializer, dateDeserializer
@@ -127,10 +128,10 @@ class Volume(object):
             self.dump()
 
     def delete(self):
-        """
-        Can't be implemented until occurrences and orphaned-entry deletion are.
-        """
-        pass
+        d.cursor.execute('DELETE FROM occurrences WHERE vid=?', (self._vid,))
+        db.entries.deleteOrphaned()
+        d.cursor.execute('DELETE FROM volumes WHERE vid=?', (self._vid,))
+        d.checkAutosave()
 
     def dump(self):
         q = """UPDATE volumes
