@@ -2,7 +2,7 @@ import utils
 from datetime import date
 
 import db.database as d
-from db.entries import *
+import db.entries
 import db.occurrences
 from db.sources import Source
 from db.volumes import Volume
@@ -12,8 +12,8 @@ class DbTests(utils.DbTestCase):
     def testObject(self):
         e1Name = "Maudi (Maudlin)"
         e2Name = "Katerina (Maudlin)"
-        e1 = Entry.makeNew(e1Name)
-        e2 = Entry.makeNew(e2Name, "ZKaterina", 5)
+        e1 = db.entries.Entry.makeNew(e1Name)
+        e2 = db.entries.Entry.makeNew(e2Name, "ZKaterina", 5)
 
         # nothing else in the db yet, so this is quite clear
         assert e1.getEid() == 1
@@ -42,37 +42,37 @@ class DbTests(utils.DbTestCase):
         e1Name = "Maudi (Maudlin)"
         e2Name = "Katerina (Maudlin)"
         e3Name = "Katharina (Maudlin)"
-        e1 = Entry.makeNew(e1Name)
-        e2 = Entry.makeNew(e2Name)
-        e3 = Entry.makeNew(e2Name)
+        e1 = db.entries.Entry.makeNew(e1Name)
+        e2 = db.entries.Entry.makeNew(e2Name)
+        e3 = db.entries.Entry.makeNew(e2Name)
         assert e3 is None
-        e3 = Entry.makeNew(e3Name)
+        e3 = db.entries.Entry.makeNew(e3Name)
 
         # test single entry
         e1eid = e1.getEid()
-        obj = find(e1Name)
+        obj = db.entries.find(e1Name)
         assert obj[0].getEid() == e1eid
 
         # test globbing: should find all, since all have this word
-        assert len(find("%Maudlin%")) == 3
-        assert len(find("Maudlin")) != 3 # but not here, ofc
+        assert len(db.entries.find("%Maudlin%")) == 3
+        assert len(db.entries.find("Maudlin")) != 3 # but not here, ofc
 
         # try changing
         newName = "Kathariana"
         e3.setName(newName)
-        obj = find(e2Name)
+        obj = db.entries.find(e2Name)
         assert len(obj) == 1
         assert obj[0].getName() == e2Name
-        obj = find(newName)
+        obj = db.entries.find(newName)
         assert len(obj) == 1
         assert obj[0].getName() == newName
 
         # test fetching by id
-        assert Entry(e1eid).getEid() == e1.getEid()
+        assert db.entries.Entry(e1eid).getEid() == e1.getEid()
 
         # test allEntries
-        assert len(allEntries()) == 3
-        for i in allEntries():
+        assert len(db.entries.allEntries()) == 3
+        for i in db.entries.allEntries():
             assert i == e1 or i == e2 or i == e3
 
         # fetching occurrences
@@ -86,7 +86,7 @@ class DbTests(utils.DbTestCase):
         assert l[0].getEntry() == e1
 
         # test delete
-        assert Entry(e1eid)
+        assert db.entries.Entry(e1eid)
 
         # occurrence that should be deleted
         e1occs = e1.getOccurrences()
@@ -97,7 +97,7 @@ class DbTests(utils.DbTestCase):
 
         e1.delete()
         with self.assertRaises(IndexError):
-            Entry(e1eid)
+            db.entries.Entry(e1eid)
         # the occurrence should be deleted too
         d.cursor.execute('SELECT oid FROM occurrences WHERE oid=?', (oids[0],))
         with self.assertRaises(IndexError):

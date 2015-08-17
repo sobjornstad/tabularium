@@ -156,7 +156,10 @@ def byNumAndSource(source, num):
     sid = source.getSid()
     q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
     d.cursor.execute(q, (sid, num))
-    return Volume(d.cursor.fetchall()[0][0])
+    try:
+        return Volume(d.cursor.fetchall()[0][0])
+    except IndexError:
+        return None
 
 def volExists(source, num):
     sid = source.getSid()

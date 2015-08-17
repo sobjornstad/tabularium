@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 import utils
 
 import db.database as d
 from db.entries import Entry
 from db.occurrences import *
+import db.occurrences
 from db.sources import Source
 from db.volumes import Volume
 from db.consts import sourceTypes
@@ -89,8 +91,153 @@ class OccTests(utils.DbTestCase):
 
         ### test none returns for invalid entries?
 
-    def testUnifiedFormat(self):
+    def testUOFSplitSourceRef(self):
         """
-        Tests should match the docstring documenting UOF in the
+        Tests should include all tests from the docstring documenting UOF in the
         parseUnifiedFormat() function.
         """
+        testDict = {
+# mentioned in docstring
+'CB1.56': ('CB', '1.56'),
+'CB 1.56': ('CB', '1.56'),
+'CB: 1.56': ('CB', '1.56'),
+'CB:1 . 56': ('CB', '1 . 56'),
+'RT 2378': ('RT', '2378'),
+'RT 1.2378': ('RT', '1.2378'),
+'The Invisible Man 58': ('The Invisible Man', '58'),
+'The 160th Book: 45': ('The 160th Book', '45'),
+'CB:{1.56, 5.78}': ('CB', '{1.56, 5.78}'),
+'CB {1.56, 5 .78,}': ('CB', '{1.56, 5 .78,}'),
+'CB{1.56}': ('CB', '{1.56}'),
+# other tests, trying my best to break the little sucker
+'The Invisible Man:234': ('The Invisible Man', '234'),
+'The Invisible Man: 235': ('The Invisible Man', '235'),
+'The Invisible Man: 1.235': ('The Invisible Man', '1.235'),
+'The Invisible Man: {1.235}': ('The Invisible Man', '{1.235}'),
+'The Invisible Man: 1.{235}': ('The Invisible Man', '1.{235}'),
+'The Invisible Man: 1.{235,334}': ('The Invisible Man', '1.{235,334}'),
+'The Invisible Man 588': ('The Invisible Man', '588'),
+'The Invisible Man {588, 264}': ('The Invisible Man', '{588, 264}'),
+'The Invisible Man 2.588': ('The Invisible Man', '2.588'),
+'The Invisible Man 2.{588}': ('The Invisible Man', '2.{588}'),
+'The Invisible Man 2.{220,588}': ('The Invisible Man', '2.{220,588}'),'The Invisible Man {2.220, 1.588}': ('The Invisible Man', '{2.220, 1.588}'),
+'CB:3.56': ('CB', '3.56'),
+'Chrono Book 5.{21,54,16}': ('Chrono Book', '5.{21,54,16}'),
+'CB 5.15': ('CB', '5.15'),
+'CB5.58': ('CB', '5.58'),
+'CB5.{58}': ('CB', '5.{58}'),
+'CB 5.{58}': ('CB', '5.{58}'),
+'CB5.{58, 79}': ('CB', '5.{58, 79}'),
+'CB 5.{58,79}': ('CB', '5.{58,79}'),
+'CB {5.58}': ('CB', '{5.58}'),
+'CB{5.58}': ('CB', '{5.58}'),
+'CB{5.58,6.17,}': ('CB', '{5.58,6.17,}'),
+'The 121st Valid String {237, 348}': ('The 121st Valid String', '{237, 348}'),
+'The 122nd Valid String {237}': ('The 122nd Valid String', '{237}'),
+'The 123rd Valid. String {5.23}': ('The 123rd Valid. String', '{5.23}'),
+'The 124th Valid: String: {5.23}': ('The 124th Valid: String', '{5.23}'),
+                    }
+
+        for i in testDict.keys():
+            assert db.occurrences._splitSourceRef(i) == testDict[i], \
+                    "testDict: %r\nreturned:%r\n\n" % (
+                    testDict[i], db.occurrences._splitSourceRef(i))
+
+    def testUOFParse(self):
+        cbSource = Source.makeNew('Chrono Book', (1,100), (5,80), 2, 'CB',
+                sourceTypes['diary'])
+        rtSource = Source.makeNew('Random Thoughts', (1,1), (1,20000), 2, 'RT',
+                sourceTypes['computerfile'])
+        bookSource = Source.makeNew('The Invisible Man', (1,1), (1,200), 3,
+                'TIM', sourceTypes['book'])
+        bookSource = Source.makeNew('The 160th Book', (1,1), (1,200), 3,
+                'T1B', sourceTypes['book'])
+        v1 = Volume.makeNew(cbSource, 1, "",
+                            date(2015, 6, 1), date(2015, 7, 6))
+        v2 = Volume.makeNew(cbSource, 2, "",
+                            date(2015, 7, 7), date(2015, 8, 10))
+
+        testDict = {'CB1.56': 'CB 1.56 (0) == ',
+                    'CB 1.56': 'CB 1.56 (0) == ',
+                    'CB: 1.56': 'CB 1.56 (0) == ',
+                    'Chrono Book 1.77-9': 'CB 1.77-79 (1) == ',
+                    'CB:1 . 56': 'CB 1.56 (0) == ',
+                    'RT 2378': 'RT 1.2378 (0) == ',
+                    'RT 1.2378': 'RT 1.2378 (0) == ',
+                    'The Invisible Man 58': 'TIM 1.58 (0) == ',
+                    'TIM 58': 'TIM 1.58 (0) == ',
+                    'The 160th Book: 45': 'T1B 1.45 (0) == ',
+                    'T1B: 45': 'T1B 1.45 (0) == ',
+                    'CB:{1.56, 2.78}': 'CB 1.56 (0) == CB 2.78 (0) == ',
+                    'CB {1.56,2 .78,}': 'CB 1.56 (0) == CB 2.78 (0) == ',
+                    'CB{1.56}': 'CB 1.56 (0) == ',
+                    'CB 1.56 | CB 2.78 | CB 2.56': 'CB 1.56 (0) == CB 2.78 (0) == CB 2.56 (0) == ',
+                    'CB {1.56, 2.78} | CB 2.56': 'CB 1.56 (0) == CB 2.78 (0) == CB 2.56 (0) == ',
+                    'RT 2378 | The Invisible Man {56, 78}': 'RT 1.2378 (0) == TIM 1.56 (0) == TIM 1.78 (0) == ',
+                    'The 160th Book: 45 | CB1.62': 'T1B 1.45 (0) == CB 1.62 (0) == ',
+                    'CB 2.45-56': 'CB 2.45-56 (1) == ',
+                    'CB 2.45–6': 'CB 2.45-46 (1) == ',
+                    'CB 2.45--56': 'CB 2.45-56 (1) == ',
+                    'RT 2348-89': 'RT 1.2348-2389 (1) == ',
+                    'RT 1279-89': 'RT 1.1279-1289 (1) == ',
+                    'RT: see Foobar Entry': 'RT 1.Foobar Entry (2) == ',
+                    'CB{1.26--7,2    . 18, 2.see    Other Entry} |The 160th Book    : 45': 'CB 1.26-27 (1) == CB 2.18 (0) == CB 2.Other Entry (2) == T1B 1.45 (0) == ',
+                   }
+
+        for i in testDict.keys():
+            #print "trying %r" % i
+            reflist = parseUnifiedFormat(i)
+            vals = ""
+            for j in reflist:
+                source, vol, ref, rtype = j
+                vals += "%s %s.%s (%i)" % (
+                        source.getAbbrev(), vol.getNum(), str(ref), rtype)
+                vals += " == "
+            assert vals == testDict[i], \
+                    "vals was: %r\ntestDict was: %r" % (vals, testDict[i])
+
+        # For each "raise" statement, hand function some string that fails.
+        # Some of these may not fail the way I anticipate owing to earlier
+        # checks, but all of these are clearly invalid and should trigger some
+        # check.
+        with self.assertRaises(InvalidUOFError):
+            parseUnifiedFormat('CB 2.{46, 48')
+        with self.assertRaises(InvalidUOFError):
+            parseUnifiedFormat('CB:htns.46')
+        with self.assertRaises(InvalidUOFError):
+            parseUnifiedFormat('CB: 2.46.58')
+        with self.assertRaises(InvalidUOFError):
+            parseUnifiedFormat('CB: 2.46.58')
+        with self.assertRaises(InvalidUOFError):
+            parseUnifiedFormat('CB: 2.46--qq')
+        with self.assertRaises(InvalidUOFError):
+            parseUnifiedFormat('CB 2.45-3')
+        with self.assertRaises(InvalidUOFError):
+            parseUnifiedFormat('CB 2.gc')
+        with self.assertRaises(NonexistentSourceError):
+            parseUnifiedFormat('Flibbertygibberty: 2.15')
+        with self.assertRaises(InvalidReferenceError):
+            parseUnifiedFormat('CB: 9000.15')
+        with self.assertRaises(InvalidReferenceError):
+            parseUnifiedFormat('CB: 1.800')
+        with self.assertRaises(NonexistentVolumeError):
+            parseUnifiedFormat('CB: 4.48')
+        with self.assertRaises(InvalidUOFError):
+            parseUnifiedFormat('CB: 4.{48{48}}')
+        with self.assertRaises(InvalidUOFError):
+            parseUnifiedFormat('Soren 23789 3.78')
+
+    def testColonlessValid(self):
+        validStrs  =  ('The Invisible Man 588',
+                       'The Invisible Man {588, 264}',
+                       'Chrono Book 5.{21,54,16}',
+                       'The 121st Valid String {237, 348}',
+                       'The 122st Valid String {237}'
+                      )
+        invalidStrs = ('The 120th Invalid String 234',
+                      )
+
+        for i in validStrs:
+            assert db.occurrences._isColonlessValid(i)
+        for i in invalidStrs:
+            assert not db.occurrences._isColonlessValid(i)

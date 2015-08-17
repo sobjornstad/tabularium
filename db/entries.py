@@ -2,7 +2,7 @@
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
 import db.database as d
-import occurrences
+import db.occurrences
 import re
 
 class DuplicateError(Exception):
@@ -82,7 +82,7 @@ class Entry(object):
         Call occurrences.fetchForEntry and return a list of all the occs of
         this entry.
         """
-        return occurrences.fetchForEntry(self)
+        return db.occurrences.fetchForEntry(self)
 
     def delete(self):
         d.cursor.execute('DELETE FROM occurrences WHERE eid=?', (self._eid,))

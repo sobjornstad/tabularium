@@ -184,6 +184,11 @@ def byName(name):
     d.cursor.execute(q, (name,))
     return Source(d.cursor.fetchall()[0][0])
 
+def byAbbrev(abbrev):
+    q = 'SELECT sid FROM sources WHERE abbrev = ?'
+    d.cursor.execute(q, (abbrev,))
+    return Source(d.cursor.fetchall()[0][0])
+
 def sourceExists(name):
     q = 'SELECT sid FROM sources WHERE name = ?'
     d.cursor.execute(q, (name,))
