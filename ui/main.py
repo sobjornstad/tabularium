@@ -2,7 +2,7 @@
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog
+from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox
 from forms.main import Ui_MainWindow
 import sqlite3
 import sys
@@ -10,12 +10,14 @@ import sys
 import config
 import db.database
 import db.entries
+import db.occurrences
 
 import ui.addentry
 import ui.addoccurrence
 import ui.editnotes
 import ui.sourcemanager
 import ui.volmanager
+import ui.utils
 
 class MainWindow(QMainWindow):
     ### Application lifecycle functions ###
@@ -187,6 +189,7 @@ class MainWindow(QMainWindow):
         sf.actionManage_sources.triggered.connect(self.onManageSources)
         sf.actionManage_volumes.triggered.connect(self.onManageVolumes)
         sf.actionNotes.triggered.connect(self.onViewNotes)
+        sf.actionDelete.triggered.connect(self.onDeleteEntry)
 
     def onInspect_FollowNearby(self):
         # NOTE: This can select other, longer, entries, as it %-pads. I'm not
@@ -208,11 +211,25 @@ class MainWindow(QMainWindow):
         #TODO: This doesn't preserve classification
         entry = self._fetchCurrentEntry()
         self.onAddEntry(entry.getName())
+    def onDeleteEntry(self):
+        # at some point, replace this with undo
+        row = self.form.entriesList.currentRow()
+        entry = self._fetchCurrentEntry()
+        eName = entry.getName()
+        occsAffected = len(db.occurrences.fetchForEntry(entry))
+        r = ui.utils.questionBox("Do you really want to delete the entry '%s' "
+                "and its %i occurrence%s?" % (eName, occsAffected,
+                "" if occsAffected == 1 else "s"), "Delete entry?")
+        if r == QMessageBox.Yes:
+            entry.delete()
+            self.form.entriesList.takeItem(row)
+
 
     def onAddOccurrence(self):
         # Anna-Christina's window
         ac = ui.addoccurrence.AddOccWindow(self, entry)
         ac.exec_()
+
 
     def onManageSources(self):
         ms = ui.sourcemanager.SourceManager(self)
