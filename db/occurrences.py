@@ -174,7 +174,6 @@ class Occurrence(object):
 
         return entries
 
-
 def fetchForEntry(entry):
     """
     Return a list of all Occurrences for a given Entry.
@@ -199,6 +198,29 @@ def parseRange(val):
 
     return (bottom, top)
 
+def makeOccurrencesFromString(s, entry):
+    """
+    Try to create occurrences from a UOF string.
+    
+    Arguments:
+        s - the UOF string to parse
+        entry - the entry to add the occurrences to
+
+    Return:
+        A list of Occurrence objects that were created.
+
+    Raises:
+        All exceptions raised by parseUnifiedFormat() are not caught by this
+        function and will be received by the caller so it can provide an
+        appropriate error message.
+    """
+    uofRets = parseUnifiedFormat(s)
+    occs = []
+    for i in uofRets:
+        source, vol, ref, refType = i
+        occs.append(Occurrence.makeNew(entry, vol, ref, refType))
+    return occs
+
 def parseUnifiedFormat(s):
     """
     Parse a string /s/ in Unified Occurrence Format (UOF).
@@ -216,6 +238,8 @@ def parseUnifiedFormat(s):
         NonexistentSourceError - If the part of the string specifying a source
             does not correspond to any source abbreviation or full name in the
             database.
+        NonexistentVolumeError - If the part of the string specifying a volume
+            does not correspond to an existing volume in the source given.
         InvalidReferenceError - If the volume or reference/page number provided
             in the string falls outside of the permitted volume/page validation
             parameters for this source type.
@@ -350,7 +374,7 @@ def parseUnifiedFormat(s):
             # redirect
             reftype = refTypes['redir']
             refnum = refnum.replace('see ', '').strip()
-        elif '--' in refnum or '–' in refnum or '-' in refnum:
+        elif '--' in refnum or u'–' in refnum or '-' in refnum:
             # range: normalize delimiter
             reftype = refTypes['range']
             if '--' in refnum:
@@ -381,7 +405,7 @@ def parseUnifiedFormat(s):
 
         referenceList.append((volume, refnum, reftype))
 
-    # Step 6: Fetch source object; raise an error if any references are illegal.
+    # Step 5: Fetch source object; raise an error if any references are illegal.
     for i in referenceList:
         if(not db.sources.abbrevUsed(source) and
            not db.sources.sourceExists(source)):
@@ -412,7 +436,7 @@ def parseUnifiedFormat(s):
         else:
             assert False, "unreachable code reached -- invalid refType"
 
-    # Step 7: Find Volume object and return the tuple.
+    # Step 6: Find Volume object and return the tuple.
     finalReferences = []
     for i in referenceList:
         volume = i[0]
@@ -428,7 +452,7 @@ def parseUnifiedFormat(s):
 def _splitSourceRef(s):
     """
     Component of the parseUnifiedFormat() routine. Given a working string with
-    no pipes but all other components, return a source and reference.
+    no pipes but all other components, return a source and reference part.
 
     Raises InvalidUOFError if something doesn't match the parser's assumptions
     (hopefully this means the given string is not in UOF).

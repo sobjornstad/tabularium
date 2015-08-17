@@ -226,6 +226,8 @@ class OccTests(utils.DbTestCase):
             parseUnifiedFormat('CB: 4.{48{48}}')
         with self.assertRaises(InvalidUOFError):
             parseUnifiedFormat('Soren 23789 3.78')
+        with self.assertRaises(InvalidUOFError):
+            parseUnifiedFormat('')
 
     def testColonlessValid(self):
         validStrs  =  ('The Invisible Man 588',

@@ -3,10 +3,23 @@
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QDialog
+
 import forms.newoccs
+import ui.utils
+
+import db.occurrences
 
 class AddOccWindow(QDialog):
     def __init__(self, parent, entry):
+        """
+        Arguments:
+            parent: The usual.
+            entry: The entry to add occurrences to.
+            isNew: Whether the entry was just created; if so, if we fail to add
+                at least one occurrence, we need to roll back by deleting that
+                entry, or we will be left with an orphaned entry.
+        """
+
         QDialog.__init__(self)
         self.form = forms.newoccs.Ui_Dialog()
         self.form.setupUi(self)
@@ -19,9 +32,25 @@ class AddOccWindow(QDialog):
         self.form.cancelButton.clicked.connect(self.reject)
 
     def accept(self):
-        # actually write the changes to the db!
+        toParse = unicode(self.form.valueBox.text())
+        try:
+            occs = db.occurrences.makeOccurrencesFromString(toParse, self.entry)
+        except db.occurrences.InvalidUOFError:
+            error = "The occurrence string is invalid – please check your " \
+                    "syntax and try again."
+        except db.occurrences.NonexistentSourceError as e:
+            error = "%s" % e
+        except db.occurrences.NonexistentVolumeError as e:
+            error = "%s" % e
+        except db.occurrences.InvalidReferenceError as e:
+            error = "%s" % e
+        else:
+            super(AddOccWindow, self).accept()
+            return
 
-        super(AddOccWindow, self).accept()
+        # if we're still here, there was an exception
+        ui.utils.errorBox(error, "UOF parsing error")
+        return
 
     def reject(self):
         if not self.entry.getOccurrences():
