@@ -62,6 +62,10 @@ class MainWindow(QMainWindow):
     def initDb(self):
         db.database.connect(config.DATABASE_FILENAME)
 
+    def closeEvent(self, event):
+        "Catch click of the X button, etc., and properly quit."
+        self.quit()
+
     def quit(self):
         db.database.close()
         sys.exit(0)
