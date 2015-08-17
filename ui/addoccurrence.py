@@ -15,9 +15,6 @@ class AddOccWindow(QDialog):
         Arguments:
             parent: The usual.
             entry: The entry to add occurrences to.
-            isNew: Whether the entry was just created; if so, if we fail to add
-                at least one occurrence, we need to roll back by deleting that
-                entry, or we will be left with an orphaned entry.
         """
 
         QDialog.__init__(self)
@@ -43,7 +40,7 @@ class AddOccWindow(QDialog):
         except db.occurrences.InvalidUOFError:
             error = u"The occurrence string is invalid – please check your " \
                     "syntax and try again."
-            raise
+            #raise
         except db.occurrences.NonexistentSourceError as e:
             error = "%s" % e
         except db.occurrences.NonexistentVolumeError as e:

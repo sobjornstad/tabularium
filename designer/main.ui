@@ -574,12 +574,12 @@
     <property name="title">
      <string>O&amp;ccurrence</string>
     </property>
-    <addaction name="actionNew"/>
+    <addaction name="actionAdd_occ"/>
     <addaction name="separator"/>
     <addaction name="actionChange_page"/>
     <addaction name="actionChange_volume"/>
-    <addaction name="actionDelete_2"/>
     <addaction name="actionMove_to_entry"/>
+    <addaction name="actionDelete_occ"/>
     <addaction name="separator"/>
     <addaction name="actionFollow_redirect"/>
    </widget>
@@ -755,14 +755,17 @@
     <string>Move to Entry...</string>
    </property>
   </action>
-  <action name="actionDelete_2">
+  <action name="actionDelete_occ">
    <property name="text">
     <string>Delete</string>
    </property>
   </action>
-  <action name="actionNew">
+  <action name="actionAdd_occ">
    <property name="text">
-    <string>New...</string>
+    <string>Add to entry...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O, A</string>
    </property>
   </action>
   <action name="actionFollow_redirect">

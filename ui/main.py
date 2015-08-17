@@ -3,6 +3,7 @@
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox
+from PyQt4.QtCore import QObject, QEvent
 from forms.main import Ui_MainWindow
 import sqlite3
 import sys
@@ -19,14 +20,42 @@ import ui.sourcemanager
 import ui.volmanager
 import ui.utils
 
+class MwEventFilter(QObject):
+    """
+    In order to keep items in menus properly enabled and disabled based on the
+    selection, we use a series of methods connected to the aboutToShow()
+    methods of menus. However, this causes keyboard shortcuts to not get
+    correctly enabled or disabled when the state changes until you open the
+    menu. To rectify this, we install this event filter, which checks the state
+    whenever you press a modifier key that begins any shortcut. This doesn't
+    appear to cause any noticeable performance degradation.
+    """
+
+    def __init__(self):
+        self.mw = None
+        self.actOnKeys = (16777251, 16777249, 16777248) # ctrl, alt, shift
+        super(MwEventFilter, self).__init__()
+
+    def setupFilter(self, mw):
+        self.mw = mw
+
+    def eventFilter(self, receiver, event):
+       if event.type() == 51:
+           #print event.key()
+           if event.key() in self.actOnKeys and self.mw is not None:
+               self.mw.checkAllMenus()
+       return super(MwEventFilter,self).eventFilter(receiver, event)
+
 class MainWindow(QMainWindow):
     ### Application lifecycle functions ###
-    def __init__(self):
+    def __init__(self, qfilter):
         # set up form and window
         QMainWindow.__init__(self)
         self.form = Ui_MainWindow()
         self.form.setupUi(self)
         sf = self.form
+        self.qfilter = qfilter
+        self.qfilter.setupFilter(self)
 
         # connect buttons and signals
         sf.searchGoButton.clicked.connect(self.onSearch)
@@ -37,6 +66,7 @@ class MainWindow(QMainWindow):
         # connect menu check functions (for enable/disable)
         sf.menuEntry.aboutToShow.connect(self.checkEntryMenu)
         sf.menuInspect.aboutToShow.connect(self.checkInspectMenu)
+        sf.menuOccurrence.aboutToShow.connect(self.checkOccurrenceMenu)
 
         # connect menu actions
         self._setupMenus()
@@ -190,6 +220,7 @@ class MainWindow(QMainWindow):
         sf.actionManage_volumes.triggered.connect(self.onManageVolumes)
         sf.actionNotes.triggered.connect(self.onViewNotes)
         sf.actionDelete.triggered.connect(self.onDeleteEntry)
+        sf.actionAdd_occ.triggered.connect(self.onAddOccurrence)
 
     def onInspect_FollowNearby(self):
         # NOTE: This can select other, longer, entries, as it %-pads. I'm not
@@ -227,9 +258,24 @@ class MainWindow(QMainWindow):
 
     def onAddOccurrence(self):
         # Anna-Christina's window
-        ac = ui.addoccurrence.AddOccWindow(self, entry)
+        ac = ui.addoccurrence.AddOccWindow(self, self._fetchCurrentEntry())
         ac.exec_()
+    def onDeleteOccurrence(self):
+        #TODO pending freezing of the format for occurrence display
+        assert False, "this function is not yet implemented"
+        return
 
+        # at some point, replace this with undo
+        row = self.form.occurrencesList.currentRow()
+
+        eName = entry.getName()
+        occsAffected = len(db.occurrences.fetchForEntry(entry))
+        r = ui.utils.questionBox("Do you really want to delete the entry '%s' "
+                "and its %i occurrence%s?" % (eName, occsAffected,
+                "" if occsAffected == 1 else "s"), "Delete entry?")
+        if r == QMessageBox.Yes:
+            entry.delete()
+            self.form.entriesList.takeItem(row)
 
     def onManageSources(self):
         ms = ui.sourcemanager.SourceManager(self)
@@ -242,6 +288,11 @@ class MainWindow(QMainWindow):
         nb.exec_()
 
     ### Menu check functions ###
+    def checkAllMenus(self):
+        # called from the event filter to check keyboard shortcuts
+        self.checkEntryMenu()
+        self.checkInspectMenu()
+        self.checkOccurrenceMenu()
     def checkEntryMenu(self):
         sf = self.form
         ifCondition = sf.entriesList.currentRow() != -1
@@ -254,6 +305,17 @@ class MainWindow(QMainWindow):
         sf = self.form
         ifCondition = sf.nearbyList.currentRow() != -1
         sf.actionFollow_Nearby_Entry.setEnabled(ifCondition)
+    def checkOccurrenceMenu(self):
+        sf = self.form
+        ifNoOccurrence = sf.occurrencesList.currentRow() != -1
+        sf.actionChange_page.setEnabled(ifNoOccurrence)
+        sf.actionChange_volume.setEnabled(ifNoOccurrence)
+        sf.actionDelete_occ.setEnabled(ifNoOccurrence)
+        sf.actionMove_to_entry.setEnabled(ifNoOccurrence)
+        #TODO: next should actually be enabled only if selection is a redirect
+        sf.actionFollow_redirect.setEnabled(ifNoOccurrence)
+        ifNoEntry = sf.entriesList.currentRow() != -1
+        sf.actionAdd_occ.setEnabled(ifNoEntry)
 
     ### Other action functions ###
     def onReturnInSearch(self):
@@ -279,6 +341,12 @@ class MainWindow(QMainWindow):
             return None
         else:
             return db.entries.find(search)[0]
+    def _fetchCurrentOccurrence(self):
+        """
+        As in _fetchCurrentEntry, for the currently selected occurrence.
+        """
+        try:
+            search = unicode(self.form.occurrencesList.currentItem().text())
 
     ### Reset functions: since more or less needs to be reset for each, do a
     ### sort of cascade.
@@ -299,6 +367,8 @@ class MainWindow(QMainWindow):
 
 def start():
     app = QApplication(sys.argv)
-    mw = MainWindow()
+    qfilter = MwEventFilter()
+    app.installEventFilter(qfilter)
+    mw = MainWindow(qfilter)
     mw.show()
     app.exec_()
