@@ -63,6 +63,7 @@ class MainWindow(QMainWindow):
         # connect buttons and signals
         sf.searchGoButton.clicked.connect(self.onSearch)
         sf.searchBox.returnPressed.connect(self.onReturnInSearch)
+        sf.searchAddButton.clicked.connect(self.onAddFromSearch)
         sf.entriesList.itemSelectionChanged.connect(self.fillOccurrences)
         sf.occurrencesList.itemSelectionChanged.connect(self.fillInspect)
 
@@ -354,8 +355,10 @@ class MainWindow(QMainWindow):
 
         if doIncremental:
             self.form.searchBox.textChanged.connect(self.onSearch)
-            self.onSearch() # immediately update based on current content
+            #self.form.searchAddButton.setDefault(True)
+            #self.onSearch() # immediately update based on current content
         else:
+            #self.form.searchAddButton.setDefault(False)
             try:
                 self.form.searchBox.textChanged.disconnect()
             except TypeError: # not connected in the first place
@@ -550,13 +553,25 @@ class MainWindow(QMainWindow):
 
     ### Other action functions ###
     def onReturnInSearch(self):
+        self.onSearch()
+        numResults = self.form.entriesList.count()
+
         if self.searchOptions['incremental']:
-            self._selectFirstAndFocus(self.form.entriesList)
+            if numResults > 0:
+                self._selectFirstAndFocus(self.form.entriesList)
+            else:
+                self.onAddFromSearch()
         else:
-            self.onSearch()
+            if numResults == 0:
+                self.form.searchAddButton.setFocus()
+
     def onSearch(self):
         self.search = unicode(self.form.searchBox.text())
         self.fillEntries()
+
+    def onAddFromSearch(self):
+        entryName = unicode(self.form.searchBox.text())
+        self.onAddEntry(entryName)
 
 
     ### UTILITIES ###
