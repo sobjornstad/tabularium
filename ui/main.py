@@ -203,17 +203,28 @@ class MainWindow(QMainWindow):
 
     ### Checkbox / options handling ###
     def onChangeInspectionOptions(self):
-        val = not self.form.showNearbyCheck.isChecked()
-        self.form.nearbyList.setHidden(val)
-        self.form.nearbyLabel.setHidden(val)
+        doShowNearby = self.form.showNearbyCheck.isChecked()
+        self.form.nearbyList.setHidden(not doShowNearby)
+        self.form.nearbyLabel.setHidden(not doShowNearby)
 
-        val = self.form.showInspectCheck.isChecked()
-        self.form.inspectBox.setHidden(not val)
-        self.form.inspectLabel.setHidden(not val)
+        doShowInspect = self.form.showInspectCheck.isChecked()
+        self.form.inspectBox.setHidden(not doShowInspect)
+        self.form.inspectLabel.setHidden(not doShowInspect)
         sf = self.form
         for i in (sf.showSourceNameCheck, sf.showAddedCheck,
                   sf.showEnteredCheck, sf.showDiaryCheck):
-            i.setEnabled(val)
+            i.setEnabled(doShowInspect)
+
+        #TODO: when going to a single display, save the state of the splitter
+        if doShowInspect and doShowNearby:
+            self.form.inspectNearbySplitter.setSizes([0, 0])
+        elif doShowInspect and not doShowNearby:
+            self.form.inspectNearbySplitter.setSizes([100000, 0])
+        elif not doShowInspect and doShowNearby:
+            self.form.inspectNearbySplitter.setSizes([0, 100000])
+        elif not doShowInspect and not doShowNearby:
+            pass
+
 
         self.inspectOptions['sn'] = self.form.showSourceNameCheck.isChecked()
         self.inspectOptions['ed'] = self.form.showEnteredCheck.isChecked()
