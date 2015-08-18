@@ -915,6 +915,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Delete</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+O, D</string>
+   </property>
   </action>
   <action name="actionAdd_occ">
    <property name="text">

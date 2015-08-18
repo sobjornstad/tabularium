@@ -240,7 +240,8 @@ class MainWindow(QMainWindow):
             return
 
         entry = self._fetchCurrentEntry()
-        self.currentOccs = entry.getOccurrences() # hold onto objects for reference
+        # hold onto objects for reference by _fetchCurrentOccurrence
+        self.currentOccs = entry.getOccurrences()
         for i in self.currentOccs:
             self.form.occurrencesList.addItem(str(i))
 
@@ -253,10 +254,9 @@ class MainWindow(QMainWindow):
 
         # fetch inspection info
         # the actual occurrence
-        row = self.form.occurrencesList.currentRow()
-        if row == -1: # no occurrence selected
+        occ = self._fetchCurrentOccurrence()
+        if occ is None:
             return
-        occ = self.currentOccs[row]
         vol = occ.getVolume()
         source = vol.getSource()
         # the added and edited dates
@@ -455,6 +455,7 @@ class MainWindow(QMainWindow):
         sf.actionNotes.triggered.connect(self.onViewNotes)
         sf.actionDelete.triggered.connect(self.onDeleteEntry)
         sf.actionAdd_occ.triggered.connect(self.onAddOccurrence)
+        sf.actionDelete_occ.triggered.connect(self.onDeleteOccurrence)
 
     def onInspect_FollowNearby(self):
         # NOTE: This can select other, longer, entries, as it %-pads. I'm not
@@ -477,11 +478,11 @@ class MainWindow(QMainWindow):
         entry = self._fetchCurrentEntry()
         self.onAddEntry(entry.getName())
     def onDeleteEntry(self):
-        # at some point, replace this with undo
         row = self.form.entriesList.currentRow()
         entry = self._fetchCurrentEntry()
         eName = entry.getName()
         occsAffected = len(db.occurrences.fetchForEntry(entry))
+        # at some point, replace this with undo
         r = ui.utils.questionBox("Do you really want to delete the entry '%s' "
                 "and its %i occurrence%s?" % (eName, occsAffected,
                 "" if occsAffected == 1 else "s"), "Delete entry?")
@@ -495,21 +496,14 @@ class MainWindow(QMainWindow):
         ac = ui.addoccurrence.AddOccWindow(self, self._fetchCurrentEntry())
         ac.exec_()
     def onDeleteOccurrence(self):
-        #TODO pending freezing of the format for occurrence display
-        assert False, "this function is not yet implemented"
-        return
-
-        # at some point, replace this with undo
         row = self.form.occurrencesList.currentRow()
-
-        eName = entry.getName()
-        occsAffected = len(db.occurrences.fetchForEntry(entry))
-        r = ui.utils.questionBox("Do you really want to delete the entry '%s' "
-                "and its %i occurrence%s?" % (eName, occsAffected,
-                "" if occsAffected == 1 else "s"), "Delete entry?")
+        occ = self._fetchCurrentOccurrence()
+        r = ui.utils.questionBox("Do you really want to delete the "
+                                 "occurrence '%s'?" % str(occ),
+                                 "Delete entry?")
         if r == QMessageBox.Yes:
-            entry.delete()
-            self.form.entriesList.takeItem(row)
+            occ.delete()
+            self.form.occurrencesList.takeItem(row)
 
     def onManageSources(self):
         ms = ui.sourcemanager.SourceManager(self)
@@ -589,10 +583,13 @@ class MainWindow(QMainWindow):
             return db.entries.find(search)[0]
     def _fetchCurrentOccurrence(self):
         """
-        As in _fetchCurrentEntry, for the currently selected occurrence.
+        Get an Occurrence object for the currently selected entry. Return None if
+        nothing is selected.
         """
-        #try:
-            #search = unicode(self.form.occurrencesList.currentItem().text())
+        row = self.form.occurrencesList.currentRow()
+        if row == -1: # no occurrence selected
+            return None
+        return self.currentOccs[row]
 
     ### Reset functions: since more or less needs to be reset for each, do a
     ### sort of cascade.
