@@ -201,3 +201,29 @@ def findNextOpenVol(source):
     except (IndexError, TypeError):
         # unsupported operand types: NoneType and int
         return 1
+
+def findDateInDiary(date):
+    """
+    Given a Date, return the diary Volume that was open during that time, or
+    None if there is no diary volume or volume open during that date.
+    """
+    #TODO: Make sure we can't have several diary volumes open at the same time
+
+    diary = db.sources.getDiary()
+    if diary is None:
+        return None
+
+    q = '''SELECT vid FROM volumes
+           WHERE sid=(SELECT sid FROM sources WHERE stype=?)
+           AND dopened <= ?
+           AND dclosed >= ?'''
+    date = dateSerializer(date)
+    vals = (db.consts.sourceTypes['diary'], date, date)
+    d.cursor.execute(q, vals)
+    fetch = d.cursor.fetchall()
+    if len(fetch) > 1:
+        assert False, "Multiple diary volumes open at the same time!"
+    elif len(fetch) == 1:
+        return Volume(fetch[0][0])
+    else:
+        return None

@@ -4,6 +4,7 @@
 import db.database as d
 import db.consts
 import db.volumes
+from db.utils import dateSerializer
 import json
 
 class DuplicateError(Exception):
@@ -205,3 +206,18 @@ def allSources(includeSingleVolSources=True):
     if not includeSingleVolSources:
         sources = [source for source in sources if source.getVolVal() != (1,1)]
     return sources
+
+def getDiary():
+    """
+    Find the diary source, if it exists.
+
+    Return:
+        The Source that is the diary, or None if no source has the diary type.
+    """
+    d.cursor.execute('SELECT sid FROM sources WHERE stype=?',
+                     (db.consts.sourceTypes['diary'],))
+    fetch = d.cursor.fetchall()
+    if fetch:
+        return Source(fetch[0][0])
+    else:
+        return None

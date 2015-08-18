@@ -12,6 +12,7 @@ import config
 import db.database
 import db.entries
 import db.occurrences
+import db.sources
 
 import ui.addentry
 import ui.addoccurrence
@@ -57,6 +58,11 @@ class MainWindow(QMainWindow):
         self.qfilter = qfilter
         self.qfilter.setupFilter(self)
 
+        #with open('settings.txt') as f:
+            #geom = f.read()
+        ##print geom
+        #self.form.mainSplitter.restoreState(geom)
+
         # connect buttons and signals
         sf.searchGoButton.clicked.connect(self.onSearch)
         sf.searchBox.returnPressed.connect(self.onReturnInSearch)
@@ -84,12 +90,13 @@ class MainWindow(QMainWindow):
 
         # set up inspection options
         self.inspectOptions = {}
-        items = [sf.showAddedCheck, sf.showEnteredCheck,
-                 sf.showNearbyCheck, sf.showDiaryCheck]
+        items = (sf.showInspectCheck, sf.showSourceNameCheck, sf.showAddedCheck,
+                 sf.showEnteredCheck, sf.showNearbyCheck, sf.showDiaryCheck)
         for i in items:
             i.setChecked(True)
             i.toggled.connect(self.onChangeInspectionOptions)
         self.onChangeInspectionOptions()
+
 
     def initDb(self):
         db.database.connect(config.DATABASE_FILENAME)
@@ -99,6 +106,9 @@ class MainWindow(QMainWindow):
         self.quit()
 
     def quit(self):
+        #geom = self.form.mainSplitter.saveState()
+        #with open('settings.txt', 'w') as f:
+            #f.write(geom)
         db.database.close()
         sys.exit(0)
 
@@ -146,23 +156,35 @@ class MainWindow(QMainWindow):
         # fetch inspection info
         # the actual occurrence
         row = self.form.occurrencesList.currentRow()
+        if row == -1: # no occurrence selected
+            return
         occ = self.currentOccs[row]
         vol = occ.getVolume()
-        occStr = "<b>%s%s.%s</b><br>" % (
-                vol.getSource().getAbbrev(), vol.getNum(), occ.getRef()[0])
+        source = vol.getSource()
         # the added and edited dates
         daStr = "Entered %s<br>" % occ.getAddedDate()
         deStr = "Modified %s<br>" % occ.getEditedDate()
         # during diary time...
-        # we cannot yet do this, as events are unimplemented. that's the idea.
+        diaryVolume = db.volumes.findDateInDiary(occ.getAddedDate())
 
+        # format
         s = "<center>"
-        s += occStr # name of occurrence
-        s += daStr # added date
-        s += deStr # edited date
+        s += "<b>%s</b><br>" % occ # name of occurrence
+        if self.inspectOptions['sn']:
+            s += "(<i>%s</i>)<br>" % (source.getName())
+        if self.inspectOptions['ad']:
+            s += daStr # added date
+        if self.inspectOptions['ed']:
+            s += deStr # edited date
+        if self.inspectOptions['diary']:
+            if diaryVolume is not None:
+                s += "<br>"
+                s += "Entered during<br>"
+                s += "diary volume %i" % (diaryVolume.getNum())
+            else:
+                s += "(no diary volume open<br>"
+                s += "when entered)"
         s += ""
-        s += "" # during diary time
-        s += "" # dates of diary
         s += "</center>"
         self.form.inspectBox.setHtml(s)
 
@@ -185,9 +207,19 @@ class MainWindow(QMainWindow):
         self.form.nearbyList.setHidden(val)
         self.form.nearbyLabel.setHidden(val)
 
+        val = self.form.showInspectCheck.isChecked()
+        self.form.inspectBox.setHidden(not val)
+        self.form.inspectLabel.setHidden(not val)
+        sf = self.form
+        for i in (sf.showSourceNameCheck, sf.showAddedCheck,
+                  sf.showEnteredCheck, sf.showDiaryCheck):
+            i.setEnabled(val)
+
+        self.inspectOptions['sn'] = self.form.showSourceNameCheck.isChecked()
         self.inspectOptions['ed'] = self.form.showEnteredCheck.isChecked()
         self.inspectOptions['ad'] = self.form.showAddedCheck.isChecked()
         self.inspectOptions['diary'] = self.form.showDiaryCheck.isChecked()
+        self.fillInspect()
 
     def onChangeSearchOptions(self):
         doRegex = self.form.regexCheckbox.isChecked()

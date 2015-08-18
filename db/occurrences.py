@@ -8,6 +8,7 @@ import db.database as d
 import db.entries
 import db.volumes
 import db.sources
+from db.utils import dateDeserializer
 
 class InvalidUOFError(Exception):
     def __init__(self, text="Invalid UOF."):
@@ -59,6 +60,8 @@ class Occurrence(object):
                 d.cursor.fetchall()[0]
         self._entry = db.entries.Entry(eid)
         self._volume = db.volumes.Volume(vid)
+        self._da = dateDeserializer(self._da)
+        self._de = dateDeserializer(self._de)
         self._oid = oid
 
     @classmethod
@@ -86,13 +89,20 @@ class Occurrence(object):
 
     def __str__(self):
         if self._type == refTypes['num'] or self._type == refTypes['range']:
-            return "%s %s.%s" % (self._volume.getSource().getAbbrev(),
-                                 self._volume.getNum(),
-                                 self._ref)
+            source = self._volume.getSource()
+            if source.isSingleVol():
+                return "%s %s" % (source.getAbbrev(), self._ref)
+            else:
+                return "%s %s.%s" % (source.getAbbrev(),
+                                     self._volume.getNum(),
+                                     self._ref)
         elif self._type == refTypes['redir']:
             source = self._volume.getSource()
             vol = self._volume.getNum()
-            return '%s %s: see "%s"' % (source.getAbbrev(), vol, self._ref)
+            if source.isSingleVol():
+                return "%s: see %s" % (source.getAbbrev, self._ref)
+            else:
+                return '%s %s: see "%s"' % (source.getAbbrev(), vol, self._ref)
         else:
             assert False, "invalid reftype in occurrence"
 

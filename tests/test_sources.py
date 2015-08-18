@@ -41,12 +41,17 @@ class SourceTests(utils.DbTestCase):
 
 
 
-    def testFetchAll(self):
+    def testFetches(self):
         s1 = Source.makeNew('Chronic Book', (10,100), (44,80), 25, 'CD',
                 sourceTypes['other'])
         s2 = Source.makeNew('Turticular Book', (1,20), (1,240), 3, 'TB',
                 sourceTypes['notebooktype'])
         assert allSources() == [s1, s2]
+
+        assert getDiary() is None
+        s3 = Source.makeNew('Chrono Book', (1,100), (5,80), 25, 'CB',
+                sourceTypes['diary'])
+        assert getDiary() == s3
 
     def testInvalidData(self):
         s1 = Source.makeNew('Chronic Book', (10,100), (44,80), 25, 'CD',
