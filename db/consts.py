@@ -36,3 +36,5 @@ sourceTypesFriendlyReversed = dict(
 
 sourceTypesKeys = (
     "Other", "Book", "Computer file", "Diary", "Notebook type")
+
+noSourceLimitText = '(all sources)'

@@ -9,6 +9,7 @@ import sqlite3
 import sys
 
 import config
+import db.consts
 import db.database
 import db.entries
 import db.occurrences
@@ -17,6 +18,7 @@ import db.sources
 import ui.addentry
 import ui.addoccurrence
 import ui.editnotes
+import ui.settings
 import ui.sourcemanager
 import ui.volmanager
 import ui.utils
@@ -58,11 +60,6 @@ class MainWindow(QMainWindow):
         self.qfilter = qfilter
         self.qfilter.setupFilter(self)
 
-        #with open('settings.txt') as f:
-            #geom = f.read()
-        ##print geom
-        #self.form.mainSplitter.restoreState(geom)
-
         # connect buttons and signals
         sf.searchGoButton.clicked.connect(self.onSearch)
         sf.searchBox.returnPressed.connect(self.onReturnInSearch)
@@ -93,10 +90,24 @@ class MainWindow(QMainWindow):
         items = (sf.showInspectCheck, sf.showSourceNameCheck, sf.showAddedCheck,
                  sf.showEnteredCheck, sf.showNearbyCheck, sf.showDiaryCheck)
         for i in items:
-            i.setChecked(True)
             i.toggled.connect(self.onChangeInspectionOptions)
         self.onChangeInspectionOptions()
 
+        # set up limits
+        self.updateSourceCombo()
+        sf.enteredCheck.toggled.connect(self.onEnteredToggled)
+        sf.modifiedCheck.toggled.connect(self.onModifiedToggled)
+        sf.sourceCheck.toggled.connect(self.onSourceToggled)
+        sf.occurrencesSourceCombo.activated.connect(self.onSourceToggled)
+        sf.volumeCheck.toggled.connect(self.onVolumeToggled)
+        self.onEnteredToggled()
+        self.onModifiedToggled()
+        self.onSourceToggled()
+        self.onVolumeToggled()
+
+        # set up configuration fetch options, and restore options
+        self.sh = ui.settings.SettingsHandler(self)
+        self.restoreWindowState()
 
     def initDb(self):
         db.database.connect(config.DATABASE_FILENAME)
@@ -106,11 +117,97 @@ class MainWindow(QMainWindow):
         self.quit()
 
     def quit(self):
-        #geom = self.form.mainSplitter.saveState()
-        #with open('settings.txt', 'w') as f:
-            #f.write(geom)
+        self.saveWindowState()
         db.database.close()
         sys.exit(0)
+
+    def saveWindowState(self):
+        sf = self.form
+        sh = self.sh
+        sh.put('mainSplitterState', sf.mainSplitter.saveState())
+        sh.put('secondarySplitterState', sf.inspectNearbySplitter.saveState())
+        sh.put('incrementalCheck', sf.incrementalCheckbox.isChecked())
+        sh.put('regexCheck', sf.regexCheckbox.isChecked())
+        sh.put('showInspectCheck', sf.showInspectCheck.isChecked())
+        sh.put('showSourceNameCheck', sf.showSourceNameCheck.isChecked())
+        sh.put('showAddedCheck', sf.showAddedCheck.isChecked())
+        sh.put('showEnteredCheck', sf.showEnteredCheck.isChecked())
+        sh.put('showDiaryCheck', sf.showDiaryCheck.isChecked())
+        sh.put('showNearbyCheck', sf.showNearbyCheck.isChecked())
+        sh.put('entriesNamesCheck', sf.entriesNamesCheck.isChecked())
+        sh.put('entriesPlacesCheck', sf.entriesPlacesCheck.isChecked())
+        sh.put('entriesQuotationsCheck', sf.entriesQuotationsCheck.isChecked())
+        sh.put('entriesTitlesCheck', sf.entriesTitlesCheck.isChecked())
+        sh.put('entriesCommonsCheck', sf.entriesCommonsCheck.isChecked())
+        sh.put('entriesUnclassifiedCheck', sf.entriesUnclassifiedCheck.isChecked())
+        sh.put('enteredCheck', sf.enteredCheck.isChecked())
+        sh.put('modifiedCheck', sf.modifiedCheck.isChecked())
+        sh.put('sourceCheck', sf.sourceCheck.isChecked())
+        sh.put('volumeCheck', sf.volumeCheck.isChecked())
+
+        sh.put('sourceCombo', sf.occurrencesSourceCombo.currentText())
+        sh.put('minVolume', sf.occurrencesVolumeSpin1.value())
+        sh.put('maxVolume', sf.occurrencesVolumeSpin2.value())
+        sh.put('minDateAdded', sf.occurrencesAddedDateSpin1.date())
+        sh.put('maxDateAdded', sf.occurrencesAddedDateSpin2.date())
+        sh.put('minDateEdited', sf.occurrencesEditedDateSpin1.date())
+        sh.put('maxDateEdited', sf.occurrencesEditedDateSpin2.date())
+        sh.sync()
+
+    def restoreWindowState(self):
+        sf = self.form
+        sh = self.sh
+        def wrapper(func, key):
+            """
+            Set state to saved value if there is one.
+            Arguments:
+                func - A function to run with one argument, the value of /key/.
+                    func() will not be run at all if there is no saved value.
+                key - The key to look for in the configuration and pass as the
+                    function argument.
+            Return:
+                func()'s return value if executed, else 'NotExecuted'.
+            """
+            val = sh.get(key)
+            if val is not None:
+                return func(val)
+            else:
+                return 'NotExecuted'
+
+        # splitters
+        wrapper(sf.mainSplitter.restoreState, 'mainSplitterState')
+        wrapper(sf.inspectNearbySplitter.restoreState, 'secondarySplitterState')
+
+        # checkboxes
+        wrapper(sf.incrementalCheckbox.setChecked, 'incrementalCheck')
+        wrapper(sf.regexCheckbox.setChecked, 'regexCheck')
+        wrapper(sf.showInspectCheck.setChecked, 'showInspectCheck')
+        wrapper(sf.showSourceNameCheck.setChecked, 'showSourceNameCheck')
+        wrapper(sf.showAddedCheck.setChecked, 'showAddedCheck')
+        wrapper(sf.showEnteredCheck.setChecked, 'showEnteredCheck')
+        wrapper(sf.showDiaryCheck.setChecked, 'showDiaryCheck')
+        wrapper(sf.showNearbyCheck.setChecked, 'showNearbyCheck')
+        wrapper(sf.entriesNamesCheck.setChecked, 'entriesNamesCheck')
+        wrapper(sf.entriesPlacesCheck.setChecked, 'entriesPlacesCheck')
+        wrapper(sf.entriesQuotationsCheck.setChecked, 'entriesQuotationsCheck')
+        wrapper(sf.entriesTitlesCheck.setChecked, 'entriesTitlesCheck')
+        wrapper(sf.entriesCommonsCheck.setChecked, 'entriesCommonsCheck')
+        wrapper(sf.entriesUnclassifiedCheck.setChecked, 'entriesUnclassifiedCheck')
+        wrapper(sf.enteredCheck.setChecked, 'enteredCheck')
+        wrapper(sf.modifiedCheck.setChecked, 'modifiedCheck')
+        wrapper(sf.sourceCheck.setChecked, 'sourceCheck')
+        wrapper(sf.volumeCheck.setChecked, 'volumeCheck')
+        def setupSourceCombo(value):
+            i = sf.occurrencesSourceCombo.findText(value)
+            sf.occurrencesSourceCombo.setCurrentIndex(i)
+            self.onSourceToggled() # for whatever reason above doesn't emit
+        wrapper(setupSourceCombo, 'sourceCombo')
+        wrapper(sf.occurrencesVolumeSpin1.setValue, 'minVolume')
+        wrapper(sf.occurrencesVolumeSpin2.setValue, 'maxVolume')
+        wrapper(sf.occurrencesAddedDateSpin1.setDate, 'minDateAdded')
+        wrapper(sf.occurrencesAddedDateSpin2.setDate, 'maxDateAdded')
+        wrapper(sf.occurrencesEditedDateSpin1.setDate, 'minDateEdited')
+        wrapper(sf.occurrencesEditedDateSpin2.setDate, 'maxDateEdited')
 
 
     ### Setting, resetting, and filling the data windows ###
@@ -203,6 +300,8 @@ class MainWindow(QMainWindow):
 
     ### Checkbox / options handling ###
     def onChangeInspectionOptions(self):
+        sf = self.form
+
         doShowNearby = self.form.showNearbyCheck.isChecked()
         self.form.nearbyList.setHidden(not doShowNearby)
         self.form.nearbyLabel.setHidden(not doShowNearby)
@@ -210,21 +309,35 @@ class MainWindow(QMainWindow):
         doShowInspect = self.form.showInspectCheck.isChecked()
         self.form.inspectBox.setHidden(not doShowInspect)
         self.form.inspectLabel.setHidden(not doShowInspect)
-        sf = self.form
         for i in (sf.showSourceNameCheck, sf.showAddedCheck,
                   sf.showEnteredCheck, sf.showDiaryCheck):
             i.setEnabled(doShowInspect)
 
-        #TODO: when going to a single display, save the state of the splitter
+        # When hiding/showing inspect/nearby windows, expand the other to fill
+        # the whole screen. This is a bit messy because we have to save the
+        # current state (i.e., the size of the splits) if and only if we are
+        # moving from a state of both showing to a state of one showing, and we
+        # don't have information about which state we were in before.
+        try:
+            self.nearbySplitterState
+        except AttributeError:
+            self.nearbySplitterState = None
+            self.noInspectsDisplayed = False
         if doShowInspect and doShowNearby:
-            self.form.inspectNearbySplitter.setSizes([0, 0])
+            if self.nearbySplitterState is not None:
+                sf.inspectNearbySplitter.restoreState(self.nearbySplitterState)
         elif doShowInspect and not doShowNearby:
-            self.form.inspectNearbySplitter.setSizes([100000, 0])
+            if not self.noInspectsDisplayed:
+                self.nearbySplitterState = sf.inspectNearbySplitter.saveState()
+            self.noInspectsDisplayed = False
+            sf.inspectNearbySplitter.setSizes([100000, 0])
         elif not doShowInspect and doShowNearby:
+            if not self.noInspectsDisplayed:
+                self.nearbySplitterState = sf.inspectNearbySplitter.saveState()
+            self.noInspectsDisplayed = False
             self.form.inspectNearbySplitter.setSizes([0, 100000])
         elif not doShowInspect and not doShowNearby:
-            pass
-
+            self.noInspectsDisplayed = True
 
         self.inspectOptions['sn'] = self.form.showSourceNameCheck.isChecked()
         self.inspectOptions['ed'] = self.form.showEnteredCheck.isChecked()
@@ -243,7 +356,85 @@ class MainWindow(QMainWindow):
             self.form.searchBox.textChanged.connect(self.onSearch)
             self.onSearch() # immediately update based on current content
         else:
-            self.form.searchBox.textChanged.disconnect()
+            try:
+                self.form.searchBox.textChanged.disconnect()
+            except TypeError: # not connected in the first place
+                pass
+
+    def onEnteredToggled(self):
+        state = self.form.enteredCheck.isChecked()
+        self.form.occurrencesAddedDateSpin1.setEnabled(state)
+        self.form.occurrencesAddedDateSpin2.setEnabled(state)
+        mind, maxd = db.utils.minMaxDatesOccurrenceEnteredModified()
+        self.form.occurrencesAddedDateSpin1.setMinimumDate(mind)
+        self.form.occurrencesAddedDateSpin1.setMaximumDate(maxd)
+        self.form.occurrencesAddedDateSpin2.setMinimumDate(mind)
+        self.form.occurrencesAddedDateSpin2.setMaximumDate(maxd)
+        self.form.occurrencesAddedDateSpin1.setDate(mind)
+        self.form.occurrencesAddedDateSpin2.setDate(maxd)
+
+    def onModifiedToggled(self):
+        state = self.form.modifiedCheck.isChecked()
+        self.form.occurrencesEditedDateSpin1.setEnabled(state)
+        self.form.occurrencesEditedDateSpin2.setEnabled(state)
+        mind, maxd = db.utils.minMaxDatesOccurrenceEnteredModified()
+        self.form.occurrencesEditedDateSpin1.setMinimumDate(mind)
+        self.form.occurrencesEditedDateSpin1.setMaximumDate(maxd)
+        self.form.occurrencesEditedDateSpin2.setMinimumDate(mind)
+        self.form.occurrencesEditedDateSpin2.setMaximumDate(maxd)
+        self.form.occurrencesEditedDateSpin1.setDate(mind)
+        self.form.occurrencesEditedDateSpin2.setDate(maxd)
+
+    def onSourceToggled(self):
+        state = self.form.sourceCheck.isChecked()
+        self.form.occurrencesSourceCombo.setEnabled(state)
+        if state:
+            source = self._getSourceComboSelection()
+            if type(source) != type('all'):
+                self.form.volumeCheck.setEnabled(True)
+                self.onVolumeToggled() # because if already enabled, above will
+                                       # not emit the signal again
+        else:
+            self.form.volumeCheck.setChecked(False)
+            self.form.volumeCheck.setEnabled(False)
+            self.form.occurrencesVolumeSpin1.setMinimum(1)
+            self.form.occurrencesVolumeSpin1.setMaximum(1)
+            self.form.occurrencesVolumeSpin2.setMinimum(1)
+            self.form.occurrencesVolumeSpin2.setMaximum(1)
+            self.form.occurrencesSourceCombo.setCurrentIndex(0) # all
+
+    def onVolumeToggled(self):
+        state = self.form.volumeCheck.isChecked()
+        self.form.occurrencesVolumeSpin1.setEnabled(state)
+        self.form.occurrencesVolumeSpin2.setEnabled(state)
+        source = self._getSourceComboSelection()
+        if type(source) != type('all'):
+            # if check fails, then volume will not be displayed anyway
+            minv, maxv = source.getVolVal()
+            # update volume max/min to match volval
+            self.form.occurrencesVolumeSpin1.setMinimum(minv)
+            self.form.occurrencesVolumeSpin1.setMaximum(maxv)
+            self.form.occurrencesVolumeSpin2.setMinimum(minv)
+            self.form.occurrencesVolumeSpin2.setMaximum(maxv)
+            self.form.occurrencesVolumeSpin1.setValue(minv)
+            self.form.occurrencesVolumeSpin2.setValue(maxv)
+
+    def updateSourceCombo(self):
+        self.form.occurrencesSourceCombo.clear()
+        self.form.occurrencesSourceCombo.addItem(db.consts.noSourceLimitText)
+        for i in db.sources.allSources():
+            self.form.occurrencesSourceCombo.addItem(i.getName())
+
+    def _getSourceComboSelection(self):
+        """
+        Return the Source currently selected, or 'all' if all sources option
+        is selected.
+        """
+        name = unicode(self.form.occurrencesSourceCombo.currentText())
+        if name == db.consts.noSourceLimitText:
+            return 'all'
+        else:
+            return db.sources.byName(name)
 
 
     ### Functions from the menu ###

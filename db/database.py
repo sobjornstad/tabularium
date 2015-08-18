@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
+import pickle
 import re
 import sqlite3 as sqlite
 import time
@@ -79,6 +80,8 @@ def makeDatabase(fname):
     cursor.execute('CREATE TABLE entries (eid INTEGER PRIMARY KEY, name TEXT, sortkey TEXT, classification INTEGER, dEdited TEXT, dAdded TEXT)')
     cursor.execute('CREATE TABLE sources (sid INTEGER PRIMARY KEY, name TEXT, volval TEXT, pageval TEXT, nearrange INTEGER, abbrev TEXT, stype INTEGER)')
     cursor.execute('CREATE TABLE volumes (vid INTEGER PRIMARY KEY, sid INTEGER, num INTEGER, notes TEXT, dopened TEXT, dclosed TEXT)')
+    cursor.execute('CREATE TABLE conf (conf TEXT)')
+    cursor.execute('INSERT INTO conf (conf) VALUES (?)', (pickle.dumps({}),))
     return connection
 
 if __name__ == "__main__":

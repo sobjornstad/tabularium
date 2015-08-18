@@ -2,6 +2,7 @@
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
 import datetime
+import db.database as d
 
 def dateSerializer(obj):
     """
@@ -30,3 +31,18 @@ def dateDeserializer(yyyymmdd):
         raise
         assert False, "Invalid date serialized to database!"
     return datetime.date(y, m, d)
+
+def minMaxDatesOccurrenceEnteredModified():
+    """
+    Return the earliest and latest Dates used for "entered" or "modified"
+    dates for any occurrence.
+    """
+
+    d.cursor.execute('SELECT MAX(dEdited) FROM occurrences')
+    edit = d.cursor.fetchall()[0][0]
+    d.cursor.execute('SELECT MAX(dAdded) FROM occurrences')
+    add = d.cursor.fetchall()[0][0]
+
+    early = edit if edit < add else add
+    late = edit if edit > add else add
+    return dateDeserializer(early), dateDeserializer(late)

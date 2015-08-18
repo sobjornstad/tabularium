@@ -271,7 +271,7 @@
             <bool>false</bool>
            </property>
            <property name="title">
-            <string>Include entries</string>
+            <string>Show entries for</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -302,12 +302,18 @@
                 <property name="text">
                  <string>People</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
                <widget class="QCheckBox" name="entriesPlacesCheck">
                 <property name="text">
                  <string>Places</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -316,6 +322,9 @@
                 <property name="text">
                  <string>Quotations</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -323,12 +332,18 @@
                 <property name="text">
                  <string>Titles</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
                <widget class="QCheckBox" name="entriesCommonsCheck">
                 <property name="text">
-                 <string>Ordinary</string>
+                 <string>Others</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -336,6 +351,9 @@
                <widget class="QCheckBox" name="entriesUnclassifiedCheck">
                 <property name="text">
                  <string>Unclassified</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -369,7 +387,7 @@
             </size>
            </property>
            <property name="title">
-            <string>Include occurrences</string>
+            <string>Limit occurrences by</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -386,54 +404,21 @@
             </property>
             <item>
              <layout class="QGridLayout" name="gridLayout">
-              <item row="3" column="0">
-               <widget class="QLabel" name="label_8">
-                <property name="text">
-                 <string>Volume</string>
+              <item row="3" column="5" colspan="2">
+               <widget class="QSpinBox" name="occurrencesVolumeSpin2"/>
+              </item>
+              <item row="0" column="5" colspan="2">
+               <widget class="QDateEdit" name="occurrencesAddedDateSpin2">
+                <property name="displayFormat">
+                 <string>yyyy/MM/dd</string>
+                </property>
+                <property name="calendarPopup">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
               <item row="2" column="1" colspan="6">
                <widget class="QComboBox" name="occurrencesSourceCombo"/>
-              </item>
-              <item row="3" column="1" colspan="3">
-               <widget class="QSpinBox" name="occurrencesVolumeSpin1"/>
-              </item>
-              <item row="3" column="5" colspan="2">
-               <widget class="QSpinBox" name="occurrencesVolumeSpin2"/>
-              </item>
-              <item row="2" column="0">
-               <widget class="QLabel" name="label_7">
-                <property name="text">
-                 <string>Source</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="5" colspan="2">
-               <widget class="QDateEdit" name="occurrencesAddedDateSpin2"/>
-              </item>
-              <item row="0" column="1" colspan="3">
-               <widget class="QDateEdit" name="occurrencesAddedDateSpin1"/>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>Date modified</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="5" colspan="2">
-               <widget class="QDateEdit" name="occurrencesEditedDateSpin2"/>
-              </item>
-              <item row="1" column="1" colspan="3">
-               <widget class="QDateEdit" name="occurrencesAddedDateSpin1_2"/>
-              </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_5">
-                <property name="text">
-                 <string>Date entered</string>
-                </property>
-               </widget>
               </item>
               <item row="0" column="4">
                <widget class="QLabel" name="label_9">
@@ -483,6 +468,67 @@
                 </property>
                </widget>
               </item>
+              <item row="1" column="1" colspan="3">
+               <widget class="QDateEdit" name="occurrencesEditedDateSpin1">
+                <property name="displayFormat">
+                 <string>yyyy/MM/dd</string>
+                </property>
+                <property name="calendarPopup">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1" colspan="3">
+               <widget class="QSpinBox" name="occurrencesVolumeSpin1"/>
+              </item>
+              <item row="1" column="5" colspan="2">
+               <widget class="QDateEdit" name="occurrencesEditedDateSpin2">
+                <property name="displayFormat">
+                 <string>yyyy/MM/dd</string>
+                </property>
+                <property name="calendarPopup">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1" colspan="3">
+               <widget class="QDateEdit" name="occurrencesAddedDateSpin1">
+                <property name="displayFormat">
+                 <string>yyyy/MM/dd</string>
+                </property>
+                <property name="calendarPopup">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="enteredCheck">
+                <property name="text">
+                 <string>Entered</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QCheckBox" name="modifiedCheck">
+                <property name="text">
+                 <string>Modified</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QCheckBox" name="sourceCheck">
+                <property name="text">
+                 <string>Source</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QCheckBox" name="volumeCheck">
+                <property name="text">
+                 <string>Volume</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
            </layout>
@@ -513,7 +559,7 @@
             </size>
            </property>
            <property name="title">
-            <string>Show</string>
+            <string>Display</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -539,7 +585,7 @@
               <item>
                <widget class="QCheckBox" name="showInspectCheck">
                 <property name="text">
-                 <string>Inspect</string>
+                 <string>Inspect window</string>
                 </property>
                 <property name="checked">
                  <bool>true</bool>
@@ -551,12 +597,18 @@
                 <property name="text">
                  <string>Source name</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
                <widget class="QCheckBox" name="showAddedCheck">
                 <property name="text">
                  <string>Date entered</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -565,6 +617,9 @@
                 <property name="text">
                  <string>Date modified</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -572,12 +627,18 @@
                 <property name="text">
                  <string>Diary reference</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
                <widget class="QCheckBox" name="showNearbyCheck">
                 <property name="text">
-                 <string>Nearby</string>
+                 <string>Nearby window</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
