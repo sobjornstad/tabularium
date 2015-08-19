@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>924</width>
-    <height>741</height>
+    <width>925</width>
+    <height>740</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,9 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_10">
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
@@ -170,7 +173,7 @@ If the interface is sluggish, try turning this off.</string>
        <property name="childrenCollapsible">
         <bool>false</bool>
        </property>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <layout class="QVBoxLayout" name="verticalLayout_6">
          <item>
           <widget class="QLabel" name="inspectLabel">
@@ -203,7 +206,7 @@ If the interface is sluggish, try turning this off.</string>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
           <widget class="QLabel" name="nearbyLabel">
@@ -689,7 +692,7 @@ If the interface is sluggish, try turning this off.</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>924</width>
+     <width>925</width>
      <height>25</height>
     </rect>
    </property>
@@ -783,7 +786,7 @@ If the interface is sluggish, try turning this off.</string>
    <addaction name="menuTools"/>
    <addaction name="menuHelp"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusBar"/>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
     <string>toolBar</string>
@@ -860,15 +863,24 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Edit...</string>
    </property>
+   <property name="statusTip">
+    <string>Edit the name, sort key, or classification of the current entry.</string>
+   </property>
   </action>
   <action name="actionMerge_into">
    <property name="text">
     <string>Merge Into...</string>
    </property>
+   <property name="statusTip">
+    <string>Move all of these entry's occurrences into another entry and delete this entry.</string>
+   </property>
   </action>
   <action name="actionDelete">
    <property name="text">
     <string>Delete</string>
+   </property>
+   <property name="statusTip">
+    <string>Delete this entry and all of its occurrences.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+E, D</string>
@@ -878,6 +890,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Add...</string>
    </property>
+   <property name="statusTip">
+    <string>Add a single new entry.</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+E, A</string>
    </property>
@@ -885,6 +900,9 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionAdd_Redirect_To">
    <property name="text">
     <string>Add Redirect To...</string>
+   </property>
+   <property name="statusTip">
+    <string>Add a new entry redirecting to the currently selected entry.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+E, R</string>
@@ -894,6 +912,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Add Multiple...</string>
    </property>
+   <property name="statusTip">
+    <string>Add many entries with occurrences belonging to the same source and volume at once.</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+E, M</string>
    </property>
@@ -901,6 +922,9 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionNew_based_on">
    <property name="text">
     <string>Add Based On...</string>
+   </property>
+   <property name="statusTip">
+    <string>Add a new entry, starting with the values of the entry currently selected.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+E, B</string>
@@ -910,10 +934,16 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Move to Entry...</string>
    </property>
+   <property name="statusTip">
+    <string>Move this occurrence to a different entry.</string>
+   </property>
   </action>
   <action name="actionDelete_occ">
    <property name="text">
     <string>Delete</string>
+   </property>
+   <property name="statusTip">
+    <string>Delete this occurrence without otherwise modifying the entry.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O, D</string>
@@ -923,6 +953,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Add to entry...</string>
    </property>
+   <property name="statusTip">
+    <string>Create a new occurrence in the currently selected entry.</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+O, A</string>
    </property>
@@ -931,20 +964,32 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Follow Redirect</string>
    </property>
+   <property name="statusTip">
+    <string>Search for the entry that the selected occurrence redirects to.</string>
+   </property>
   </action>
   <action name="actionChange_page">
    <property name="text">
     <string>Change Page...</string>
+   </property>
+   <property name="statusTip">
+    <string>Change the page number of the selected occurrence.</string>
    </property>
   </action>
   <action name="actionChange_volume">
    <property name="text">
     <string>Change Volume...</string>
    </property>
+   <property name="statusTip">
+    <string>Change the volume number of the selected occurrence.</string>
+   </property>
   </action>
   <action name="actionFollow_Nearby_Entry">
    <property name="text">
     <string>&amp;Follow Nearby Entry</string>
+   </property>
+   <property name="statusTip">
+    <string>Search for the entry currently selected in the nearby window.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+I, F</string>
@@ -954,6 +999,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>&amp;Source notes...</string>
    </property>
+   <property name="statusTip">
+    <string>Open the notes browser to the notes for the source used by the selected occurrence.</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+I, N</string>
    </property>
@@ -961,6 +1009,9 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionDiary_notes">
    <property name="text">
     <string>&amp;Diary notes...</string>
+   </property>
+   <property name="statusTip">
+    <string>Open the notes browser to the notes for the diary volume that was open when this occurrence was added.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+I, D</string>
@@ -970,6 +1021,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Manage sources...</string>
    </property>
+   <property name="statusTip">
+    <string>Open the source manager to view, add, edit, and delete sources.</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+S, S</string>
    </property>
@@ -978,6 +1032,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Manage volumes...</string>
    </property>
+   <property name="statusTip">
+    <string>Open the volume manager to view, add, edit, and delete volumes of your sources.</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+S, V</string>
    </property>
@@ -985,6 +1042,9 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionNotes">
    <property name="text">
     <string>Notes...</string>
+   </property>
+   <property name="statusTip">
+    <string>Open the notes browser to view and edit notes on your sources.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S, N</string>

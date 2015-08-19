@@ -75,6 +75,11 @@ class MainWindow(QMainWindow):
         # connect menu actions
         self._setupMenus()
 
+        # set up statusbar
+        self.matchesWidget = QtGui.QLabel("")
+        self.form.statusBar.addPermanentWidget(self.matchesWidget)
+        self.form.statusBar.showMessage("Ready!", 2000)
+
         # initialize db and set up searching and entries
         self.initDb()
         self.search = ""
@@ -212,6 +217,13 @@ class MainWindow(QMainWindow):
 
 
     ### Setting, resetting, and filling the data windows ###
+    def updateMatchesStatus(self):
+        entryCount = self.form.entriesList.count()
+        entryString = "E: %i" % entryCount
+        occCount = self.form.occurrencesList.count()
+        occString = ", O: %i" % occCount
+        self.matchesWidget.setText(entryString + ("" if not occCount else occString))
+
     def fillEntries(self):
         """
         Fill the Entries list box with all entries that match the current
@@ -228,6 +240,7 @@ class MainWindow(QMainWindow):
         else:
             entries = db.entries.find(db.entries.percentageWrap(self.search))
         self._fillListWidgetWithEntries(self.form.entriesList, entries)
+        self.updateMatchesStatus()
 
     def fillOccurrences(self):
         """
@@ -244,6 +257,7 @@ class MainWindow(QMainWindow):
         self.currentOccs = entry.getOccurrences()
         for i in self.currentOccs:
             self.form.occurrencesList.addItem(str(i))
+        self.updateMatchesStatus()
 
     def fillInspect(self):
         """
