@@ -473,6 +473,7 @@ class MainWindow(QMainWindow):
         ae = ui.addentry.AddEntryWindow(self)
         if entryName:
             ae.initializeSortKeyCheck(entryName)
+            ae.putClassification()
         ae.exec_()
     def onAddEntryBasedOn(self):
         #TODO: This doesn't preserve classification

@@ -44,6 +44,21 @@ class AddEntryWindow(QDialog):
         self.form.copyButton.clicked.connect(self.onCopy)
         self.form.washButton.clicked.connect(self.wash)
 
+    def putClassification(self):
+        """
+        Called if modifying/basing on an existing entry; finds the
+        corresponding entry and determines its classification.
+        """
+        entry = db.entries.find(unicode(self.form.nameBox.text()))[0]
+        classification = entry.getClassification()
+        sf = self.form
+        for i in (sf.ordinaryButton, sf.personButton, sf.placeButton,
+                  sf.quotationButton, sf.titleButton, sf.unclassifiedButton):
+            if db.consts.entryTypes[unicode(i.property('cKey').toString())] == \
+                    classification:
+                i.setChecked(True)
+
+
     def initializeSortKeyCheck(self, value=""):
         """
         Get the stored value of the name/sort key into sync. See
