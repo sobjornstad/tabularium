@@ -190,6 +190,13 @@ class OccTests(utils.DbTestCase):
                     'RT 1279-89': 'RT 1.1279-1289 (1) == ',
                     'RT: see Foobar Entry': 'RT 1.Foobar Entry (2) == ',
                     'CB{1.26--7,2    . 18, 2.see    Other Entry} |The 160th Book    : 45': 'CB 1.26-27 (1) == CB 2.18 (0) == CB 2.Other Entry (2) == T1B 1.45 (0) == ',
+                    'CB 2. see Mr. Aoeui': 'CB 2.Mr. Aoeui (2) == ',
+                    'RT 1. see foobar': 'RT 1.foobar (2) == ',
+                    'RT 1. see Mr. Aoeui': 'RT 1.Mr. Aoeui (2) == ',
+                    'RT: see foobar': 'RT 1.foobar (2) == ',
+                    'RT see foobar': 'RT 1.foobar (2) == ',
+                    # hehe -- this didn't work right the first time though :-)
+                    'CB 2.see seeing see foo': 'CB 2.seeing see foo (2) == ',
                    }
 
         for i in testDict.keys():

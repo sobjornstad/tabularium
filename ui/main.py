@@ -534,6 +534,7 @@ class MainWindow(QMainWindow):
                                  "Delete entry?")
         if r == QMessageBox.Yes:
             occ.delete()
+            #TODO: also take from the entries box if needed!
             self.form.occurrencesList.takeItem(row)
 
     def onSourceNotes(self):

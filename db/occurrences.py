@@ -101,7 +101,7 @@ class Occurrence(object):
             source = self._volume.getSource()
             vol = self._volume.getNum()
             if source.isSingleVol():
-                return "%s: see %s" % (source.getAbbrev, self._ref)
+                return "%s: see %s" % (source.getAbbrev(), self._ref)
             else:
                 return '%s %s: see "%s"' % (source.getAbbrev(), vol, self._ref)
         else:
@@ -392,7 +392,12 @@ def parseUnifiedFormat(s):
             volume = refSplit[0].strip()
             refnum = refSplit[1].strip()
         else:
-            raise InvalidUOFError()
+            if 'see ' in refSplit[1]:
+                # This was a "see" entry with a period in it.
+                volume = refSplit[0].strip()
+                refnum = '.'.join(refSplit[1:]).strip()
+            else:
+                raise InvalidUOFError()
         try:
             volume = int(volume)
         except ValueError:
@@ -403,7 +408,7 @@ def parseUnifiedFormat(s):
         if refnum.startswith('see '):
             # redirect
             reftype = refTypes['redir']
-            refnum = refnum.replace('see ', '').strip()
+            refnum = re.sub('^see ', '', refnum).strip()
         elif '--' in refnum or ENDASH in refnum or '-' in refnum:
             # range: normalize delimiter
             reftype = refTypes['range']
@@ -543,6 +548,14 @@ def _splitSourceRef(s):
                 # when no space between; latter with range
                 source = ''.join(result[0:2]).strip()
                 reference = ''.join(result[2:]).strip()
+            elif len(result) == 1:
+                # perhaps this is a single-volume 'see': e.g. 'RT see foobar'
+                newResult = result[0].split(' see ')
+                if len(newResult) > 1:
+                    source = newResult[0]
+                    reference = 'see ' + ' see '.join(newResult[1:]).strip()
+                else:
+                    raise InvalidUOFError()
             else:
                 raise InvalidUOFError()
     else:
