@@ -10,11 +10,12 @@ import ui.utils
 import db.occurrences
 
 class AddOccWindow(QDialog):
-    def __init__(self, parent, entry):
+    def __init__(self, parent, entry, preparedOccurrence=None):
         """
         Arguments:
             parent: The usual.
             entry: The entry to add occurrences to.
+            preparedOccurrence (optional): Text to place in the occurrences box.
         """
 
         QDialog.__init__(self)
@@ -24,6 +25,9 @@ class AddOccWindow(QDialog):
         self.entry = entry
 
         self.form.entryBox.setText(self.entry.getName())
+        if preparedOccurrence:
+            self.form.valueBox.setText(preparedOccurrence)
+            self.form.valueBox.setCursorPosition(0)
 
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)

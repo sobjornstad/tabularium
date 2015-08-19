@@ -471,6 +471,7 @@ class MainWindow(QMainWindow):
         sf.actionFollow_Nearby_Entry.triggered.connect(self.onInspect_FollowNearby)
         sf.actionAdd.triggered.connect(self.onAddEntry)
         sf.actionNew_based_on.triggered.connect(self.onAddEntryBasedOn)
+        sf.actionAdd_Redirect_To.triggered.connect(self.onAddRedirect)
         sf.actionManage_sources.triggered.connect(self.onManageSources)
         sf.actionManage_volumes.triggered.connect(self.onManageVolumes)
         sf.actionNotes.triggered.connect(self.onViewNotes)
@@ -490,16 +491,23 @@ class MainWindow(QMainWindow):
         #TODO: Ideally we would autoselect the occurrence that was nearby,
         #      but that's a LOT more work, so not right away.
 
-    def onAddEntry(self, entryName=None):
+    def onAddEntry(self, entryName=None, redirTo=None):
         ae = ui.addentry.AddEntryWindow(self)
         if entryName:
             ae.initializeSortKeyCheck(entryName)
-            ae.putClassification()
+            entry = db.entries.find(entryName)[0]
+            ae.putClassification(entry)
+            ae.resetTitle("New Entry Based On '%s'" % entryName)
+        if redirTo:
+            ae.putRedirect(redirTo)
+            ae.resetTitle("New Redirect To '%s'" % redirTo.getName())
         ae.exec_()
     def onAddEntryBasedOn(self):
-        #TODO: This doesn't preserve classification
         entry = self._fetchCurrentEntry()
-        self.onAddEntry(entry.getName())
+        self.onAddEntry(unicode(entry.getName()))
+    def onAddRedirect(self):
+        entry = self._fetchCurrentEntry()
+        self.onAddEntry(redirTo=entry)
     def onDeleteEntry(self):
         row = self.form.entriesList.currentRow()
         entry = self._fetchCurrentEntry()

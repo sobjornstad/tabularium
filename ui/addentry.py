@@ -38,18 +38,18 @@ class AddEntryWindow(QDialog):
         self.initializeSortKeyCheck()
         self.form.nameBox.textChanged.connect(self.maybeUpdateSortKey)
         self.form.unclassifiedButton.setChecked(True)
+        self.preparedOccurrence = None
 
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
         self.form.copyButton.clicked.connect(self.onCopy)
         self.form.washButton.clicked.connect(self.wash)
 
-    def putClassification(self):
+    def putClassification(self, entry):
         """
         Called if modifying/basing on an existing entry; finds the
         corresponding entry and determines its classification.
         """
-        entry = db.entries.find(unicode(self.form.nameBox.text()))[0]
         classification = entry.getClassification()
         sf = self.form
         for i in (sf.ordinaryButton, sf.personButton, sf.placeButton,
@@ -58,6 +58,13 @@ class AddEntryWindow(QDialog):
                     classification:
                 i.setChecked(True)
 
+    def putRedirect(self, to):
+        self.putClassification(to)
+        name = to.getName()
+        self.preparedOccurrence = ".see " + to.getName()
+
+    def resetTitle(self, title):
+        self.setWindowTitle(title)
 
     def initializeSortKeyCheck(self, value=""):
         """
@@ -109,7 +116,7 @@ class AddEntryWindow(QDialog):
             entry = db.entries.Entry.makeNew(newName, newSk, classif)
 
         super(AddEntryWindow, self).accept()
-        ac = ui.addoccurrence.AddOccWindow(self, entry)
+        ac = ui.addoccurrence.AddOccWindow(self, entry, self.preparedOccurrence)
         ac.exec_()
 
     def _getSelectedClassif(self):
