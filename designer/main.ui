@@ -135,6 +135,12 @@ If the interface is sluggish, try turning this off.</string>
             <height>0</height>
            </size>
           </property>
+          <property name="layoutMode">
+           <enum>QListView::SinglePass</enum>
+          </property>
+          <property name="uniformItemSizes">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
        </layout>
