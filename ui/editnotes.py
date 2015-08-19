@@ -109,10 +109,13 @@ class NotesBrowser(QDialog):
     def saveIfModified(self):
         if self.editorTextChanged:
             # we know selection is a volume because it's not possible to
-            # change the editor text in a top-level heading or nothing
-            newHtml = unicode(self.form.editor.toHtml())
-            newHtml = newHtml.replace('&lt;', '<').replace('&gt;', '>')
-            self.lastVolumeSelected.setNotes(newHtml)
+            # change the editor text in a top-level heading, or nothing
+            if not unicode(self.form.editor.toPlainText()).strip():
+                self.lastVolumeSelected.setNotes('')
+            else:
+                newHtml = unicode(self.form.editor.toHtml())
+                newHtml = newHtml.replace('&lt;', '<').replace('&gt;', '>')
+                self.lastVolumeSelected.setNotes(newHtml)
         self.editorTextChanged = False
 
     def fillTreeWidget(self):

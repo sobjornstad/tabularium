@@ -43,7 +43,7 @@ class VolumeTableModel(QAbstractTableModel):
             val = robj.getFormattedDclosed()
             return val if val is not None else "N/A"
         elif col == 3:
-            return robj.getNotes()
+            return "Available" if robj.getNotes() else "None"
         else:
             assert False, "Invalid column!"
             return None
@@ -118,7 +118,7 @@ class VolumeManager(QDialog):
         nd = ui.editnotes.NotesBrowser(self, self._currentSource(),
                                        self._currentVolume())
         nd.exec_()
-
+        self.fillVolumes()
 
     def _currentVolume(self):
         """
