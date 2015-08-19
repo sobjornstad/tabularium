@@ -37,12 +37,16 @@ def minMaxDatesOccurrenceEnteredModified():
     Return the earliest and latest Dates used for "entered" or "modified"
     dates for any occurrence.
     """
+    d.cursor.execute('SELECT MIN(dEdited) FROM occurrences')
+    minEdit = d.cursor.fetchall()[0][0]
+    d.cursor.execute('SELECT MIN(dAdded) FROM occurrences')
+    minAdd = d.cursor.fetchall()[0][0]
+    early = minEdit if minEdit < minAdd else minAdd
 
     d.cursor.execute('SELECT MAX(dEdited) FROM occurrences')
-    edit = d.cursor.fetchall()[0][0]
+    maxEdit = d.cursor.fetchall()[0][0]
     d.cursor.execute('SELECT MAX(dAdded) FROM occurrences')
-    add = d.cursor.fetchall()[0][0]
+    maxAdd = d.cursor.fetchall()[0][0]
+    late = maxEdit if maxEdit > maxAdd else maxAdd
 
-    early = edit if edit < add else add
-    late = edit if edit > add else add
     return dateDeserializer(early), dateDeserializer(late)
