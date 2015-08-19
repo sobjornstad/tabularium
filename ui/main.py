@@ -7,6 +7,7 @@ from PyQt4.QtCore import QObject, QEvent, Qt
 from forms.main import Ui_MainWindow
 import sqlite3
 import sys
+import time
 
 import config
 import db.consts
@@ -78,7 +79,7 @@ class MainWindow(QMainWindow):
         # set up statusbar
         self.matchesWidget = QtGui.QLabel("")
         self.form.statusBar.addPermanentWidget(self.matchesWidget)
-        self.form.statusBar.showMessage("Ready!", 2000)
+        self.form.statusBar.showMessage("Database loaded.", 1000)
 
         # initialize db and set up searching and entries
         self.initDb()
@@ -230,6 +231,11 @@ class MainWindow(QMainWindow):
         search and limit criteria. (Right now limits are ignored.)
         """
 
+        self.form.statusBar.showMessage("Searching...")
+        # i-search feels much faster if we process events here, as it means
+        # the user sees her keystroke appear while the search is taking place
+        # rather than only afterwards
+        QApplication.processEvents()
         self._resetForEntry()
         if self.searchOptions['regex']:
             try:
@@ -241,6 +247,7 @@ class MainWindow(QMainWindow):
             entries = db.entries.find(db.entries.percentageWrap(self.search))
         self._fillListWidgetWithEntries(self.form.entriesList, entries)
         self.updateMatchesStatus()
+        self.form.statusBar.clearMessage()
 
     def fillOccurrences(self):
         """
