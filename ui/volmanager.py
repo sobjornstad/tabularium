@@ -198,8 +198,8 @@ class NewVolumeDialog(QDialog):
         # volExists is the only check we need to do, as the other errors
         # (SingleVolume and Validation) should be prevented from occurring
         # by the interface.
-        if num != self.volume.getNum() and \
-                db.volumes.volExists(self.source, num):
+        if db.volumes.volExists(self.source, num) and not (
+                self.isEditing and num == self.volume.getNum()):
             ui.utils.errorBox("That volume already exists for this source. "
                               "Maybe you mistyped the number or chose the "
                               "wrong source?", "Volume exists")

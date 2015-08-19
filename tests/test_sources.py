@@ -3,6 +3,9 @@ import utils
 import db.database as d
 from db.consts import sourceTypes
 from db.sources import *
+from db.volumes import Volume
+from db.occurrences import Occurrence
+from db.entries import Entry
 
 class SourceTests(utils.DbTestCase):
     def testObject(self):
@@ -38,6 +41,33 @@ class SourceTests(utils.DbTestCase):
                     sourceTypes['book'])
             s3 = Source.makeNew('Chronic Books', (10,100), (44,80), 25, 'CH',
                     sourceTypes['book'])
+
+        # resetting sensitive things
+        v1 = Volume.makeNew(s1, 50, "")
+        v2 = Volume.makeNew(s1, 5, "")
+        e1 = Entry.makeNew("Kathariana")
+        o1 = Occurrence.makeNew(e1, v1, '25', 0)
+        o2 = Occurrence.makeNew(e1, v1, '50', 0)
+        assert s1.volExists(50)
+        with self.assertRaises(TrouncesError) as e:
+            s1.setValidVol((1, 10))
+            assert 'would make 1 volume and 2 occurrences invalid' in e
+        s1.setValidVol((1, 10), overrideTrounce=True)
+        assert not s1.volExists(50)
+        assert s1.volExists(5)
+
+        v2 = Volume.makeNew(s1, 10, "")
+        e2 = Entry.makeNew("Melgreth, Maudia")
+        o1 = Occurrence.makeNew(e2, v2, '25', 0)
+        o2 = Occurrence.makeNew(e2, v2, '50', 0)
+        assert len(e2.getOccurrences()) == 2
+        with self.assertRaises(TrouncesError) as e:
+            s1.setValidPage((1, 30))
+            assert 'Changing the page max' in e
+            assert 'would make 1 occurrence invalid' in e
+        s1.setValidPage((1, 30), overrideTrounce=True)
+        assert len(e2.getOccurrences()) == 1
+
 
 
 

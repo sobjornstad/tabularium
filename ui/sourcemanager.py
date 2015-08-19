@@ -139,8 +139,7 @@ class NewSourceDialog(QDialog):
         self.form.nearbyRange.setValue(source.getNearbyRange())
         self.isEditing = True
 
-    def accept(self):
-        #TODO: PREVENT BLANK ENTRIES
+    def accept(self, overrideTrounce=None):
         sf = self.form
 
         newName = unicode(sf.nameBox.text()).strip()
@@ -154,14 +153,24 @@ class NewSourceDialog(QDialog):
         newStype = db.consts.sourceTypesFriendly[
                         unicode(sf.typeCombo.currentText())]
 
+        if newName == '':
+            ui.utils.errorBox("Please enter a name.", "No source name given")
+            return
+        elif newAbbr == '':
+            ui.utils.errorBox("Please enter an abbreviation.",
+                              "No abbreviation given")
+            return
+
         try:
             if not self.isEditing:
                 db.sources.Source.makeNew(newName, newVolval, newPageval,
                                           newNearrange, newAbbr, newStype)
             else:
                 self.source.setName(newName)
-                self.source.setValidVol(newVolval)
-                self.source.setValidPage(newPageval)
+                self.source.setValidVol(newVolval,
+                        True if overrideTrounce == 'volume' else False)
+                self.source.setValidPage(newPageval,
+                        True if overrideTrounce == 'page' else False)
                 self.source.setNearbyRange(newNearrange)
                 self.source.setAbbrev(newAbbr)
                 # right now, no setting of stype
@@ -171,5 +180,26 @@ class NewSourceDialog(QDialog):
             ui.utils.errorBox(str(e))
         except db.sources.DiaryExistsError as e:
             ui.utils.errorBox(str(e))
+        except db.sources.TrouncesError as e:
+            whichThing = e.whichThing
+            if whichThing == 'volume':
+                what = 'volumes and occurrences'
+                check = "&Really delete these %i volumes and %i " \
+                        "occurrences" % (e.number1, e.number2)
+                title = "Delete invalid volumes and occurrences"
+            elif whichThing == 'page':
+                what = 'occurrences'
+                check = "&Really delete these %i occurrences" % (
+                        e.number1)
+                title = "Delete invalid occurrences"
+
+            errStr = str(e).replace('would', 'will')
+            extra = " If you continue, they will be permanently deleted from " \
+                    "your database along with any entries that are left " \
+                    "without occurrences."
+            cd = ui.utils.ConfirmationDialog(self, errStr + extra, check, title)
+            doDelete = cd.exec_()
+            if doDelete:
+                return self.accept(overrideTrounce=whichThing)
         else:
             super(NewSourceDialog, self).accept()

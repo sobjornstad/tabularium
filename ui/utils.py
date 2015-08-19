@@ -3,8 +3,9 @@
 # Copyright 2014 Soren Bjornstad. All rights reserved.
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QDialog, QMessageBox
+from PyQt4.QtGui import QDialog, QMessageBox, QCheckBox
 from PyQt4.QtCore import QObject
+import ui.forms.confirmationwindow
 
 def informationBox(text, title=None):
     msgBox = QMessageBox()
@@ -39,6 +40,26 @@ def questionBox(text, title=None):
     if title:
         msgBox.setWindowTitle(title)
     return msgBox.exec_()
+
+class ConfirmationDialog(QDialog):
+    def __init__(self, parent, text, checkText, title):
+        QDialog.__init__(self)
+        self.form = ui.forms.confirmationwindow.Ui_Dialog()
+        self.form.setupUi(self)
+        self.parent = parent
+
+        self.form.dialogText.setText(text)
+        self.form.confirmationCheck.setText(checkText)
+        self.setWindowTitle(title)
+
+        self.form.acceptButton.setEnabled(False)
+        self.form.confirmationCheck.toggled.connect(self.onConfirmChecked)
+        self.form.acceptButton.clicked.connect(self.accept)
+        self.form.rejectButton.clicked.connect(self.reject)
+
+    def onConfirmChecked(self):
+        sf = self.form
+        sf.acceptButton.setEnabled(sf.confirmationCheck.isChecked())
 
 
 ###### this corresponds to CQM stuff, ignore for now

@@ -4,6 +4,7 @@
 import db.database as d
 import db.consts
 import db.volumes
+import db.occurrences
 from db.utils import dateSerializer
 import json
 
@@ -26,7 +27,23 @@ class DiaryExistsError(Exception):
     def __str__(self):
         return "You can only have one diary source. Yours is named '%s'." % \
                 self.conflicts
-
+class TrouncesError(Exception):
+    def __init__(self, toWhat, whichThing, number1, number2=None):
+        self.toWhat = toWhat
+        self.whichThing = whichThing
+        self.number1 = number1
+        self.number2 = number2
+    def __str__(self):
+        if self.whichThing == 'volume':
+            return "Changing the %s max and min to (%i, %i) would make %i " \
+                   "volume%s and %i occurrence%s invalid." % (
+                           self.whichThing, self.toWhat[0], self.toWhat[1],
+                           self.number1, "s" if self.number1 != 1 else "",
+                           self.number2, "s" if self.number2 != 1 else "")
+        elif self.whichThing == 'page':
+            return "Changing the page max and min to (%i, %i) would make %i " \
+                   "occurrence%s invalid." % (self.toWhat[0], self.toWhat[1],
+                           self.number1, "s" if self.number1 != 1 else "")
 
 class Source(object):
     def __init__(self, sid):
@@ -123,24 +140,88 @@ class Source(object):
         d.cursor.execute(q, (self._sid, num))
         return True if d.cursor.fetchall() else False
 
-    #TODO: Make sure that we can't trounce on existing valid occurrences by
-    # changing valid vols/pages. But occurrences need to be working first!
     def setName(self, name):
         if self._name != name:
             if sourceExists(name):
                 raise DuplicateError('name')
             self._name = name
             self.dump()
-    def setValidVol(self, tup):
+    def setValidVol(self, tup, overrideTrounce=False):
+        """
+        Reset the volume validation. 
+
+        Arguments:
+            tup - the new volval, (min, max)
+            overrideTrounce - see note under TrouncesOccurrencesError
+        
+        Raises:
+            TrouncesOccurrencesError - if changing the validation to the new
+                values would make some occurrences invalid. After presenting
+                appropriate confirmation to the user, this function may be
+                run again with overrideTrounce set to True, which will cause
+                those occurrences to be deleted instead.
+
+        """
         assert isinstance(tup, tuple) # in case we forget
-        if tup[0] > tup[1]:
-            raise InvalidRangeError('volume')
-        self._volval = tup
-        self.dump()
-    def setValidPage(self, tup):
+        if tup != self._volval:
+            if tup[0] > tup[1]:
+                raise InvalidRangeError('volume')
+
+            q = '''SELECT vid FROM volumes WHERE sid=?
+                   AND (num < ? OR num > ?)'''
+            d.cursor.execute(q, (self._sid, tup[0], tup[1]))
+            volsAffected = d.cursor.fetchall()
+            if volsAffected:
+                if overrideTrounce:
+                    vols = [db.volumes.Volume(volTuple[0])
+                            for volTuple in volsAffected]
+                    for vol in vols:
+                        vol.delete()
+                else:
+                    q = '''SELECT oid FROM occurrences
+                           WHERE vid IN (SELECT vid FROM volumes
+                                         WHERE sid=?
+                                         AND (num < ? OR num > ?))'''
+                    vals = (self._sid, tup[0], tup[1])
+                    d.cursor.execute(q, vals)
+                    occsAffected = d.cursor.fetchall()
+                    raise TrouncesError(tup, 'volume', len(volsAffected),
+                                        len(occsAffected))
+            else:
+                self._volval = tup
+                self.dump()
+    def setValidPage(self, tup, overrideTrounce=False):
+        """
+        Same deal as for setValidVol.
+        """
         assert isinstance(tup, tuple)
         if tup[0] > tup[1]:
             raise InvalidRangeError('page')
+
+        # Get occs in this source that are not redirects and are outside the
+        # range. (The cast even works for ranges, though I'm not entirely sure
+        # how! SQL is awesome.)
+        q = '''SELECT oid FROM occurrences
+               WHERE vid IN (SELECT vid FROM volumes
+                             WHERE sid=?)
+               AND (CAST(ref as integer) < ?
+                    OR CAST(ref as integer) > ?)
+               AND type IN (0,1)'''
+        vals = (self._sid, tup[0], tup[1])
+        d.cursor.execute(q, vals)
+        occsAffected = d.cursor.fetchall()
+
+        if occsAffected:
+            if overrideTrounce:
+                occs = [db.occurrences.Occurrence(occTuple[0])
+                        for occTuple in occsAffected]
+                for occ in occs:
+                    occ.delete()
+            else:
+                raise TrouncesError(tup, 'page', len(occsAffected))
+
+
+
         self._pageval = tup
         self.dump()
     def setNearbyRange(self, r):

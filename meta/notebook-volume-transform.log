@@ -98,3 +98,69 @@ UPDATE occurrences SET vid=30 WHERE vid=530;
 UPDATE occurrences SET vid=31 WHERE vid=531;
 UPDATE occurrences SET vid=32 WHERE vid=532;
 COMMIT;
+
+
+
+
+--------------------
+
+
+UPDATE entries SET sortkey=name;
+UPDATE entries SET classification=0;
+
+Occs
+----
+ALTER TABLE occurrences RENAME TO occs_old;
+CREATE TABLE occurrences (
+  oid INTEGER PRIMARY KEY,
+  eid INTEGER,
+  nid INTEGER,
+  ref TEXT,
+  type INTEGER,
+  dEdited TEXT,
+  dAdded TEXT
+)
+INSERT INTO occurrences (oid, eid, nid, ref)
+SELECT oid, eid, nid, page
+FROM occs_old;
+DROP TABLE occs_old;
+
+# note that there are a couple of malformed entries in these, fault of the previous program
+SELECT * FROM occurrences WHERE ref LIKE '%see%'; # to check
+UPDATE occurrences SET type=2 WHERE ref LIKE '%see%';
+SELECT * FROM  occurrences WHERE ref LIKE '%moved%';
+UPDATE occurrences SET type=2 WHERE ref LIKE '%moved%';
+
+# note: in following, some entries not properly zero-padded
+SELECT * FROM occurrences WHERE (ref LIKE '%-%' AND type IS NULL);
+[set to appropriate type]
+
+# in the remainder, there are some things we have yet to handle: parens in TB, a couple of bad entries, a couple of items of commentary inserted!
+# but for now, execute this:
+UPDATE occurrences SET type=0 WHERE type IS NULL;
+
+# and this is no good for the future, we'll want to be more precise, but for now...
+UPDATE occurrences set dAdded = '2015-01-01';
+UPDATE occurrences set dEdited = '2015-06-29';
+
+
+Sources
+----
+CREATE TABLE sources (
+  sid INTEGER PRIMARY KEY,
+  name TEXT,
+  volval TEXT,
+  pageval TEXT,
+  nearrange INTEGER,
+  abbrev TEXT,
+  stype INTEGER
+);
+
+CREATE TABLE volumes (
+  vid INTEGER PRIMARY KEY,
+  sid INTEGER,
+  num INTEGER,
+  notes TEXT,
+  dopened TEXT,
+  dclosed TEXT
+);
