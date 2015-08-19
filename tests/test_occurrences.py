@@ -197,6 +197,10 @@ class OccTests(utils.DbTestCase):
                     'RT see foobar': 'RT 1.foobar (2) == ',
                     # hehe -- this didn't work right the first time though :-)
                     'CB 2.see seeing see foo': 'CB 2.seeing see foo (2) == ',
+                    'RT see Other. Entry.': 'RT 1.Other. Entry. (2) == ',
+                    'RT:see Other. see Entry.': 'RT 1.Other. see Entry. (2) == ',
+                    'RT see Other. see E. Entry': 'RT 1.Other. see E. Entry (2) == ',
+                    'RT see   Other . see   E. Entry': 'RT 1.Other . see   E. Entry (2) == ',
                    }
 
         for i in testDict.keys():

@@ -335,6 +335,8 @@ def parseUnifiedFormat(s):
     CB 15.45–6
     CB 15.45--56
     CB 15. see Other Entry
+    RT: see Other Entry
+    RT see Other. Entry.
 
     Rules:
     
@@ -396,12 +398,23 @@ def parseUnifiedFormat(s):
                 # This was a "see" entry with a period in it.
                 volume = refSplit[0].strip()
                 refnum = '.'.join(refSplit[1:]).strip()
+            elif 'see ' in refSplit[0]:
+                # This was a "see" entry with a period in it, and no volume.
+                volume = 1
+                refnum = '.'.join(refSplit).strip()
             else:
                 raise InvalidUOFError()
         try:
             volume = int(volume)
         except ValueError:
-            raise InvalidUOFError()
+            # Perhaps there are several "sees" and periods in here, and no
+            # source? (Dear user: quit screwing with us.)
+            if 'see ' in volume:
+                # Yep, no volume num was given after all.
+                volume = 1
+                refnum = '.'.join(refSplit)
+            else:
+                raise InvalidUOFError()
 
         # determine entry type and format refnum
         ENDASH = u'–' # putting it in a variable fixes Unicode error somehow
