@@ -71,10 +71,18 @@ class SourceManager(QDialog):
         self.form.editButton.clicked.connect(self.onEdit)
         self.form.deleteButton.clicked.connect(self.onDelete)
 
-        model = SourceTableModel(self)
-        self.form.sourceTable.setModel(model)
+        self.model = SourceTableModel(self)
+        self.form.sourceTable.setModel(self.model)
         self.form.sourceTable.resizeColumnsToContents()
+        self.sm = self.form.sourceTable.selectionModel()
+        self.sm.selectionChanged.connect(self.checkButtonEnablement)
+        self.model.modelReset.connect(self.checkButtonEnablement)
+        self.checkButtonEnablement()
 
+    def checkButtonEnablement(self):
+        sf = self.form
+        for i in (sf.editButton, sf.deleteButton):
+            i.setEnabled(self.sm.hasSelection())
 
     def onNew(self):
         nsd = NewSourceDialog(self)
