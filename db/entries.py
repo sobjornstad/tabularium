@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
+import datetime
+import re
+
 import db.database as d
 import db.occurrences
-import re
+from db.utils import dateSerializer, dateDeserializer
 
 class DuplicateError(Exception):
     def __init__(self):
@@ -21,6 +24,8 @@ class Entry(object):
         d.cursor.execute(q, (eid,))
         self._name, self._sk, self._clf, self._de, self._da = \
                 d.cursor.fetchall()[0]
+        self._da = dateDeserializer(self._da)
+        self._de = dateDeserializer(self._de)
         self._eid = eid
 
     @classmethod
@@ -36,7 +41,7 @@ class Entry(object):
         if nameExists(name):
             return None
 
-        dAdded  = '2015-06-01' # obviously fetch the actual ones later
+        dAdded  = dateSerializer(datetime.date.today())
         dEdited = dAdded
 
         q = '''INSERT INTO entries
@@ -62,6 +67,10 @@ class Entry(object):
         return self._sk
     def getClassification(self):
         return self._clf
+    def getDadded(self):
+        return self._da
+    def getDedited(self):
+        return self._de
 
     def setName(self, name):
         """
@@ -90,14 +99,14 @@ class Entry(object):
         d.checkAutosave()
 
     def dump(self):
-        # no longer need to check if eid exists, initial write handled in makeNew
-        dEdited  = '2015-06-29' # obviously fetch the actual ones later
+        dEdited  = datetime.date.today()
 
         q = '''UPDATE entries
                SET name=?, sortkey=?, classification=?, dAdded=?, dEdited=?
                WHERE eid=?'''
-        d.cursor.execute(q, (self._name, self._sk, self._clf, self._da,
-                dEdited, self._eid))
+        d.cursor.execute(q, (self._name, self._sk, self._clf,
+                         dateSerializer(self._da), dateSerializer(dEdited),
+                         self._eid))
         d.checkAutosave()
 
 

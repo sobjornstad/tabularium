@@ -280,7 +280,7 @@ class MainWindow(QMainWindow):
                 s += "Entered during<br>"
                 s += "diary volume %i" % (diaryVolume.getNum())
             else:
-                s += "(no diary volume open<br>"
+                s += "<br>(no diary volume open<br>"
                 s += "when entered)"
         s += ""
         s += "</center>"

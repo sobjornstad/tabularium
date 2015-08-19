@@ -38,6 +38,10 @@ class DbTests(utils.DbTestCase):
         anotherE = e1
         assert e1 == anotherE
 
+        # date
+        assert e1.getDadded() == date.today()
+        assert e1.getDedited() == date.today()
+
     def testFind(self):
         e1Name = "Maudi (Maudlin)"
         e2Name = "Katerina (Maudlin)"

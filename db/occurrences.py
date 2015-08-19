@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
+import datetime
 import re
 
 from db.consts import refTypes
@@ -8,7 +9,7 @@ import db.database as d
 import db.entries
 import db.volumes
 import db.sources
-from db.utils import dateDeserializer
+from db.utils import dateSerializer, dateDeserializer
 
 class InvalidUOFError(Exception):
     def __init__(self, text="Invalid UOF."):
@@ -66,7 +67,7 @@ class Occurrence(object):
 
     @classmethod
     def makeNew(cls, entry, volume, ref, type):
-        dAdded = '2015-01-01' # update this!
+        dAdded = dateSerializer(datetime.date.today())
         dEdited = dAdded
 
         eid = entry.getEid()
@@ -136,13 +137,14 @@ class Occurrence(object):
         self.dump()
 
     def dump(self):
-        dEdited = '2015-06-29' # obviously fetch this in future
+        dEdited = datetime.date.today()
 
         query = '''UPDATE occurrences
                    SET eid=?, vid=?, ref=?, type=?, dEdited=?, dAdded=?
                    WHERE oid=?'''
         d.cursor.execute(query, (self._entry.getEid(), self._volume.getVid(),
-                self._ref, self._type, self._de, self._da, self._oid))
+                self._ref, self._type, dateSerializer(dEdited),
+                dateSerializer(self._da), self._oid))
         d.checkAutosave()
 
     def delete(self):

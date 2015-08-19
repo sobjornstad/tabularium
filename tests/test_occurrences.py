@@ -45,6 +45,10 @@ class OccTests(utils.DbTestCase):
         assert len(occs) == 1
         assert occs[0] == o1
 
+        # uses today's date
+        assert o1.getAddedDate() == date.today()
+        assert o1.getEditedDate() == date.today()
+
         # delete
         o1.delete()
         assert len(fetchForEntry(e2)) == 0
