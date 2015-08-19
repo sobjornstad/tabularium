@@ -115,7 +115,8 @@ class VolumeManager(QDialog):
     def onDelete(self):
         pass
     def onNotes(self):
-        nd = ui.editnotes.NotesBrowser(self)
+        nd = ui.editnotes.NotesBrowser(self, self._currentSource(),
+                                       self._currentVolume())
         nd.exec_()
 
 

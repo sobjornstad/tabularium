@@ -34,10 +34,10 @@ class TreeWidgetItem(QTreeWidgetItem):
 
 class NotesBrowser(QDialog):
     # Ideally we would handle this with a model/view; if I ever really feel
-    # like refactoring and hav nothing better to do, we can do it...but I
+    # like refactoring and have nothing better to do, we can do it...but I
     # think the widget is a decent way to handle it for now, so I don't have
     # to learn how to write a tree view model for this one thing.
-    def __init__(self, parent):
+    def __init__(self, parent, jumpToSource=None, jumpToVolume=None):
         QDialog.__init__(self)
         self.form = forms.editnotes.Ui_Dialog()
         self.form.setupUi(self)
@@ -53,6 +53,27 @@ class NotesBrowser(QDialog):
 
         self.fillTreeWidget()
         self.fillNotesWidget()
+
+        if jumpToSource and jumpToVolume:
+            sourceName = jumpToSource.getName()
+            # the following is the way we choose to display volume names, and
+            # could change in the future
+            volumeName = jumpToSource.getAbbrev() + str(jumpToVolume.getNum())
+            item = self.form.tree.findItems(sourceName, Qt.MatchExactly)[0]
+            numChildren = item.childCount()
+            if numChildren == 0:
+                # Either there are no volumes (which is not the case because
+                # there's an occurrence), or this is a single-volume source.
+                # Thus, select the source.
+                found = item
+            else:
+                found = None
+                for childNum in range(numChildren):
+                    if unicode(item.child(childNum).text(0)) == volumeName:
+                        found = item.child(childNum)
+                        break
+            if found is not None:
+                self.form.tree.setCurrentItem(found)
 
     def reject(self):
         self.saveIfModified()

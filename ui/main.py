@@ -3,7 +3,7 @@
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox
-from PyQt4.QtCore import QObject, QEvent
+from PyQt4.QtCore import QObject, QEvent, Qt
 from forms.main import Ui_MainWindow
 import sqlite3
 import sys
@@ -456,15 +456,16 @@ class MainWindow(QMainWindow):
         sf.actionDelete.triggered.connect(self.onDeleteEntry)
         sf.actionAdd_occ.triggered.connect(self.onAddOccurrence)
         sf.actionDelete_occ.triggered.connect(self.onDeleteOccurrence)
+        sf.actionSource_notes.triggered.connect(self.onSourceNotes)
+        sf.actionDiary_notes.triggered.connect(self.onDiaryNotes)
 
     def onInspect_FollowNearby(self):
-        # NOTE: This can select other, longer, entries, as it %-pads. I'm not
-        # sure if this is a problem, as it won't select *shorter* ones, and the
-        # shortest one is the top one and will be chosen.
         entryName = unicode(self.form.nearbyList.currentItem().text())
         self.form.searchBox.setText(entryName)
         self.onSearch()
-        self._selectFirstAndFocus(self.form.entriesList)
+        item = self.form.entriesList.findItems(entryName, Qt.MatchExactly)[0]
+        self.form.entriesList.setCurrentItem(item)
+        self.form.entriesList.setFocus()
         #TODO: Ideally we would autoselect the occurrence that was nearby,
         #      but that's a LOT more work, so not right away.
 
@@ -505,6 +506,21 @@ class MainWindow(QMainWindow):
             occ.delete()
             self.form.occurrencesList.takeItem(row)
 
+    def onSourceNotes(self):
+        occ = self._fetchCurrentOccurrence()
+        volume = occ.getVolume()
+        source = volume.getSource()
+        nb = ui.editnotes.NotesBrowser(self, jumpToSource=source,
+                                       jumpToVolume=volume)
+        nb.exec_()
+    def onDiaryNotes(self):
+        occ = self._fetchCurrentOccurrence()
+        diaryVolume = db.volumes.findDateInDiary(occ.getAddedDate())
+        source = diaryVolume.getSource()
+        nb = ui.editnotes.NotesBrowser(self, jumpToSource=source,
+                                       jumpToVolume=diaryVolume)
+        nb.exec_()
+
     def onManageSources(self):
         ms = ui.sourcemanager.SourceManager(self)
         ms.exec_()
@@ -533,6 +549,9 @@ class MainWindow(QMainWindow):
         sf = self.form
         ifCondition = sf.nearbyList.currentRow() != -1
         sf.actionFollow_Nearby_Entry.setEnabled(ifCondition)
+        ifCondition = sf.occurrencesList.currentRow() != -1
+        sf.actionSource_notes.setEnabled(ifCondition)
+        sf.actionDiary_notes.setEnabled(ifCondition)
     def checkOccurrenceMenu(self):
         sf = self.form
         ifNoOccurrence = sf.occurrencesList.currentRow() != -1

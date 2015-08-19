@@ -946,15 +946,24 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>&amp;Follow Nearby Entry</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+I, F</string>
+   </property>
   </action>
   <action name="actionSource_notes">
    <property name="text">
     <string>&amp;Source notes...</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+I, N</string>
+   </property>
   </action>
   <action name="actionDiary_notes">
    <property name="text">
     <string>&amp;Diary notes...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I, D</string>
    </property>
   </action>
   <action name="actionManage_sources">
