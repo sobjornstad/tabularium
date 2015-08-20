@@ -40,7 +40,8 @@ class AddOccWindow(QDialog):
         """
         toParse = unicode(self.form.valueBox.text())
         try:
-            occs = db.occurrences.makeOccurrencesFromString(toParse, self.entry)
+            occs, numDupes = db.occurrences.makeOccurrencesFromString(
+                    toParse, self.entry)
         except db.occurrences.InvalidUOFError:
             error = u"The occurrence string is invalid – please check your " \
                     "syntax and try again."
@@ -53,6 +54,10 @@ class AddOccWindow(QDialog):
             error = "%s" % e
         else:
             super(AddOccWindow, self).accept()
+            if numDupes > 0:
+                ui.utils.informationBox("%i of the occurrences you added were "
+                                        "already in the database." % numDupes,
+                                        "Duplicate warning")
             return
 
         # if we're still here, there was an exception

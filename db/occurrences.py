@@ -16,6 +16,11 @@ class InvalidUOFError(Exception):
         self.text = text
     def __str__(self):
         return self.text
+class DuplicateError(Exception):
+    def __init__(self, text="That occurrence already exists."):
+        self.text = text
+    def __str__(self):
+        return self.text
 class NonexistentSourceError(Exception):
     def __init__(self, sourceName):
         self.sourceName = sourceName
@@ -69,9 +74,17 @@ class Occurrence(object):
     def makeNew(cls, entry, volume, ref, type):
         dAdded = dateSerializer(datetime.date.today())
         dEdited = dAdded
-
         eid = entry.getEid()
         vid = volume.getVid()
+
+        # check for dupes
+        q = '''SELECT oid FROM occurrences
+               WHERE eid=? AND vid=? AND ref=? AND type=?'''
+        d.cursor.execute(q, (eid, vid, ref, type))
+        if d.cursor.fetchall():
+            raise DuplicateError
+
+        # create
         q = '''INSERT INTO occurrences
                (oid, eid, vid, ref, type, dEdited, dAdded)
                VALUES (null, ?,?,?,?,?,?)'''
@@ -245,7 +258,9 @@ def makeOccurrencesFromString(s, entry):
         entry - the entry to add the occurrences to
 
     Return:
-        A list of Occurrence objects that were created.
+        A tuple:
+            [0] A list of Occurrence objects that were created.
+            [1] The number of duplicates specified by /s/ that were skipped.
 
     Raises:
         All exceptions raised by parseUnifiedFormat() are not caught by this
@@ -254,10 +269,14 @@ def makeOccurrencesFromString(s, entry):
     """
     uofRets = parseUnifiedFormat(s)
     occs = []
+    numDupes = 0
     for i in uofRets:
         source, vol, ref, refType = i
-        occs.append(Occurrence.makeNew(entry, vol, ref, refType))
-    return occs
+        try:
+            occs.append(Occurrence.makeNew(entry, vol, ref, refType))
+        except DuplicateError:
+            numDupes += 1
+    return occs, numDupes
 
 def parseUnifiedFormat(s):
     """

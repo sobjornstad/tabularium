@@ -49,6 +49,11 @@ class OccTests(utils.DbTestCase):
         assert o1.getAddedDate() == date.today()
         assert o1.getEditedDate() == date.today()
 
+        # dupes
+        with self.assertRaises(db.occurrences.DuplicateError):
+            o2 = Occurrence.makeNew(e1, v1, '25', 0)
+            o3 = Occurrence.makeNew(e1, v1, '25', 0)
+
         # delete
         o1.delete()
         assert len(fetchForEntry(e2)) == 0
