@@ -252,20 +252,40 @@ class Source(object):
 
     def delete(self):
         """
-        PSEUDOCODE IMPLEMENTATION: can't do this yet, pending (#TODO) a feature
-        to zap any entries with no occurrences, and the changeover of
-        occurrences from notebooks to volumes.
-
-        display "here be dragons" warning message
-        queries = (
-            "DELETE * FROM volumes WHERE sid=?"
-            "DELETE * FROM occurrences WHERE sid=?"
-            "DELETE * FROM sources WHERE sid=?"
-            )
-        execute queries
-        run orphaned entry cleanup
+        Look out -- this method can cause MASSIVE data loss, as it
+        unconditionally deletes all volumes, entries, and occurrences that use
+        the source as well as the source itself. Never, ever call this method
+        without providing an appropriate warning (perhaps with the details from
+        deletePreview()).
         """
-        pass
+        d.cursor.execute('SELECT vid FROM volumes WHERE sid=?', (self._sid,))
+        volumes = [db.volumes.Volume(volTuple[0])
+                   for volTuple in d.cursor.fetchall()]
+        for vol in volumes:
+            vol.delete()
+        d.cursor.execute('DELETE FROM sources WHERE sid=?', (self._sid,))
+        d.checkAutosave()
+
+    def deletePreview(self):
+        """
+        Return a tuple explaining what will be deleted when self is:
+            [0] how many volumes
+            [1] how many occurrences.
+
+        (Note that entries may also be deleted, but those are difficult to
+        count -- they're the ones that may be orphaned by the occurrence
+        deletion.)
+        """
+        volumes = db.volumes.volumesInSource(self)
+
+        vidList = [i.getVid() for i in volumes]
+        bindings = ','.join('?' * len(volumes))
+        q = 'SELECT oid FROM occurrences WHERE vid IN (%s)' % (bindings)
+        d.cursor.execute(q, vidList)
+        occurrences = [db.occurrences.Occurrence(occTuple[0])
+                       for occTuple in d.cursor.fetchall()]
+
+        return len(volumes), len(occurrences)
 
     def dump(self):
         q = """UPDATE sources SET name=?, volval=?, pageval=?, nearrange=?,

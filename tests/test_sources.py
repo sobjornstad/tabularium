@@ -4,7 +4,7 @@ import db.database as d
 from db.consts import sourceTypes
 from db.sources import *
 from db.volumes import Volume
-from db.occurrences import Occurrence
+from db.occurrences import Occurrence, fetchForEntry
 from db.entries import Entry
 
 class SourceTests(utils.DbTestCase):
@@ -78,6 +78,30 @@ class SourceTests(utils.DbTestCase):
         assert len(e2.getOccurrences()) == 1
 
 
+    def testDelete(self):
+        s1 = Source.makeNew('Chronic Book', (10,100), (44,80), 25, 'CD',
+                sourceTypes['diary'])
+        v1 = Volume.makeNew(s1, 10, "")
+        e1 = Entry.makeNew("foo")
+        o1 = Occurrence.makeNew(e1, v1, '25', 0)
+        o2 = Occurrence.makeNew(e1, v1, '29', 0)
+
+        # these things should survive
+        s2 = Source.makeNew('The Chronicles', (1,17), (1,240), 2, 'CC',
+                sourceTypes['other']) # Lillian & Sylvia reference :-)
+        v1n = Volume.makeNew(s2, 5, "")
+        v2n = Volume.makeNew(s2, 2, "")
+        e1n = Entry.makeNew("Martha")
+        o1n = Occurrence.makeNew(e1n, v1n, '25', 0)
+        o2n = Occurrence.makeNew(e1n, v1n, '50', 0)
+
+        assert s1.deletePreview() == (1, 2)
+        s1.delete()
+        assert len(allSources()) == 1, len(allSources())
+        assert db.volumes.volExists(s2, 5)
+        assert len(db.entries.allEntries()) == 1
+        fetch = fetchForEntry(e1n)
+        assert fetch == [o1n, o2n] or fetch == [o2n, o1n]
 
 
     def testFetches(self):

@@ -111,7 +111,32 @@ class SourceManager(QDialog):
         if r:
             self.form.sourceTable.model().doUpdate()
     def onDelete(self):
-        pass
+        index = self.form.sourceTable.selectionModel().selectedRows()[0]
+        source = self.form.sourceTable.model().sources[index.row()]
+        deletedNums = source.deletePreview()
+        if deletedNums[0] > 0:
+            msg = "You have chosen to delete the source '%s'. This will result in "\
+                  "the permanent deletion of %i volume%s and %i occurrence%s, "\
+                  "along with any entries that are left without occurrences."
+            title = "Heads up or heads off!"
+            if deletedNums[1] > 30:
+                msg += " You are highly advised to back up your database before "\
+                       "continuing. Are you sure you want to delete this source?"
+                check = "I have backed up my database."
+            else:
+                msg += " Are you sure you want to delete this source?"
+                check = "Really delete this source"
+
+            msg = msg % (source.getName(),
+                         deletedNums[0], "" if deletedNums[0] == 1 else "s",
+                         deletedNums[1], "" if deletedNums[1] == 1 else "s")
+            cd = ui.utils.ConfirmationDialog(self, msg, check, title)
+            r = cd.exec_()
+            if not r:
+                return
+        source.delete()
+        self.form.sourceTable.model().doUpdate()
+
 
 
 class NewSourceDialog(QDialog):
