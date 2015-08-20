@@ -97,6 +97,12 @@ class OccTests(utils.DbTestCase):
         entryOrder = [i.getEntry() for i in order]
         assert r == entryOrder
 
+        # getOccsOfEntry (similar but more restrictive)
+        # same entry as o1 but different occurrence and pagenum
+        o8 = Occurrence.makeNew(e1, v1, '27', 0)
+        assert o8.getOccsOfEntry() == [o1, o8] or o8.getOccsOfEntry == [o8, o1]
+
+
         ### test none returns for invalid entries?
 
     def testUOFSplitSourceRef(self):

@@ -572,7 +572,6 @@ class MainWindow(QMainWindow):
                 "" if occsAffected == 1 else "s"), "Delete entry?")
         if r == QMessageBox.Yes:
             entry.delete()
-            #self.form.entriesList.takeItem(row)
         self.updateAndRestoreSelections()
 
 
@@ -586,13 +585,14 @@ class MainWindow(QMainWindow):
         self.saveSelections()
         row = self.form.occurrencesList.currentRow()
         occ = self._fetchCurrentOccurrence()
-        r = ui.utils.questionBox("Do you really want to delete the "
-                                 "occurrence '%s'?" % str(occ),
-                                 "Delete entry?")
+        qString = "Do you really want to delete the occurrence '%s'?" % str(occ)
+        if len(occ.getOccsOfEntry()) == 1:
+            entry = occ.getEntry()
+            qString +=" (The entry '%s' will be deleted too.)" % entry.getName()
+        r = ui.utils.questionBox(qString, "Delete entry?")
         if r == QMessageBox.Yes:
             occ.delete()
-            #TODO: also take from the entries box if needed!
-            #self.form.occurrencesList.takeItem(row)
+            db.entries.deleteOrphaned()
         self.updateAndRestoreSelections()
 
     def onSourceNotes(self):

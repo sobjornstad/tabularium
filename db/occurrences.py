@@ -151,12 +151,21 @@ class Occurrence(object):
         d.cursor.execute('DELETE FROM occurrences WHERE oid=?', (self._oid,))
         d.checkAutosave()
 
+    def getOccsOfEntry(self):
+        """
+        Return a list of all occurrences belonging to this entry (including
+        self).
+        """
+        q = 'SELECT oid FROM occurrences WHERE eid=?'
+        d.cursor.execute(q, (self._entry.getEid(),))
+        return [Occurrence(oidTuple[0]) for oidTuple in d.cursor.fetchall()]
+
     def getNearby(self, nearRange=1):
         """
         Find all occurrences that are in the same volume and within /nearRange/
-        pages/indices of it. Eventually /nearRange/ should be part of the
-        source options; for now this will ordinarily use the default value of
-        1.
+        pages/indices of it, and return their entries. Eventually /nearRange/
+        should be part of the source options; for now this will ordinarily use
+        the default value of 1.
 
         If the current occurrence is a redirect and thus has no logical result
         for this operation, or if the range or other data is otherwise invalid
