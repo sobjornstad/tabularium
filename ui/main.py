@@ -551,8 +551,9 @@ class MainWindow(QMainWindow):
         if edit:
             assert entry is not None, "Must specify entry when using edit=True"
             ae.setEditing()
-        ae.exec_()
-        self.updateAndRestoreSelections()
+        r = ae.exec_()
+        if r:
+            self.updateAndRestoreSelections()
     def onAddEntryBasedOn(self):
         entry = self._fetchCurrentEntry()
         self.onAddEntry(entry)
@@ -581,8 +582,9 @@ class MainWindow(QMainWindow):
         self.saveSelections()
         # Anna-Christina's window
         ac = ui.addoccurrence.AddOccWindow(self, self._fetchCurrentEntry())
-        ac.exec_()
-        self.updateAndRestoreSelections()
+        r = ac.exec_()
+        if r:
+            self.updateAndRestoreSelections()
     def onDeleteOccurrence(self):
         self.saveSelections()
         row = self.form.occurrencesList.currentRow()
@@ -595,7 +597,7 @@ class MainWindow(QMainWindow):
         if r == QMessageBox.Yes:
             occ.delete()
             db.entries.deleteOrphaned()
-        self.updateAndRestoreSelections()
+            self.updateAndRestoreSelections()
 
     def onSourceNotes(self):
         occ = self._fetchCurrentOccurrence()
