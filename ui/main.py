@@ -540,7 +540,7 @@ class MainWindow(QMainWindow):
         self.saveSelections()
         ae = ui.addentry.AddEntryWindow(self)
         if entry:
-            ae.initializeSortKeyCheck(entry.getName())
+            ae.initializeSortKeyCheck(entry.getName(), entry.getSortKey())
             ae.putClassification(entry)
             ae.resetTitle("New Entry Based On '%s'" % entry.getName())
         if redirTo:

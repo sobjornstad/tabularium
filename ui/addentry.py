@@ -71,14 +71,14 @@ class AddEntryWindow(QDialog):
     def resetTitle(self, title):
         self.setWindowTitle(title)
 
-    def initializeSortKeyCheck(self, value=""):
+    def initializeSortKeyCheck(self, value="", skValue=""):
         """
         Get the stored value of the name/sort key into sync. See
         maybeUpdateSortKey().
         """
         self.oldName = value
         self.form.nameBox.setText(value)
-        self.form.sortKeyBox.setText(value)
+        self.form.sortKeyBox.setText(skValue if skValue else value)
 
     def maybeUpdateSortKey(self):
         """
