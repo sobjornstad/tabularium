@@ -67,6 +67,8 @@ class MainWindow(QMainWindow):
         sf.searchAddButton.clicked.connect(self.onAddFromSearch)
         sf.entriesList.itemSelectionChanged.connect(self.fillOccurrences)
         sf.occurrencesList.itemSelectionChanged.connect(self.fillInspect)
+        sf.nearbyList.itemDoubleClicked.connect(self.onInspect_FollowNearby)
+        sf.entriesList.itemDoubleClicked.connect(self.onEditEntry)
 
         # connect menu check functions (for enable/disable)
         sf.menuEntry.aboutToShow.connect(self.checkEntryMenu)
