@@ -201,6 +201,9 @@ class OccTests(utils.DbTestCase):
                     'RT:see Other. see Entry.': 'RT 1.Other. see Entry. (2) == ',
                     'RT see Other. see E. Entry': 'RT 1.Other. see E. Entry (2) == ',
                     'RT see   Other . see   E. Entry': 'RT 1.Other . see   E. Entry (2) == ',
+                    'RT: see "21st century classroom"': 'RT 1."21st century classroom" (2) == ',
+                    'RT {see "21st century classroom"}': 'RT 1."21st century classroom" (2) == ',
+                    'Random Thoughts {see "21st century classroom",}': 'RT 1."21st century classroom" (2) == ',
                    }
 
         for i in testDict.keys():

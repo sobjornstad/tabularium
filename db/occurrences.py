@@ -298,11 +298,9 @@ def parseUnifiedFormat(s):
       (or you can write in volume 1, but that's generally silly).
     - The colon may be omitted entirely so long as the source name does not
       contain any numbers or colons. If there are numbers or colons in the
-      source name, the parser would otherwise be unable to figure out where the
-      source name ended and the page number began. If there are multiple
-      numbers separated by at least one space or non-numeric character and no
-      colon, or a colon in the source but not after it, the string is invalid
-      UOF.
+      source name, the parser will be too confused to tell what you mean (even
+      if the volume number has been omitted), and you must use the colon or put
+      the reference in braces.
     - If the source is not a valid source abbreviation, the parser will try to
       parse it as a full source name; if there is a conflict, the abbreviation
       takes precedence.
