@@ -67,6 +67,7 @@ class AddEntryWindow(QDialog):
     def setEditing(self):
         self.isEditing = True
         self.beforeEditingName = unicode(self.form.nameBox.text())
+        self.form.addButton.setText("S&ave")
 
     def resetTitle(self, title):
         self.setWindowTitle(title)

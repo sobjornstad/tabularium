@@ -551,6 +551,7 @@ class MainWindow(QMainWindow):
         if edit:
             assert entry is not None, "Must specify entry when using edit=True"
             ae.setEditing()
+            ae.resetTitle("Edit Entry '%s'" % entry.getName())
         r = ae.exec_()
         if r:
             self.updateAndRestoreSelections()
