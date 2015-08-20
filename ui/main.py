@@ -262,6 +262,7 @@ class MainWindow(QMainWindow):
         if entry is not None:
             # hold onto objects for reference by _fetchCurrentOccurrence
             self.currentOccs = entry.getOccurrences()
+            self.currentOccs.sort(key=lambda i: str(i).lower())
             for i in self.currentOccs:
                 self.form.occurrencesList.addItem(str(i))
         self.updateMatchesStatus()

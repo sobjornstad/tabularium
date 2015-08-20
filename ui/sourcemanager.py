@@ -29,6 +29,7 @@ class SourceTableModel(QAbstractTableModel):
         self.beginResetModel()
         self.sources = db.sources.allSources()
         self.endResetModel()
+        self.sort(0, QtCore.Qt.AscendingOrder)
 
     def data(self, index, role):
         if role != QtCore.Qt.DisplayRole:
@@ -43,13 +44,26 @@ class SourceTableModel(QAbstractTableModel):
         elif col == 2:
             return db.consts.sourceTypesFriendlyReversed[robj.getStype()]
         elif col == 3:
-            if robj.isSingleVol():
-                return "(single-volume)"
-            else:
-                return len(db.volumes.volumesInSource(robj))
+            return robj.getNumVolsRepr()
         else:
             assert False, "Invalid column!"
             return None
+
+    def sort(self, column, order=QtCore.Qt.AscendingOrder):
+        rev = not (order == QtCore.Qt.AscendingOrder)
+
+        if column == 0:
+            key = lambda i: i.getName().lower()
+        elif column == 1:
+            key = lambda i: i.getAbbrev().lower()
+        elif column == 2:
+            key = lambda i: db.consts.sourceTypesFriendlyReversed[i.getStype()]
+        elif column == 3:
+            key = lambda i: len(db.volumes.volumesInSource(i))
+
+        self.beginResetModel()
+        self.sources.sort(key=key, reverse=rev)
+        self.endResetModel()
 
     def headerData(self, col, orientation, role):
         # note: I don't know why, but if this if-statement is left out, the
@@ -86,14 +100,16 @@ class SourceManager(QDialog):
 
     def onNew(self):
         nsd = NewSourceDialog(self)
-        nsd.exec_()
-        self.form.sourceTable.model().doUpdate()
+        r = nsd.exec_()
+        if r:
+            self.form.sourceTable.model().doUpdate()
     def onEdit(self):
         index = self.form.sourceTable.selectionModel().selectedRows()[0]
         source = self.form.sourceTable.model().sources[index.row()]
         nsd = NewSourceDialog(self, source)
-        nsd.exec_()
-        self.form.sourceTable.model().doUpdate()
+        r = nsd.exec_()
+        if r:
+            self.form.sourceTable.model().doUpdate()
     def onDelete(self):
         pass
 

@@ -139,6 +139,12 @@ class Source(object):
         q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
         d.cursor.execute(q, (self._sid, num))
         return True if d.cursor.fetchall() else False
+    def getNumVolsRepr(self):
+        "Get a friendly representation of how many volumes are in this source."
+        if self.isSingleVol():
+            return "(single-volume)"
+        else:
+            return len(db.volumes.volumesInSource(self))
 
     def setName(self, name):
         if self._name != name:
@@ -282,7 +288,10 @@ def abbrevUsed(name):
     return True if d.cursor.fetchall() else False
 
 def allSources(includeSingleVolSources=True):
-    d.cursor.execute('SELECT sid FROM sources')
+    """
+    Return a list of all sources, sorted by name.
+    """
+    d.cursor.execute('SELECT sid FROM sources ORDER BY name')
     sources = [Source(sid[0]) for sid in d.cursor.fetchall()]
     if not includeSingleVolSources:
         sources = [source for source in sources if source.getVolVal() != (1,1)]

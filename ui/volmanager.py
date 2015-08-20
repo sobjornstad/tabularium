@@ -23,6 +23,11 @@ class VolumeTableModel(QAbstractTableModel):
         self.headerdata = ["Number", "Opened", "Closed", "Notes"]
         self.vols = None
 
+        # default sort parameters
+        # At this point we don't have the data, so don't actually sort() yet.
+        self.curSortColumn = 0
+        self.curSortIsReversed = False
+
     def rowCount(self, parent):
         return len(self.vols) if self.vols is not None else 0
     def columnCount(self, parent):
@@ -48,6 +53,30 @@ class VolumeTableModel(QAbstractTableModel):
             assert False, "Invalid column!"
             return None
 
+    def sort(self, column, order=QtCore.Qt.AscendingOrder, isReversed=None):
+        if isReversed:
+            rev = isReversed
+        else:
+            rev = not (order == QtCore.Qt.AscendingOrder)
+        # Save the column we've chosen for use after replaceData(). isReversed
+        # parameter is used to support this, since we can't cleanly negate the
+        # constant QtCore.Qt.AscendingOrder.
+        self.curSortColumn = column
+        self.curSortIsReversed = rev
+
+        if column == 0:
+            key = lambda i: i.getNum()
+        elif column == 1:
+            key = lambda i: i.getDopened()
+        elif column == 2:
+            key = lambda i: i.getDclosed()
+        elif column == 3:
+            key = lambda i: "Available" if i.getNotes() else "None"
+
+        self.beginResetModel()
+        self.vols.sort(key=key, reverse=rev)
+        self.endResetModel()
+
     def headerData(self, col, orientation, role):
         # note: I don't know why, but if this if-statement is left out, the
         # headers silently don't show up
@@ -59,6 +88,7 @@ class VolumeTableModel(QAbstractTableModel):
         self.beginResetModel()
         self.vols = volList
         self.endResetModel()
+        self.sort(self.curSortColumn, isReversed=self.curSortIsReversed)
 
 
 class VolumeManager(QDialog):
@@ -118,7 +148,6 @@ class VolumeManager(QDialog):
         nd = ui.editnotes.NotesBrowser(self, self._currentSource(),
                                        self._currentVolume())
         nd.exec_()
-        self.fillVolumes()
 
     def _currentVolume(self):
         """
