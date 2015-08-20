@@ -258,9 +258,6 @@ class MainWindow(QMainWindow):
         """
 
         self._resetForOccurrence()
-        if not self.form.entriesList.currentItem():
-            return
-
         entry = self._fetchCurrentEntry()
         if entry is not None:
             # hold onto objects for reference by _fetchCurrentOccurrence
