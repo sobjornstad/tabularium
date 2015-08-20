@@ -41,6 +41,15 @@ class SourceTests(utils.DbTestCase):
                     sourceTypes['book'])
             s3 = Source.makeNew('Chronic Books', (10,100), (44,80), 25, 'CH',
                     sourceTypes['book'])
+        with self.assertRaises(InvalidNameError):
+            s3 = Source.makeNew('Chronic {Books}', (10,100), (44,80), 25, 'CI',
+                    sourceTypes['book'])
+        with self.assertRaises(InvalidNameError):
+            s3 = Source.makeNew('Chronic|Books', (10,100), (44,80), 25, 'CJ',
+                    sourceTypes['book'])
+        with self.assertRaises(InvalidNameError):
+            s3 = Source.makeNew('Chronicality', (10,100), (44,80), 25, 'C|H',
+                    sourceTypes['book'])
 
         # resetting sensitive things
         v1 = Volume.makeNew(s1, 50, "")

@@ -198,11 +198,8 @@ class NewSourceDialog(QDialog):
                 self.source.setNearbyRange(newNearrange)
                 self.source.setAbbrev(newAbbr)
                 # right now, no setting of stype
-        except db.sources.DuplicateError as e:
-            ui.utils.errorBox(str(e))
-        except db.sources.InvalidRangeError as e:
-            ui.utils.errorBox(str(e))
-        except db.sources.DiaryExistsError as e:
+        except (db.sources.DuplicateError, db.sources.InvalidNameError,
+                db.sources.InvalidRangeError, db.sources.DiaryExistsError) as e:
             ui.utils.errorBox(str(e))
         except db.sources.TrouncesError as e:
             whichThing = e.whichThing
