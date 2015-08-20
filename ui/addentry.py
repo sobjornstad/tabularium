@@ -39,6 +39,7 @@ class AddEntryWindow(QDialog):
         self.form.nameBox.textChanged.connect(self.maybeUpdateSortKey)
         self.form.unclassifiedButton.setChecked(True)
         self.preparedOccurrence = None
+        self.isEditing = False
 
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
@@ -61,7 +62,11 @@ class AddEntryWindow(QDialog):
     def putRedirect(self, to):
         self.putClassification(to)
         name = to.getName()
-        self.preparedOccurrence = ".see " + to.getName()
+        self.preparedOccurrence = " see " + to.getName()
+
+    def setEditing(self):
+        self.isEditing = True
+        self.beforeEditingName = unicode(self.form.nameBox.text())
 
     def resetTitle(self, title):
         self.setWindowTitle(title)
@@ -99,25 +104,39 @@ class AddEntryWindow(QDialog):
     def accept(self):
         """
         Add new entry to the database and open the add occurrences window,
-        passing in the new Entry. If the entry already exists, indicate as such
-        and open the add occurrences window without touching the db, passing in
-        the existing Entry.
+        passing in the new Entry.
+
+        If the entry already exists:
+            if not self.isEditing - indicate as such and open the add
+                occurrences window without touching the db, passing in the
+                existing Entry.
+            otherwise - update the existing Entry with the new content, and
+                do not open the add occurrences window.
         """
 
-        newName = unicode(self.form.nameBox.text())
-        existingEntry = db.entries.find(newName)
-        if existingEntry:
-            utils.informationBox("Entry already exists; adding occurrences.",
-                    "Entry exists")
-            entry = existingEntry[0]
-        else:
-            newSk = unicode(self.form.sortKeyBox.text())
-            classif = self._getSelectedClassif()
-            entry = db.entries.Entry.makeNew(newName, newSk, classif)
 
-        super(AddEntryWindow, self).accept()
-        ac = ui.addoccurrence.AddOccWindow(self, entry, self.preparedOccurrence)
-        ac.exec_()
+        newName = unicode(self.form.nameBox.text())
+        newSk = unicode(self.form.sortKeyBox.text())
+        classif = self._getSelectedClassif()
+
+        if self.isEditing:
+            entryToEdit = db.entries.find(self.beforeEditingName)[0]
+            entryToEdit.setName(newName)
+            entryToEdit.setSortKey(newSk)
+            entryToEdit.setClassification(classif)
+            super(AddEntryWindow, self).accept()
+        else:
+            existingEntry = db.entries.find(newName)
+            if not existingEntry:
+                entry = db.entries.Entry.makeNew(newName, newSk, classif)
+            else:
+                utils.informationBox("Entry already exists; adding occurrences.",
+                        "Entry exists")
+                entry = existingEntry[0]
+            ac = ui.addoccurrence.AddOccWindow(self, entry,
+                                               self.preparedOccurrence)
+            super(AddEntryWindow, self).accept()
+            ac.exec_()
 
     def _getSelectedClassif(self):
         """

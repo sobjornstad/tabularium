@@ -91,6 +91,8 @@ class MainWindow(QMainWindow):
         sf.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
         self.onChangeSearchOptions()
         self.fillEntries()
+        self.savedTexts = ("", "")
+        self.savedSelections = (-1,-1)
 
         # set up inspection options
         self.inspectOptions = {}
@@ -260,10 +262,11 @@ class MainWindow(QMainWindow):
             return
 
         entry = self._fetchCurrentEntry()
-        # hold onto objects for reference by _fetchCurrentOccurrence
-        self.currentOccs = entry.getOccurrences()
-        for i in self.currentOccs:
-            self.form.occurrencesList.addItem(str(i))
+        if entry is not None:
+            # hold onto objects for reference by _fetchCurrentOccurrence
+            self.currentOccs = entry.getOccurrences()
+            for i in self.currentOccs:
+                self.form.occurrencesList.addItem(str(i))
         self.updateMatchesStatus()
 
     def fillInspect(self):
@@ -460,6 +463,49 @@ class MainWindow(QMainWindow):
         else:
             return db.sources.byName(name)
 
+    def saveSelections(self):
+        el = self.form.entriesList
+        ol = self.form.occurrencesList
+        self.savedSelections = (el.currentRow(),
+                                ol.currentRow())
+        self.savedTexts = (el.currentItem().text()
+                           if el.currentItem() else "",
+                           ol.currentItem().text
+                           if ol.currentItem() else "")
+
+    def updateAndRestoreSelections(self):
+        #TODO: Consider whether there should be an option to go highlight
+        # the just-added entry
+        self._resetForEntry()
+        self.fillEntries()
+        #except AttributeError:
+            # If we just deleted something, fillOccurrences will fail, but it's
+            # no big deal as we select an item further down which will signal
+            # it to fill them.
+        #    pass
+
+        self.form.statusBar.showMessage("Reloading...")
+        el = self.form.entriesList
+        ol = self.form.occurrencesList
+        # try for an exact match on the former text
+        result = el.findItems(self.savedTexts[0], Qt.MatchExactly)
+        if result:
+            el.setCurrentItem(result[0])
+            # since we've found the exact item, we can also sensibly restore
+            # the occurrence selection
+            if self.savedSelections[1] <= ol.count() - 1:
+                ol.setCurrentRow(self.savedSelections[1])
+            else:
+                ol.setCurrentRow(ol.count() - 1)
+        else:
+            # try by row, so we end up near where we were before
+            if self.savedSelections[0] <= el.count() - 1:
+                el.setCurrentRow(self.savedSelections[0])
+            else:
+                el.setCurrentRow(self.form.entriesList.count() - 1)
+
+        self.form.statusBar.clearMessage()
+
 
     ### Functions from the menu ###
     #TODO: When returning from a menu like "add entry," make sure the view is
@@ -472,6 +518,7 @@ class MainWindow(QMainWindow):
         sf.actionAdd.triggered.connect(self.onAddEntry)
         sf.actionNew_based_on.triggered.connect(self.onAddEntryBasedOn)
         sf.actionAdd_Redirect_To.triggered.connect(self.onAddRedirect)
+        sf.actionEdit.triggered.connect(self.onEditEntry)
         sf.actionManage_sources.triggered.connect(self.onManageSources)
         sf.actionManage_volumes.triggered.connect(self.onManageVolumes)
         sf.actionNotes.triggered.connect(self.onViewNotes)
@@ -491,24 +538,32 @@ class MainWindow(QMainWindow):
         #TODO: Ideally we would autoselect the occurrence that was nearby,
         #      but that's a LOT more work, so not right away.
 
-    def onAddEntry(self, entryName=None, redirTo=None):
+    def onAddEntry(self, entry=None, redirTo=None, edit=False):
+        self.saveSelections()
         ae = ui.addentry.AddEntryWindow(self)
-        if entryName:
-            ae.initializeSortKeyCheck(entryName)
-            entry = db.entries.find(entryName)[0]
+        if entry:
+            ae.initializeSortKeyCheck(entry.getName())
             ae.putClassification(entry)
-            ae.resetTitle("New Entry Based On '%s'" % entryName)
+            ae.resetTitle("New Entry Based On '%s'" % entry.getName())
         if redirTo:
             ae.putRedirect(redirTo)
             ae.resetTitle("New Redirect To '%s'" % redirTo.getName())
+        if edit:
+            assert entry is not None, "Must specify entry when using edit=True"
+            ae.setEditing()
         ae.exec_()
+        self.updateAndRestoreSelections()
     def onAddEntryBasedOn(self):
         entry = self._fetchCurrentEntry()
-        self.onAddEntry(unicode(entry.getName()))
+        self.onAddEntry(entry)
     def onAddRedirect(self):
         entry = self._fetchCurrentEntry()
         self.onAddEntry(redirTo=entry)
+    def onEditEntry(self):
+        entry = self._fetchCurrentEntry()
+        self.onAddEntry(entry, edit=True)
     def onDeleteEntry(self):
+        self.saveSelections()
         row = self.form.entriesList.currentRow()
         entry = self._fetchCurrentEntry()
         eName = entry.getName()
@@ -519,14 +574,18 @@ class MainWindow(QMainWindow):
                 "" if occsAffected == 1 else "s"), "Delete entry?")
         if r == QMessageBox.Yes:
             entry.delete()
-            self.form.entriesList.takeItem(row)
+            #self.form.entriesList.takeItem(row)
+        self.updateAndRestoreSelections()
 
 
     def onAddOccurrence(self):
+        self.saveSelections()
         # Anna-Christina's window
         ac = ui.addoccurrence.AddOccWindow(self, self._fetchCurrentEntry())
         ac.exec_()
+        self.updateAndRestoreSelections()
     def onDeleteOccurrence(self):
+        self.saveSelections()
         row = self.form.occurrencesList.currentRow()
         occ = self._fetchCurrentOccurrence()
         r = ui.utils.questionBox("Do you really want to delete the "
@@ -535,7 +594,8 @@ class MainWindow(QMainWindow):
         if r == QMessageBox.Yes:
             occ.delete()
             #TODO: also take from the entries box if needed!
-            self.form.occurrencesList.takeItem(row)
+            #self.form.occurrencesList.takeItem(row)
+        self.updateAndRestoreSelections()
 
     def onSourceNotes(self):
         occ = self._fetchCurrentOccurrence()
@@ -630,7 +690,11 @@ class MainWindow(QMainWindow):
         except AttributeError:
             return None
         else:
-            return db.entries.find(search)[0]
+            try:
+                return db.entries.find(search)[0]
+            except IndexError:
+                # entry was just deleted
+                return None
     def _fetchCurrentOccurrence(self):
         """
         Get an Occurrence object for the currently selected entry. Return None if

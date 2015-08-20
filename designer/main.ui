@@ -867,15 +867,18 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionEdit">
    <property name="text">
-    <string>Edit...</string>
+    <string>&amp;Edit...</string>
    </property>
    <property name="statusTip">
     <string>Edit the name, sort key, or classification of the current entry.</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+E, E</string>
+   </property>
   </action>
   <action name="actionMerge_into">
    <property name="text">
-    <string>Merge Into...</string>
+    <string>Merge &amp;Into...</string>
    </property>
    <property name="statusTip">
     <string>Move all of these entry's occurrences into another entry and delete this entry.</string>
@@ -883,7 +886,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionDelete">
    <property name="text">
-    <string>Delete</string>
+    <string>&amp;Delete</string>
    </property>
    <property name="statusTip">
     <string>Delete this entry and all of its occurrences.</string>
@@ -894,7 +897,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionAdd">
    <property name="text">
-    <string>Add...</string>
+    <string>&amp;Add...</string>
    </property>
    <property name="statusTip">
     <string>Add a single new entry.</string>
@@ -905,7 +908,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionAdd_Redirect_To">
    <property name="text">
-    <string>Add Redirect To...</string>
+    <string>Add &amp;Redirect To...</string>
    </property>
    <property name="statusTip">
     <string>Add a new entry redirecting to the currently selected entry.</string>
@@ -916,7 +919,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionAdd_Multiple">
    <property name="text">
-    <string>Add Multiple...</string>
+    <string>Add &amp;Multiple...</string>
    </property>
    <property name="statusTip">
     <string>Add many entries with occurrences belonging to the same source and volume at once.</string>
@@ -927,7 +930,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionNew_based_on">
    <property name="text">
-    <string>Add Based On...</string>
+    <string>Add &amp;Based On...</string>
    </property>
    <property name="statusTip">
     <string>Add a new entry, starting with the values of the entry currently selected.</string>
