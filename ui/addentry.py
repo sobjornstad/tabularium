@@ -116,8 +116,8 @@ class AddEntryWindow(QDialog):
         """
 
 
-        newName = unicode(self.form.nameBox.text())
-        newSk = unicode(self.form.sortKeyBox.text())
+        newName = unicode(self.form.nameBox.text()).strip()
+        newSk = unicode(self.form.sortKeyBox.text()).strip()
         classif = self._getSelectedClassif()
 
         if self.isEditing:
