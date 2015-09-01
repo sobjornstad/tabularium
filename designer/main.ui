@@ -847,7 +847,10 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionPrint">
    <property name="text">
-    <string>Print...</string>
+    <string>&amp;Print</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
   <action name="actionQuit">

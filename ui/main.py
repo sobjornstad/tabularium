@@ -2,7 +2,8 @@
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox
+from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox, \
+        QCursor
 from PyQt4.QtCore import QObject, QEvent, Qt
 from forms.main import Ui_MainWindow
 import sqlite3
@@ -14,7 +15,9 @@ import db.consts
 import db.database
 import db.entries
 import db.occurrences
+import db.printing
 import db.sources
+from db.utils import sortOccs
 
 import ui.addentry
 import ui.addoccurrence
@@ -264,7 +267,7 @@ class MainWindow(QMainWindow):
         if entry is not None:
             # hold onto objects for reference by _fetchCurrentOccurrence
             self.currentOccs = entry.getOccurrences()
-            self.currentOccs.sort(key=lambda i: str(i).lower())
+            self.currentOccs = sortOccs(self.currentOccs)
             for i in self.currentOccs:
                 self.form.occurrencesList.addItem(str(i))
         self.updateMatchesStatus()
@@ -527,6 +530,15 @@ class MainWindow(QMainWindow):
         sf.actionDelete_occ.triggered.connect(self.onDeleteOccurrence)
         sf.actionSource_notes.triggered.connect(self.onSourceNotes)
         sf.actionDiary_notes.triggered.connect(self.onDiaryNotes)
+        sf.actionPrint.triggered.connect(self.onPrint)
+
+    def onPrint(self):
+        #TODO: add more printing functions, and create submenu/choice dialog
+        QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
+        try:
+            db.printing.printFullIndex()
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def onInspect_FollowNearby(self):
         entryName = unicode(self.form.nearbyList.currentItem().text())
