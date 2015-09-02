@@ -1,13 +1,6 @@
-# if true, display a warning that you're editing your actual data file rather
-# than a programming test file
-IS_PRODUCTION = False
+DATABASE_FILENAME = "/home/soren/current/indexer/records.db"
 
-# where the database file is
-if IS_PRODUCTION:
-    DATABASE_FILENAME = "/home/soren/cabinet/records.db"
-else:
-    DATABASE_FILENAME = "records.db"
-    #DATABASE_FILENAME = "test.db"
+##### The following are no longer used.
 
 # the password needed to access the software
 PASSWORD = ''
