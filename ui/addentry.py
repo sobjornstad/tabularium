@@ -61,8 +61,8 @@ class AddEntryWindow(QDialog):
 
     def putRedirect(self, to):
         self.putClassification(to)
-        name = to.getName()
-        self.preparedOccurrence = " {see " + to.getName() + "}"
+        name = to.getName().replace(',', '\\,')
+        self.preparedOccurrence = " {see " + name + "}"
 
     def setEditing(self):
         self.isEditing = True

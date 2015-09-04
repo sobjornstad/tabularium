@@ -350,11 +350,12 @@ def parseUnifiedFormat(s):
       or volume and page references in braces, separating them with a comma. A
       trailing comma inside the braces may optionally be used. (Braces are also
       legal with a single occurrence.)
+    - To place a literal comma within braces (say, in the name of an entry
+      you're redirecting to), escape it with a backslash: '{see Doe\, Jane}'.
     - To enter multiple whole sources, or as a more verbose way of entering
       multiple pages within the same source, place a pipe (|) character between
       the references, with optional (but suggested for readability) spaces on
       either side.
-
 
     Finally, you may want to enter a range or a redirect. Examples:
     CB 15.45-56
@@ -558,11 +559,13 @@ def _splitSourceRef(s):
             volPart = None
             if braceSplits[0].strip().endswith('.'):
                 try:
-                    volPart = re.match(r'.*?(\d+)\.$', braceSplits[0]).group(1)
+                    volPart = re.match(r'.*?(\d+)\.$', braceSplits[0].strip()).group(1)
                     #print "my volPart will be: %r" % volPart
                 except AttributeError:
+                    volPart = re.match(r'.*?(\d+)\.$', braceSplits[0])
+                    raise InvalidUOFError()
+                    print volPart
                     #print "error will be excepted"
-                    pass
             else:
                 #print "I will not run because my braceSplits[0].strip() is:"
                 #print "-> %r" % braceSplits[0].strip()

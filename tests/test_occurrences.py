@@ -218,6 +218,7 @@ class OccTests(utils.DbTestCase):
                     'CB 2.see King, Heather': 'CB 2.King, Heather (2) == ',
                     'CB 2.{see King\, Heather}': 'CB 2.King, Heather (2) == ',
                     'CB 2.{35, see King\, Heather}': 'CB 2.35 (0) == CB 2.King, Heather (2) == ',
+                    'CB 2. {see King\, Heather}': 'CB 2.King, Heather (2) == ',
                    }
 
         for i in testDict.keys():
