@@ -394,6 +394,7 @@ def parseUnifiedFormat(s):
 
     # Step 3: Separate the individual references within 'reference' into a list
     #         of references.
+    reference = reference.replace('\\,', '<ESCAPEDCOMMA>')
     if reference.startswith('{') and reference.endswith('}'):
         reference = reference[1:-1] # chop out braces
         refs = reference.split(',')
@@ -407,6 +408,7 @@ def parseUnifiedFormat(s):
     else:
         # no braces at all, not much to do
         refs = [reference]
+    refs = [i.replace('<ESCAPEDCOMMA>', ',') for i in refs]
 
     # Step 4: Find volume, refnum, and range/redir type from each reference.
     referenceList = []
