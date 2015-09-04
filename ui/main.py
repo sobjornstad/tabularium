@@ -6,6 +6,7 @@ from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox, \
         QCursor
 from PyQt4.QtCore import QObject, QEvent, Qt
 from forms.main import Ui_MainWindow
+from passlib.hash import pbkdf2_sha256 as pbkdf
 import sqlite3
 import sys
 import time
@@ -95,6 +96,21 @@ class MainWindow(QMainWindow):
         sf.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
         sf.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
         self.onChangeSearchOptions()
+
+        # set up configuration
+        self.sh = ui.settings.SettingsHandler(self)
+
+        # make sure user is authorized
+        if self.sh.get('password'):
+            pw, accepted = ui.utils.passwordEntry()
+            if not accepted:
+                sys.exit(0)
+            if not checkPassword(unicode(pw), self.sh):
+                ui.utils.errorBox("Invalid password, exiting program.",
+                                  "No dice!")
+                sys.exit(1)
+
+        # fill entries
         self.fillEntries()
         self.savedTexts = ("", "")
         self.savedSelections = (-1,-1)
@@ -119,9 +135,9 @@ class MainWindow(QMainWindow):
         self.onSourceToggled()
         self.onVolumeToggled()
 
-        # set up configuration fetch options, and restore options
-        self.sh = ui.settings.SettingsHandler(self)
+        # finally, restore user preferences
         self.restoreWindowState()
+
 
     def initDb(self):
         db.database.connect(config.DATABASE_FILENAME)
@@ -531,6 +547,7 @@ class MainWindow(QMainWindow):
         sf.actionSource_notes.triggered.connect(self.onSourceNotes)
         sf.actionDiary_notes.triggered.connect(self.onDiaryNotes)
         sf.actionPrint.triggered.connect(self.onPrint)
+        sf.actionPreferences.triggered.connect(self.onPrefs)
 
     def onPrint(self):
         #TODO: add more printing functions, and create submenu/choice dialog
@@ -539,6 +556,11 @@ class MainWindow(QMainWindow):
             db.printing.printFullIndex()
         finally:
             QApplication.restoreOverrideCursor()
+
+    def onPrefs(self):
+        pw = ui.settings.PreferencesWindow(self, self.sh)
+        pw.exec_()
+
 
     def onInspect_FollowNearby(self):
         entryName = unicode(self.form.nearbyList.currentItem().text())
@@ -735,6 +757,17 @@ class MainWindow(QMainWindow):
     def _selectFirstAndFocus(self, widget):
         widget.setCurrentRow(0)
         widget.setFocus()
+
+def checkPassword(password, conf):
+    """
+    Check if the /password/ matches the one in conf; return True if yes, False
+    if no. Return True if no password is set in the database.
+    """
+
+    if conf.get('password'):
+        return pbkdf.verify(password, conf.get('password'))
+    else:
+        return True
 
 
 def start():

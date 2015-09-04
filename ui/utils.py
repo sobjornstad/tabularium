@@ -3,7 +3,7 @@
 # Copyright 2014 Soren Bjornstad. All rights reserved.
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QDialog, QMessageBox, QCheckBox
+from PyQt4.QtGui import QDialog, QMessageBox, QCheckBox, QInputDialog, QLineEdit
 from PyQt4.QtCore import QObject
 import ui.forms.confirmationwindow
 
@@ -40,6 +40,15 @@ def questionBox(text, title=None):
     if title:
         msgBox.setWindowTitle(title)
     return msgBox.exec_()
+
+def passwordEntry():
+    ret = QInputDialog.getText(None,
+                               "Password required",
+                               "Database password:",
+                               QLineEdit.Password)
+    return ret
+
+
 
 class ConfirmationDialog(QDialog):
     def __init__(self, parent, text, checkText, title):
