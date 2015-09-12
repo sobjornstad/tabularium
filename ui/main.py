@@ -553,9 +553,12 @@ class MainWindow(QMainWindow):
         #TODO: add more printing functions, and create submenu/choice dialog
         QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
         try:
+            self.form.statusBar.showMessage("Generating PDF (this may take a few seconds)...")
+            QApplication.processEvents()
             db.printing.printFullIndex()
         finally:
             QApplication.restoreOverrideCursor()
+            self.form.statusBar.clearMessage()
 
     def onPrefs(self):
         pw = ui.settings.PreferencesWindow(self, self.sh)
