@@ -6,7 +6,7 @@ import db.entries
 import db.occurrences
 from db.sources import Source
 from db.volumes import Volume
-from db.consts import sourceTypes
+from db.consts import sourceTypes, entryTypes
 
 class DbTests(utils.DbTestCase):
     def testObject(self):
@@ -107,3 +107,18 @@ class DbTests(utils.DbTestCase):
         with self.assertRaises(IndexError):
             d.cursor.fetchall()[0]
         assert db.occurrences.Occurrence(o2.getOid())
+
+
+    def testAdvancedFindFeatures(self):
+        # globbing
+        e1 = db.entries.Entry.makeNew("Melgreth, Maudia (_Maudlin_)",
+                classification=entryTypes['person'])
+        e2 = db.entries.Entry.makeNew('"the rational animal"',
+                classification=entryTypes['quote'])
+        e3 = db.entries.Entry.makeNew("_The Art of Computer Programming_",
+                classification=entryTypes['title'])
+
+        assert len(db.entries.find("%t%")) == 3
+        assert len(db.entries.find("%t%", (entryTypes['person'],
+                entryTypes['quote'], entryTypes['title']))) == 3
+        assert len(db.entries.find("%t%", (entryTypes['person'],))) == 1

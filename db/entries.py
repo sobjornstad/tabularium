@@ -7,6 +7,7 @@ import re
 import db.database as d
 import db.occurrences
 from db.utils import dateSerializer, dateDeserializer
+from db.consts import entryTypes
 
 class DuplicateError(Exception):
     def __init__(self):
@@ -132,18 +133,33 @@ def nameExists(name):
     else:
         return False
 
-def find(search, regex=False):
+def find(search, classification=tuple([i for i in entryTypes.values()]),
+         regex=False):
     """
-    Return a list of Entry objects matching the given glob, or empty list if
-    there are no matches. If regex option is True, use search with SQLite's
-    REGEXP option and Python regular expression syntax.
+    Get a list of Entries matching the given criteria.
+
+    Arguments:
+        search - a glob to search for, using either standard SQLite or Python
+            regex matching
+        classification (optional, default all values defined in
+            db.consts.entryTypes) - a tuple of allowable values for the entry's
+            classification
+        regex (optional, default False) - use regex match (see arg /search/)
+
+    Return:
+        A list of entry objects matching the criteria, or an empty list if
+        there were no matches.
+
+    Raises:
+        SQLite.OperationalError - if using regex mode and the regex is invalid,
+            this error will propagate.
     """
 
-    if regex:
-        query = "SELECT eid FROM entries WHERE name REGEXP ?"
-    else:
-        query = 'SELECT eid FROM entries WHERE name LIKE ?'
-    d.cursor.execute(query, (search,))
+    query = "SELECT eid FROM entries WHERE name %s ? AND classification IN (%s)"
+    placeholders = ','.join('?' * len(classification))
+    query = query % ('REGEXP' if regex else 'LIKE', placeholders)
+
+    d.cursor.execute(query, (search,) + classification)
     results = d.cursor.fetchall()
     return [Entry(r[0]) for r in results]
 
@@ -154,7 +170,6 @@ def allEntries():
 
     d.cursor.execute('SELECT eid FROM entries')
     return [Entry(i[0]) for i in d.cursor.fetchall()]
-
 
 def percentageWrap(search):
     return "%" + search + "%"

@@ -123,7 +123,7 @@ class MainWindow(QMainWindow):
             i.toggled.connect(self.onChangeInspectionOptions)
         self.onChangeInspectionOptions()
 
-        # set up limits
+        # set up limits: for occurrences
         self.updateSourceCombo()
         sf.enteredCheck.toggled.connect(self.onEnteredToggled)
         sf.modifiedCheck.toggled.connect(self.onModifiedToggled)
@@ -134,6 +134,12 @@ class MainWindow(QMainWindow):
         self.onModifiedToggled()
         self.onSourceToggled()
         self.onVolumeToggled()
+        # for entries
+        for i in (sf.entriesCommonsCheck, sf.entriesNamesCheck,
+                  sf.entriesPlacesCheck, sf.entriesQuotationsCheck,
+                  sf.entriesTitlesCheck, sf.entriesUnclassifiedCheck):
+            i.toggled.connect(self.fillEntries)
+
 
         # finally, restore user preferences
         self.restoreWindowState()
@@ -260,14 +266,16 @@ class MainWindow(QMainWindow):
         # rather than only afterwards
         QApplication.processEvents()
         self._resetForEntry()
+        classification = self._getOKClassifications()
         if self.searchOptions['regex']:
             try:
-                entries = db.entries.find(self.search, True)
+                entries = db.entries.find(self.search, classification, True)
             except sqlite3.OperationalError:
                 # regex in search box is invalid
                 entries = []
         else:
-            entries = db.entries.find(db.entries.percentageWrap(self.search))
+            entries = db.entries.find(db.entries.percentageWrap(self.search),
+                                      classification)
         self._fillListWidgetWithEntries(self.form.entriesList, entries)
         self.updateMatchesStatus()
         self.form.statusBar.clearMessage()
@@ -340,6 +348,23 @@ class MainWindow(QMainWindow):
         entries.sort(key=lambda i: i.getSortKey().lower())
         for i in entries:
             widget.addItem(i.getName())
+
+    def _getOKClassifications(self):
+        """
+        Return a tuple of the values defined in db/consts for the selected
+        classification / entry-limiting check boxes.
+        """
+        sf = self.form
+        et = db.consts.entryTypes
+        trans = {sf.entriesCommonsCheck: et['ord'],
+                 sf.entriesNamesCheck: et['person'],
+                 sf.entriesPlacesCheck: et['place'],
+                 sf.entriesQuotationsCheck: et['quote'],
+                 sf.entriesTitlesCheck: et['title'],
+                 sf.entriesUnclassifiedCheck: et['unclassified']
+                 }
+        checked = [trans[box] for box in trans.keys() if box.isChecked()]
+        return tuple(checked)
 
 
     ### Checkbox / options handling ###
