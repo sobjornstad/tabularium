@@ -774,7 +774,7 @@ If the interface is sluggish, try turning this off.</string>
      <string>&amp;Tools</string>
     </property>
     <addaction name="actionDuplicates_Tool"/>
-    <addaction name="actionClassify_Entryies"/>
+    <addaction name="actionClassify_Entries"/>
     <addaction name="actionEntry_Merge_Tool"/>
     <addaction name="actionInvalid_Redirect_Check"/>
     <addaction name="actionMass_Deletion_Tool"/>
@@ -1065,9 +1065,12 @@ If the interface is sluggish, try turning this off.</string>
     <string>Ctrl+S, N</string>
    </property>
   </action>
-  <action name="actionClassify_Entryies">
+  <action name="actionClassify_Entries">
    <property name="text">
     <string>Entry Classification Tool...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T, C</string>
    </property>
   </action>
   <action name="actionInvalid_Redirect_Check">

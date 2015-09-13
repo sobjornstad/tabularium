@@ -28,6 +28,8 @@ import ui.sourcemanager
 import ui.volmanager
 import ui.utils
 
+import ui.tools_classification
+
 class MwEventFilter(QObject):
     """
     In order to keep items in menus properly enabled and disabled based on the
@@ -573,6 +575,17 @@ class MainWindow(QMainWindow):
         sf.actionDiary_notes.triggered.connect(self.onDiaryNotes)
         sf.actionPrint.triggered.connect(self.onPrint)
         sf.actionPreferences.triggered.connect(self.onPrefs)
+        sf.actionClassify_Entries.triggered.connect(self.onClassify)
+
+    def onClassify(self):
+        self.form.statusBar.showMessage("Loading entry classification tool, "
+                "this may take a moment...")
+        QApplication.processEvents()
+        cw = ui.tools_classification.ClassificationWindow(self)
+        self.form.statusBar.clearMessage()
+        cw.exec_()
+        self.onSearch()
+        #self.updateAndRestoreSelections()
 
     def onPrint(self):
         #TODO: add more printing functions, and create submenu/choice dialog

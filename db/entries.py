@@ -84,8 +84,9 @@ class Entry(object):
         self._sk = sk
         self.dump()
     def setClassification(self, clf):
-        self._clf = clf
-        self.dump()
+        if self._clf != clf:
+            self._clf = clf
+            self.dump()
 
     def getOccurrences(self):
         """
