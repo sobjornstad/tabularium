@@ -263,6 +263,7 @@ class MainWindow(QMainWindow):
         """
 
         self.form.statusBar.showMessage("Searching...")
+        doClearStatusBarAtEnd = True
         # i-search feels much faster if we process events here, as it means
         # the user sees her keystroke appear while the search is taking place
         # rather than only afterwards
@@ -274,13 +275,17 @@ class MainWindow(QMainWindow):
                 entries = db.entries.find(self.search, classification, True)
             except sqlite3.OperationalError:
                 # regex in search box is invalid
+                self.form.statusBar.showMessage(
+                        "Current regular expression is invalid.")
+                doClearStatusBarAtEnd = False
                 entries = []
         else:
             entries = db.entries.find(db.entries.percentageWrap(self.search),
                                       classification)
         self._fillListWidgetWithEntries(self.form.entriesList, entries)
         self.updateMatchesStatus()
-        self.form.statusBar.clearMessage()
+        if doClearStatusBarAtEnd:
+            self.form.statusBar.clearMessage()
 
     def fillOccurrences(self):
         """
