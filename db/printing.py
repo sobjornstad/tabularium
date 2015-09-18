@@ -14,6 +14,17 @@ import db.database as d
 import db.entries
 import db.occurrences
 
+class PrintingError(Exception):
+    """
+    Indicates that a print could not be completed for some reason. The error
+    message /msg/ will be returned to the caller, where it is intended to be
+    printed directly as an error message to the user.
+    """
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return self.msg
+
 
 ##### LATEX FULL INDEX OUTPUT #####
 ENTRY_STARTSTR = r"\item \theentry{"
@@ -44,8 +55,19 @@ DOC_STARTSTR = """\\documentclass{article}
 INDEX_ENDSTR = """\\end{theindex}\end{document}"""
 
 
-def printFullIndex():
-    formatted = getFormattedEntriesList()
+def printEntriesAsIndex(entries=None):
+    """
+    Given a list of Entries, print it as an index, write it to LaTeX, and open
+    in the system PDF viewer. If entries is None (default), use all entries in
+    the db.
+    
+    No return.
+    """
+
+    if entries is None:
+        entries = db.entries.allEntries()
+
+    formatted = getFormattedEntriesList(entries)
     document = '\n\n'.join([DOC_STARTSTR, '\n'.join(formatted), INDEX_ENDSTR])
 
     # it would be good to delete the tmpdir we used at some point in the future
@@ -53,31 +75,32 @@ def printFullIndex():
     oldcwd = os.getcwd()
     os.chdir(tdir)
 
-    fnamebase = "index"
-    tfile = os.path.join(tdir, '.'.join([fnamebase, 'tex']))
-    with codecs.open(tfile, 'w', 'utf-8') as f:
-        f.write(document)
-    r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
-    r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
-    if r:
-        #TODO: throw an error for the ui layer
-        print "Error executing latex! Please see the error above."
-        return
-    ofile = os.path.join(tdir, '.'.join([fnamebase, 'pdf']))
-    if sys.platform.startswith('linux'):
-        subprocess.call(["xdg-open", ofile])
-    elif sys.platform == "darwin":
-        os.system("open %s" % ofile)
-    elif sys.platform == "win32":
-        os.startfile(ofile)
-    else:
-        print("Unable to automatically open the output. Please" \
-                "browse manually to %s." % ofile)
-    os.chdir(oldcwd)
+    try:
+        fnamebase = "index"
+        tfile = os.path.join(tdir, '.'.join([fnamebase, 'tex']))
+        with codecs.open(tfile, 'w', 'utf-8') as f:
+            f.write(document)
+        r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
+        r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
+        if r:
+            raise PrintingError("Error executing LaTeX! Please run the application"
+                                " in console for details on the error to debug.")
+        ofile = os.path.join(tdir, '.'.join([fnamebase, 'pdf']))
+        if sys.platform.startswith('linux'):
+            subprocess.call(["xdg-open", ofile])
+        elif sys.platform == "darwin":
+            os.system("open %s" % ofile)
+        elif sys.platform == "win32":
+            os.startfile(ofile)
+        else:
+            raise PrintingError("Unable to automatically open the output. Please"
+                                " direct your PDF viewer to %s." % ofile)
+    finally:
+        #TODO: clean up tmpdir?
+        os.chdir(oldcwd)
 
 
-def getFormattedEntriesList():
-    entries = db.entries.allEntries()
+def getFormattedEntriesList(entries):
     entries.sort(key=lambda i: i.getSortKey().lower())
 
     formatted = []

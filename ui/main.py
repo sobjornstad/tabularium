@@ -598,7 +598,9 @@ class MainWindow(QMainWindow):
         try:
             self.form.statusBar.showMessage("Generating PDF (this may take a few seconds)...")
             QApplication.processEvents()
-            db.printing.printFullIndex()
+            db.printing.printEntriesAsIndex()
+        except db.printing.PrintingError as e:
+            ui.utils.errorBox(str(e), "Printing not successful")
         finally:
             QApplication.restoreOverrideCursor()
             self.form.statusBar.clearMessage()
