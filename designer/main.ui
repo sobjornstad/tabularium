@@ -1124,6 +1124,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>&amp;Simplification</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
   </action>
  </widget>
  <resources/>

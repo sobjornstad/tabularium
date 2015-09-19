@@ -9,7 +9,6 @@ import sys
 import tempfile
 
 from db.consts import refTypes
-from db.utils import sortOccs
 import db.database as d
 import db.entries
 import db.occurrences
@@ -125,7 +124,7 @@ def getFormattedEntriesList(entries):
         newEname = ','.join(eNameList)
 
         occs = entry.getOccurrences()
-        occs = sortOccs(occs)
+        occs.sort()
         occList = []
         for occ in occs:
             vol = occ.getVolume()
@@ -148,6 +147,29 @@ def getFormattedEntriesList(entries):
     return formatted
 
 
+##### LATEX SIMPLIFICATION OUTPUT #####
+def makeSimplification():
+    allOccs = db.occurrences.allOccurrences()
+    print [i.getEntry().getName() for i in allOccs]
+    allOccs.sort()
+    print [i.getEntry().getName() for i in allOccs]
+    lastOcc = None
+    for occ in allOccs:
+        if occ.getRef()[1] != 0:
+            # temporarily forget about ranges and redirects
+            continue
+
+        if str(lastOcc) == str(occ):
+            # still on the same reference
+            print "=>", occ.getEntry().getName()
+        else:
+            print occ, occ.getEntry().getName()
+        lastOcc = occ
+        #print ""
+
+
+
+##### COMMON #####
 def mungeLatex(s):
     # This escapes all special chars listed as catcodes in /The TeXbook/, p.37.
     # Note that spacing is not guaranteed correct with things like the tilde

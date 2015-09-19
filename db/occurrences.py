@@ -9,7 +9,7 @@ import db.database as d
 import db.entries
 import db.volumes
 import db.sources
-from db.utils import dateSerializer, dateDeserializer
+from db.utils import dateSerializer, dateDeserializer, generate_index
 
 class InvalidUOFError(Exception):
     def __init__(self, text="Invalid UOF."):
@@ -120,6 +120,29 @@ class Occurrence(object):
         else:
             assert False, "invalid reftype in occurrence"
 
+    def __repr__(self):
+        return '<' + self.__str__() + '>'
+
+    def __cmp__(self, other):
+        if hasattr(other, '_volume') and hasattr(other, '_ref'):
+            return cmp(generate_index(self.getOccSortKey()),
+                       generate_index(other.getOccSortKey()))
+
+    def getOccSortKey(self):
+        """
+        Get the sort key for an occurrence, used in __cmp__.
+
+        We sort occurrences essentially by their __str__ representation, but we
+        normalize a few things to avoid weird sorting surprises (e.g., we
+        include the volume number even if single-volume). Further, if two
+        occurrences have the same source, volume, and reference, they will be
+        further sorted in order of their entries (this is nice for, say, the
+        simplification view).
+        """
+        return "%s/%s/%s/%s" % (self._volume.getSource().getAbbrev().lower(),
+                                self._volume.getNum(), self._ref,
+                                self._entry.getName())
+
     def getEntry(self):
         return self._entry
     def getVolume(self):
@@ -224,6 +247,12 @@ class Occurrence(object):
 
         return entries
 
+def allOccurrences():
+    """
+    Return a list of all occurrences in the database.
+    """
+    d.cursor.execute('SELECT oid FROM occurrences')
+    return [Occurrence(i[0]) for i in d.cursor.fetchall()]
 
 def fetchForEntry(entry):
     """

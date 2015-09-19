@@ -18,7 +18,6 @@ import db.entries
 import db.occurrences
 import db.printing
 import db.sources
-from db.utils import sortOccs
 
 import ui.addentry
 import ui.addoccurrence
@@ -308,7 +307,7 @@ class MainWindow(QMainWindow):
         if entry is not None:
             # hold onto objects for reference by _fetchCurrentOccurrence
             self.currentOccs = entry.getOccurrences()
-            self.currentOccs = sortOccs(self.currentOccs)
+            self.currentOccs.sort()
             for i in self.currentOccs:
                 self.form.occurrencesList.addItem(str(i))
         self.updateMatchesStatus()
@@ -590,6 +589,7 @@ class MainWindow(QMainWindow):
         sf.actionDiary_notes.triggered.connect(self.onDiaryNotes)
         sf.actionEntire_index.triggered.connect(self.onPrintAll)
         sf.actionVisible_entries.triggered.connect(self.onPrintVisible)
+        sf.action_Simplification.triggered.connect(self.onPrintSimplification)
         sf.actionPreferences.triggered.connect(self.onPrefs)
         sf.actionClassify_Entries.triggered.connect(self.onClassify)
 
@@ -609,6 +609,10 @@ class MainWindow(QMainWindow):
 
     def onPrintAll(self):
         self._printEntries(entries=None) # none is interpreted as whole db
+
+    def onPrintSimplification(self):
+        print "yay simplifications!"
+        db.printing.makeSimplification()
 
     def _printEntries(self, entries):
         QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))

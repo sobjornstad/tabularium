@@ -51,14 +51,7 @@ def minMaxDatesOccurrenceEnteredModified():
 
     return dateDeserializer(early), dateDeserializer(late)
 
-
-def occOrder(occ):
-    source = occ.getVolume().getSource().getAbbrev().lower()
-    volNum = occ.getVolume().getNum()
-    ref, occType = occ.getRef()
-    return "%s/%s/%s" % (source, volNum, ref)
-
-def _generate_index(str):
+def generate_index(str):
     """
     Splits a string into alpha and numeric elements, which
     is used as an index for sorting"
@@ -86,23 +79,3 @@ def _generate_index(str):
             prev_isdigit = curr_isdigit
     _append(current_fragment)
     return tuple(index)
-
-def sortit(alist):
-    # inspired by Alex Martelli
-    # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52234
-    indices = map(_generate_index, alist)
-    decorated = zip(indices, alist)
-    decorated.sort()
-    return [item for index, item in decorated]
-
-def sortOccs(occList):
-    """
-    Sort occurrences correctly, using numeric parts of string where possible.
-    It's necessary to do this with special sort strings out of the parts of the
-    occurrence, while saving the occurrence objects they belong to in a
-    dictionary so they can be restored at the end of the sort.
-    """
-    occDict = {occOrder(i):i for i in occList}
-    sortableList = [occOrder(i) for i in occList]
-    sortedList = sortit(sortableList)
-    return [occDict[i] for i in sortedList]
