@@ -160,6 +160,23 @@ class Occurrence(object):
     def getEditedDate(self):
         return self._de
 
+    def isRefType(self, reftype):
+        return self._type == refTypes[reftype]
+    def getStartPage(self):
+        if self._type == refTypes['num']:
+            return self._ref
+        elif self._type == refTypes['range']:
+            return self._ref.split('-')[0]
+        else:
+            return None
+    def getEndPage(self):
+        if self._type == refTypes['num']:
+            return self._ref
+        elif self._type == refTypes['range']:
+            return self._ref.split('-')[1]
+        else:
+            return None
+
     #TODO: error-checking
     def setRef(self, ref, type):
         self._ref = ref

@@ -135,7 +135,7 @@ SIMPLIFICATION_HEADER = r"""
 \fancyhf{}
 \pagestyle{fancy}
 \renewcommand{\headrulewidth}{0.5pt}
-\fancyhead[LO,LE]{\scshape Hooray, I'm a Simplification}
+\fancyhead[LO,LE]{\scshape Complete Simplification of the Records Project}
 \fancyhead[CO,CE]{\thepage\ / \pageref{LastPage}}
 \fancyhead[RO,RE]{\scshape \today}
 \renewcommand{\indexname}{\vskip -0.55in}
@@ -155,43 +155,67 @@ SIMPLIFICATION_FOOTER = r"""
 """
 
 def makeSimplification():
-    allOccs = db.occurrences.allOccurrences()
-    allOccs.sort()
+    """
+    Create a "simplification", essentially a reverse index, of all occurrences
+    in the database. (In the future we'll make it possible to choose subsets of
+    that, just like in the index.)
+    """
 
-    lastOcc = None
-    currentOccSet = []
-    latexAccumulator = []
-    for occ in allOccs:
-        if occ.getRef()[1] != 0:
-            # temporarily forget about ranges and redirects
-            continue
-
-        if str(lastOcc) == str(occ):
-            # We're continuing on the same "occurrence set": all occurrences
-            # with the same source/vol/refnum
-            currentOccSet.append(occ)
-            #print "=>", occ.getEntry().getName()
+    def modifiedRangeKey(occ):
+        """
+        Return a string representation of provided occurrence that uses only
+        its start page if it is a range; if it is a number or redir, return the
+        original string repr.
+        """
+        if occ.isRefType('range'):
+            start, end = occ.getRef()[0].split('-')
+            key = str(occ).replace(occ.getRef()[0], start)
+            return key
         else:
-            # We've started a new occurrence set: print the old one, reset
-            # currentOccSet, and add this occurrence to it.
-            if lastOcc is not None:
-                occStrs = ['\\item ' + mungeLatex(i.getEntry().getName())
-                           for i in currentOccSet]
-                book = currentOccSet[0].getVolume().getSource().getAbbrev()
-                # get the __str__ repr, but without the book part
-                ref = ''.join(str(currentOccSet[0]).split(book)[1:]).strip()
+            return str(occ)
 
-                latexStr = "\\theoccset{%s}{%s}\n\\theoccurrences{%s}" % (
-                        book.lower(), ref, '\n'.join(occStrs))
-                latexAccumulator.append(latexStr)
-            currentOccSet = [occ]
-        lastOcc = occ
+    allOccs = db.occurrences.allOccurrences()
+
+    # Collate all occurrences into a dictionary of lists where the key is the
+    # string representation of the occurrence and the value is a list of the
+    # actual occurrences that go with it.
+    occDictionary = {}
+    for occ in allOccs:
+        occDictionary[modifiedRangeKey(occ)] = \
+                occDictionary.get(str(occ), []) + [occ]
+
+    # Now form a sorted list using the first occurrence of each string repr.
+    # We can then pull the appropriate list by getting the str repr of the
+    # elements of this list.
+    # NOTE: This does have the possibility of pulling a range, which would
+    # sort differently--before the unranged refnums with the same start value.
+    # However, in all cases the unranged and ranged values with the same start
+    # value will be grouped under the same key, so this makes no difference.
+    sortList = sorted([occDictionary[i][0] for i in occDictionary.keys()])
+
+    latexAccumulator = []
+    for occGroup in sortList:
+        if occGroup.isRefType('redir'):
+            continue # ignore redirects as unhelpful in this view
+
+        key = modifiedRangeKey(occGroup)
+        occStrs = []
+        for occ in occDictionary[key]:
+            txt = '\\item ' + mungeLatex(occ.getEntry().getName())
+            if occ.isRefType('range'):
+                txt += ' (--%s)' % occ.getRef()[0].split('-')[1]
+            occStrs.append(txt)
+
+        book = occGroup.getVolume().getSource().getAbbrev()
+        # get the __str__ repr, but without the book part
+        ref = ''.join(key.split(book)[1:]).strip()
+        latexStr = "\\theoccset{%s}{%s}\n\\theoccurrences{%s}" % (
+                book.lower(), ref, '\n'.join(occStrs))
+        latexAccumulator.append(latexStr)
 
     body = '\n\n'.join(latexAccumulator)
     document = SIMPLIFICATION_HEADER + body + SIMPLIFICATION_FOOTER
     compileLatex(document)
-
-
 
 
 ##### COMMON #####
