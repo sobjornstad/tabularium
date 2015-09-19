@@ -260,32 +260,42 @@ class MainWindow(QMainWindow):
         """
         Fill the Entries list box with all entries that match the current
         search and limit criteria. (Right now limits are ignored.)
+
+        The motivation for running processEvents() before we start searching
+        is twofold:
+            1) It allows the "searching..." text to appear in the status bar.
+            2) It makes incremental searching feel faster: the user's
+               keystroke appears as soon as it is entered, rather than not
+               until the search is complete.
         """
 
         self.form.statusBar.showMessage("Searching...")
         doClearStatusBarAtEnd = True
-        # i-search feels much faster if we process events here, as it means
-        # the user sees her keystroke appear while the search is taking place
-        # rather than only afterwards
         QApplication.processEvents()
         self._resetForEntry()
+        entries = self._getEntriesForSearch()
+        self._fillListWidgetWithEntries(self.form.entriesList, entries)
+        self.updateMatchesStatus()
+        if doClearStatusBarAtEnd:
+            self.form.statusBar.clearMessage()
+
+    def _getEntriesForSearch(self):
+        """
+        Return a list of entries that match the current classifications and
+        search.
+        """
         classification = self._getOKClassifications()
         if self.searchOptions['regex']:
             try:
                 entries = db.entries.find(self.search, classification, True)
             except sqlite3.OperationalError:
                 # regex in search box is invalid
-                self.form.statusBar.showMessage(
-                        "Current regular expression is invalid.")
-                doClearStatusBarAtEnd = False
                 entries = []
         else:
             entries = db.entries.find(db.entries.percentageWrap(self.search),
                                       classification)
-        self._fillListWidgetWithEntries(self.form.entriesList, entries)
-        self.updateMatchesStatus()
-        if doClearStatusBarAtEnd:
-            self.form.statusBar.clearMessage()
+        return entries
+
 
     def fillOccurrences(self):
         """
@@ -578,7 +588,8 @@ class MainWindow(QMainWindow):
         sf.actionDelete_occ.triggered.connect(self.onDeleteOccurrence)
         sf.actionSource_notes.triggered.connect(self.onSourceNotes)
         sf.actionDiary_notes.triggered.connect(self.onDiaryNotes)
-        sf.actionPrint.triggered.connect(self.onPrint)
+        sf.actionEntire_index.triggered.connect(self.onPrintAll)
+        sf.actionVisible_entries.triggered.connect(self.onPrintVisible)
         sf.actionPreferences.triggered.connect(self.onPrefs)
         sf.actionClassify_Entries.triggered.connect(self.onClassify)
 
@@ -592,13 +603,20 @@ class MainWindow(QMainWindow):
         self.onSearch()
         #self.updateAndRestoreSelections()
 
-    def onPrint(self):
-        #TODO: add more printing functions, and create submenu/choice dialog
+    def onPrintVisible(self):
+        entries = self._getEntriesForSearch()
+        self._printEntries(entries)
+
+    def onPrintAll(self):
+        self._printEntries(entries=None) # none is interpreted as whole db
+
+    def _printEntries(self, entries):
         QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
         try:
-            self.form.statusBar.showMessage("Generating PDF (this may take a few seconds)...")
+            self.form.statusBar.showMessage(
+                    "Generating PDF (this may take a few seconds)...")
             QApplication.processEvents()
-            db.printing.printEntriesAsIndex()
+            db.printing.printEntriesAsIndex(entries)
         except db.printing.PrintingError as e:
             ui.utils.errorBox(str(e), "Printing not successful")
         finally:

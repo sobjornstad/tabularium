@@ -709,13 +709,23 @@ If the interface is sluggish, try turning this off.</string>
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <widget class="QMenu" name="menu_Print">
+     <property name="title">
+      <string>&amp;Print</string>
+     </property>
+     <addaction name="actionEntire_index"/>
+     <addaction name="actionVisible_entries"/>
+     <addaction name="separator"/>
+     <addaction name="action_Simplification"/>
+     <addaction name="action_Notes"/>
+    </widget>
     <addaction name="actionNew_DB"/>
     <addaction name="actionSwitch_Database"/>
     <addaction name="separator"/>
     <addaction name="actionImport"/>
     <addaction name="actionExport"/>
     <addaction name="separator"/>
-    <addaction name="actionPrint"/>
+    <addaction name="menu_Print"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -843,14 +853,6 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionExport">
    <property name="text">
     <string>Export...</string>
-   </property>
-  </action>
-  <action name="actionPrint">
-   <property name="text">
-    <string>&amp;Print</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+P</string>
    </property>
   </action>
   <action name="actionQuit">
@@ -1101,6 +1103,26 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionMass_Deletion_Tool">
    <property name="text">
     <string>Mass Deletion Tool...</string>
+   </property>
+  </action>
+  <action name="actionEntire_index">
+   <property name="text">
+    <string>&amp;Entire index</string>
+   </property>
+  </action>
+  <action name="actionVisible_entries">
+   <property name="text">
+    <string>&amp;Visible entries</string>
+   </property>
+  </action>
+  <action name="action_Notes">
+   <property name="text">
+    <string>&amp;Notes</string>
+   </property>
+  </action>
+  <action name="action_Simplification">
+   <property name="text">
+    <string>&amp;Simplification</string>
    </property>
   </action>
  </widget>
