@@ -141,7 +141,7 @@ class Occurrence(object):
         """
         return "%s/%s/%s/%s" % (self._volume.getSource().getAbbrev().lower(),
                                 self._volume.getNum(), self._ref,
-                                self._entry.getName())
+                                self._entry.getName().lower())
 
     def getEntry(self):
         return self._entry

@@ -69,34 +69,7 @@ def printEntriesAsIndex(entries=None):
     formatted = getFormattedEntriesList(entries)
     document = '\n\n'.join([DOC_STARTSTR, '\n'.join(formatted), INDEX_ENDSTR])
 
-    # it would be good to delete the tmpdir we used at some point in the future
-    tdir = tempfile.mkdtemp()
-    oldcwd = os.getcwd()
-    os.chdir(tdir)
-
-    try:
-        fnamebase = "index"
-        tfile = os.path.join(tdir, '.'.join([fnamebase, 'tex']))
-        with codecs.open(tfile, 'w', 'utf-8') as f:
-            f.write(document)
-        r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
-        r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
-        if r:
-            raise PrintingError("Error executing LaTeX! Please run the application"
-                                " in console for details on the error to debug.")
-        ofile = os.path.join(tdir, '.'.join([fnamebase, 'pdf']))
-        if sys.platform.startswith('linux'):
-            subprocess.call(["xdg-open", ofile])
-        elif sys.platform == "darwin":
-            os.system("open %s" % ofile)
-        elif sys.platform == "win32":
-            os.startfile(ofile)
-        else:
-            raise PrintingError("Unable to automatically open the output. Please"
-                                " direct your PDF viewer to %s." % ofile)
-    finally:
-        #TODO: clean up tmpdir?
-        os.chdir(oldcwd)
+    compileLatex(document)
 
 
 def getFormattedEntriesList(entries):
@@ -148,24 +121,76 @@ def getFormattedEntriesList(entries):
 
 
 ##### LATEX SIMPLIFICATION OUTPUT #####
+SIMPLIFICATION_HEADER = r"""
+\documentclass{article}
+\usepackage[top=0.9in, bottom=0.8in, left=0.5in, right=0.5in, headsep=0in, landscape]{geometry}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{multicol}
+\usepackage[columns=5, indentunit=0.75em, columnsep=0.5em, font=footnotesize, justific=raggedright, rule=0.5pt]{idxlayout}
+\usepackage[sc,osf]{mathpazo}
+\usepackage{lastpage}
+\usepackage{fancyhdr}
+%\usepackage{microtype}
+\fancyhf{}
+\pagestyle{fancy}
+\renewcommand{\headrulewidth}{0.5pt}
+\fancyhead[LO,LE]{\scshape Hooray, I'm a Simplification}
+\fancyhead[CO,CE]{\thepage\ / \pageref{LastPage}}
+\fancyhead[RO,RE]{\scshape \today}
+\renewcommand{\indexname}{\vskip -0.55in}
+%\newcommand{\theentry}[1]{#1}
+\usepackage{titlesec}
+
+\newcommand{\theoccset}[2]{\textsc{#1}\thinspace #2:\par}
+\newcommand{\theoccurrences}[1]{{\leftskip 1.5em #1\par}}
+
+\begin{document}
+\begin{theindex}
+"""
+
+SIMPLIFICATION_FOOTER = r"""
+\end{theindex}
+\end{document}
+"""
+
 def makeSimplification():
     allOccs = db.occurrences.allOccurrences()
-    print [i.getEntry().getName() for i in allOccs]
     allOccs.sort()
-    print [i.getEntry().getName() for i in allOccs]
+
     lastOcc = None
+    currentOccSet = []
+    latexAccumulator = []
     for occ in allOccs:
         if occ.getRef()[1] != 0:
             # temporarily forget about ranges and redirects
             continue
 
         if str(lastOcc) == str(occ):
-            # still on the same reference
-            print "=>", occ.getEntry().getName()
+            # We're continuing on the same "occurrence set": all occurrences
+            # with the same source/vol/refnum
+            currentOccSet.append(occ)
+            #print "=>", occ.getEntry().getName()
         else:
-            print occ, occ.getEntry().getName()
+            # We've started a new occurrence set: print the old one, reset
+            # currentOccSet, and add this occurrence to it.
+            if lastOcc is not None:
+                occStrs = ['\\item ' + mungeLatex(i.getEntry().getName())
+                           for i in currentOccSet]
+                book = currentOccSet[0].getVolume().getSource().getAbbrev()
+                # get the __str__ repr, but without the book part
+                ref = ''.join(str(currentOccSet[0]).split(book)[1:]).strip()
+
+                latexStr = "\\theoccset{%s}{%s}\n\\theoccurrences{%s}" % (
+                        book.lower(), ref, '\n'.join(occStrs))
+                latexAccumulator.append(latexStr)
+            currentOccSet = [occ]
         lastOcc = occ
-        #print ""
+
+    body = '\n\n'.join(latexAccumulator)
+    document = SIMPLIFICATION_HEADER + body + SIMPLIFICATION_FOOTER
+    compileLatex(document)
+
 
 
 
@@ -205,3 +230,38 @@ def mungeLatex(s):
         repl.replace(": %s", "")
         s = s.replace(repl, repl.lower())
     return s
+
+def compileLatex(document):
+    """
+    Given a complete LaTeX source file /document/, write it, call LaTeX on it,
+    and open the system PDF viewer on the results.
+    """
+
+    # it would be good to delete the tmpdir we used at some point in the future
+    tdir = tempfile.mkdtemp()
+    oldcwd = os.getcwd()
+    os.chdir(tdir)
+
+    try:
+        fnamebase = "index"
+        tfile = os.path.join(tdir, '.'.join([fnamebase, 'tex']))
+        with codecs.open(tfile, 'w', 'utf-8') as f:
+            f.write(document)
+        r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
+        r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
+        if r:
+            raise PrintingError("Error executing LaTeX! Please run the application"
+                                " in console for details on the error to debug.")
+        ofile = os.path.join(tdir, '.'.join([fnamebase, 'pdf']))
+        if sys.platform.startswith('linux'):
+            subprocess.call(["xdg-open", ofile])
+        elif sys.platform == "darwin":
+            os.system("open %s" % ofile)
+        elif sys.platform == "win32":
+            os.startfile(ofile)
+        else:
+            raise PrintingError("Unable to automatically open the output. Please"
+                                " direct your PDF viewer to %s." % ofile)
+    finally:
+        #TODO: clean up tmpdir?
+        os.chdir(oldcwd)
