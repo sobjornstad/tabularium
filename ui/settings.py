@@ -1,17 +1,37 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QMessageBox, QDialog
-from PyQt4.QtCore import QObject, QEvent
-from forms.prefs import Ui_Dialog
-from passlib.hash import pbkdf2_sha256 as pbkdf
+"""
+Personal Indexer preferences managers
 
+This module for the Personal Indexer UI contains two classes:
+
+SettingsHandler :: a QObject used as a convenient interface to get and set
+    settings stored in the database
+PreferencesWindow :: implements the dialog displayed on Edit -> Preferences.
+"""
+
+# no idea why pylint thinks this function doesn't exist: it works just fine
+from passlib.hash import pbkdf2_sha256 as pbkdf #pylint: disable=E0611
 import pickle
+
+from PyQt4.QtGui import QDialog
+from PyQt4.QtCore import QObject
+from ui.forms.prefs import Ui_Dialog
+
 import db.database as d
 
 class PreferencesWindow(QDialog):
-    DUMMYPASSWORD = '*' * 8
+    """
+    Code to save and retrieve preferences in the preference dialog. Requires an
+    instance of SettingsHandler (also in this file) passed to the constructor
+    to access the settings; the main window (which launches the preferences
+    window) should have one of those handy.
+
+    This class should be quite self-explanatory.
+    """
+
+    DUMMYPASSWORD = '*' * 8 # used to fill the pw field if not edited by user
     def __init__(self, mw, sh):
         QDialog.__init__(self)
         self.mw = mw
@@ -33,10 +53,14 @@ class PreferencesWindow(QDialog):
         self.form.passwordBox.setEnabled(self.form.passwordCheck.isChecked())
 
     def accept(self):
+        "Save the settings back to the db, if changed."
         if self.form.passwordCheck.isChecked():
             newPw = unicode(self.form.passwordBox.text())
             if newPw != self.DUMMYPASSWORD:
-                # i.e., user changed the "password" we put in the box
+                # i.e., user changed the "password" we put in the box.
+                # Mostly academic note: this prevents the user from using the
+                # literal password '********' (which is such a dreadful
+                # password anyway that that's maybe a good limitation!).
                 newHash = pbkdf.encrypt(newPw, rounds=10000, salt_size=16)
                 self.sh.put('password', newHash)
         else:
@@ -47,7 +71,16 @@ class PreferencesWindow(QDialog):
         super(PreferencesWindow, self).reject()
 
 class SettingsHandler(QObject):
+    """
+    This class, often instantiated as 'sh', can be used to get and set various
+    settings. Settings are always key-value pairs, and are stored in a
+    dictionary within the class and pickled into the database in the one-cell
+    table 'conf', which has one row on database creation so that we can read
+    from and write to it.
+    """
+
     def __init__(self, mw):
+        QObject.__init__(self)
         self.mw = mw
         self.conf = None
         self.loadDb()
@@ -70,6 +103,10 @@ class SettingsHandler(QObject):
             self.conf[key] = value
 
     def loadDb(self):
+        """
+        (Re)load configuration from the database. This method is automatically
+        called by the constructor, and it is rare to need to call it manually.
+        """
         d.cursor.execute('SELECT conf FROM conf')
         try:
             self.conf = pickle.loads(d.cursor.fetchall()[0][0])
