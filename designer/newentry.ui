@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>415</width>
-    <height>220</height>
+    <height>221</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -222,7 +222,7 @@
         </widget>
        </item>
        <item row="1" column="1" colspan="2">
-        <widget class="FocusGrabberField" name="sortKeyBox"/>
+        <widget class="QLineEdit" name="sortKeyBox"/>
        </item>
       </layout>
      </item>
@@ -260,22 +260,8 @@
     </layout>
    </item>
   </layout>
-  <zorder>nameBox</zorder>
-  <zorder>sortKeyBox</zorder>
-  <zorder>label</zorder>
-  <zorder>label_2</zorder>
-  <zorder>addButton</zorder>
-  <zorder>cancelButton</zorder>
-  <zorder></zorder>
   <zorder></zorder>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>FocusGrabberField</class>
-   <extends>QLineEdit</extends>
-   <header>ui/addentry</header>
-  </customwidget>
- </customwidgets>
  <tabstops>
   <tabstop>nameBox</tabstop>
   <tabstop>sortKeyBox</tabstop>
