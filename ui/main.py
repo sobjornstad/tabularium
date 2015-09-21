@@ -106,7 +106,7 @@ class MainWindow(QMainWindow):
             pw, accepted = ui.utils.passwordEntry()
             if not accepted:
                 sys.exit(0)
-            if not checkPassword(unicode(pw), self.sh):
+            if not checkPassword(pw, self.sh):
                 ui.utils.errorBox("Invalid password, exiting program.",
                                   "No dice!")
                 sys.exit(1)

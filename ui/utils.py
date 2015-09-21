@@ -1,13 +1,19 @@
 # -* coding: utf-8 *-
-# This file is part of Clicker Quiz Generator.
-# Copyright 2014 Soren Bjornstad. All rights reserved.
+# Copyright 2015 Soren Bjornstad. All rights reserved.
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QDialog, QMessageBox, QCheckBox, QInputDialog, QLineEdit
-from PyQt4.QtCore import QObject
+"""
+Personal Indexer UI utility functions
+
+These functions primarily create various kinds of simple dialog boxes.
+"""
+
+from PyQt4.QtGui import QDialog, QMessageBox, QInputDialog, QLineEdit
 import ui.forms.confirmationwindow
 
 def informationBox(text, title=None):
+    """
+    Message box with the information icon and an OK button.
+    """
     msgBox = QMessageBox()
     msgBox.setText(text)
     msgBox.setIcon(QMessageBox.Information)
@@ -16,6 +22,9 @@ def informationBox(text, title=None):
     msgBox.exec_()
 
 def errorBox(text, title=None):
+    """
+    Message box with the error icon and an OK button.
+    """
     msgBox = QMessageBox()
     msgBox.setText(text)
     msgBox.setIcon(QMessageBox.Critical)
@@ -24,6 +33,9 @@ def errorBox(text, title=None):
     msgBox.exec_()
 
 def warningBox(text, title=None):
+    """
+    Message box with the warning icon and an OK button.
+    """
     msgBox = QMessageBox()
     msgBox.setText(text)
     msgBox.setIcon(QMessageBox.Warning)
@@ -32,6 +44,13 @@ def warningBox(text, title=None):
     msgBox.exec_()
 
 def questionBox(text, title=None):
+    """
+    Message box with the question icon and Yes and No buttons.
+
+    Returns QMessageBox.Yes if yes was pushed, QMessageBox.No if no was pushed.
+    QMessageBox is PyQt4.QtGui.QMessageBox if you need to import it to use
+    those constants.
+    """
     msgBox = QMessageBox()
     msgBox.setText(text)
     msgBox.setIcon(QMessageBox.Question)
@@ -41,16 +60,36 @@ def questionBox(text, title=None):
         msgBox.setWindowTitle(title)
     return msgBox.exec_()
 
-def passwordEntry():
-    ret = QInputDialog.getText(None,
-                               "Password required",
-                               "Database password:",
-                               QLineEdit.Password)
-    return ret
+def passwordEntry(title="Password required", label="Database password:"):
+    """
+    Input box for passwords (displays asterisks in the input box).
 
+    Defaults for the title and label represent those needed for the password
+    entry box that appears upon starting the program if password protection is
+    enabled.
+
+    Returns a tuple:
+        [0] The text entered, as a Unicode string.
+        [1] True if dialog accepted, False if dialog rejected.
+    """
+    ret = QInputDialog.getText(None, title, label, QLineEdit.Password)
+    return unicode(ret[0]), ret[1]
 
 
 class ConfirmationDialog(QDialog):
+    """
+    Confirmation dialog to be used for scary/dangerous operations. The accept
+    button is greyed out until the user ticks the check box.
+
+    The dialog is created in the designer; see confirmationwindow.ui.
+
+    Arguments to the constructor:
+        parent :: as usual
+        text :: the warning message to present
+        checkText :: the label for the "yes, really" check box
+        title :: the title of the dialog
+    """
+
     def __init__(self, parent, text, checkText, title):
         QDialog.__init__(self)
         self.form = ui.forms.confirmationwindow.Ui_Dialog()
@@ -69,65 +108,3 @@ class ConfirmationDialog(QDialog):
     def onConfirmChecked(self):
         sf = self.form
         sf.acceptButton.setEnabled(sf.confirmationCheck.isChecked())
-
-
-###### this corresponds to CQM stuff, ignore for now
-# nodebugErrorText = """
-# Oops! An error occurred that CQM doesn't know how to
-# deal with. It may be a harmless bug, or it may indicate
-# a problem with your database or a larger bug in the
-# operation you're trying to do.
-# 
-# Try restarting the program and resuming your work; if
-# problems continue, please copy and paste the following
-# error information into support correspondence, along
-# with information about what you were trying to do when
-# the error occurred:
-# """.strip()
-# 
-# debugErrorText = """
-# Oops! An error occurred that CQM doesn't know how to
-# deal with. It may be a harmless bug, or it may indicate
-# a problem with your database or a larger bug in the
-# operation you're trying to do.
-# 
-# Please report this error to the developer, copying and
-# pasting the following error information, so that the
-# bug can be corrected or an appropriate error message
-# created:
-# """.strip()
-# 
-# class ErrorBoxWindow(QDialog):
-    # def __init__(self):
-        # QDialog.__init__(self)
-        # self.form = Ui_Dialog()
-        # self.form.setupUi(self)
-        # self.form.okButton.clicked.connect(self.reject)
-# 
-    # def setErrorText(self, text, includeErrorBoilerplate=True, debug=False):
-        # if includeErrorBoilerplate:
-            # if debug:
-                # tbtext = debugErrorText
-            # else:
-                # tbtext = nodebugErrorText
-            # tbtext += '\n\n'
-        # else:
-            # tbtext = ""
-# 
-        # tbtext += text
-        # self.form.text.setPlainText(tbtext)
-# 
-    # def setErrorTitle(self, title):
-        # self.setWindowTitle(title)
-# 
-# # # # # def tracebackBox(text, title=None, includeErrorBoilerplate=True, isDebug=False):
-    # tbw = ErrorBoxWindow()
-    # tbw.setErrorText(text, includeErrorBoilerplate, isDebug)
-    # if title:
-        # tbw.setErrorTitle(title)
-    # tbw.exec_()
-
-# def ensureClassExists():
-    # import db.classes
-    # classes = db.classes.getAllClasses()
-    # return True if len(classes) >= 1 else False
