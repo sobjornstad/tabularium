@@ -642,13 +642,15 @@ class MainWindow(QMainWindow):
         #TODO: Ideally we would autoselect the occurrence that was nearby,
         #      but that's a LOT more work, so not right away.
 
-    def onAddEntry(self, entry=None, redirTo=None, edit=False):
+    def onAddEntry(self, entry=None, redirTo=None, edit=False, text=None):
         self.saveSelections()
         ae = ui.addentry.AddEntryWindow(self)
         if entry:
             ae.initializeSortKeyCheck(entry.getName(), entry.getSortKey())
             ae.putClassification(entry)
             ae.resetTitle("New Entry Based On '%s'" % entry.getName())
+        if text:
+            ae.initializeSortKeyCheck(text, text)
         if redirTo:
             ae.putRedirect(redirTo)
             ae.resetTitle("New Redirect To '%s'" % redirTo.getName())
@@ -782,7 +784,7 @@ class MainWindow(QMainWindow):
 
     def onAddFromSearch(self):
         entryName = unicode(self.form.searchBox.text())
-        self.onAddEntry(entryName)
+        self.onAddEntry(text=entryName)
 
 
     ### UTILITIES ###
