@@ -9,6 +9,7 @@ These functions primarily create various kinds of simple dialog boxes.
 
 from PyQt4.QtGui import QDialog, QMessageBox, QInputDialog, QLineEdit
 import ui.forms.confirmationwindow
+import ui.forms.report
 
 def informationBox(text, title=None):
     """
@@ -60,6 +61,21 @@ def questionBox(text, title=None):
         msgBox.setWindowTitle(title)
     return msgBox.exec_()
 
+
+def inputBox(label, title=None, defaultText=None):
+    """
+    Basic input box. Returns a tuple:
+        [0] The text entered, as a Unicode string.
+        [1] True if dialog accepted, False if rejected.
+
+    See also passwordEntry().
+    """
+    if defaultText is not None:
+        ret = QInputDialog.getText(None, title, label, text=defaultText)
+    else:
+        ret = QInputDialog.getText(None, title, label)
+    return unicode(ret[0]), ret[1]
+
 def passwordEntry(title="Password required", label="Database password:"):
     """
     Input box for passwords (displays asterisks in the input box).
@@ -108,3 +124,26 @@ class ConfirmationDialog(QDialog):
     def onConfirmChecked(self):
         sf = self.form
         sf.acceptButton.setEnabled(sf.confirmationCheck.isChecked())
+
+class ReportDialog(QDialog):
+    """
+    Report dialog with a read-only QTextEdit and an OK button, to display
+    HTML-formatted reports.
+    """
+    def __init__(self, parent, text, title):
+        QDialog.__init__(self)
+        self.form = ui.forms.report.Ui_Dialog()
+        self.form.setupUi(self)
+        self.parent = parent
+
+        self.form.reportBox.setText(text)
+        self.setWindowTitle(title)
+        self.form.okButton.clicked.connect(self.accept)
+
+def reportBox(parent, text, title):
+    """
+    Convenience function to create a ReportDialog that doesn't need to do any
+    additional setup.
+    """
+    rd = ReportDialog(parent, text, title)
+    return rd.exec_()

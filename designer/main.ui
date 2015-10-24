@@ -783,8 +783,9 @@ If the interface is sluggish, try turning this off.</string>
     <property name="title">
      <string>&amp;Tools</string>
     </property>
-    <addaction name="actionDuplicates_Tool"/>
     <addaction name="actionClassify_Entries"/>
+    <addaction name="separator"/>
+    <addaction name="actionDuplicates_Tool"/>
     <addaction name="actionEntry_Merge_Tool"/>
     <addaction name="actionInvalid_Redirect_Check"/>
     <addaction name="actionMass_Deletion_Tool"/>
@@ -796,6 +797,13 @@ If the interface is sluggish, try turning this off.</string>
      <string>&amp;Help</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuAnalytics">
+    <property name="title">
+     <string>Anal&amp;ytics</string>
+    </property>
+    <addaction name="actionLetter_Distribution_Check"/>
+    <addaction name="actionTabulate_Relations"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuEntry"/>
@@ -803,6 +811,7 @@ If the interface is sluggish, try turning this off.</string>
    <addaction name="menuInspect"/>
    <addaction name="menuSources"/>
    <addaction name="menuTools"/>
+   <addaction name="menuAnalytics"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -1126,6 +1135,19 @@ If the interface is sluggish, try turning this off.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actionLetter_Distribution_Check">
+   <property name="text">
+    <string>Letter Distribution...</string>
+   </property>
+  </action>
+  <action name="actionTabulate_Relations">
+   <property name="text">
+    <string>Tabulate Relations...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
  </widget>

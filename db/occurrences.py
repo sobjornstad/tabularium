@@ -179,9 +179,10 @@ class Occurrence(object):
 
     #TODO: error-checking
     def setRef(self, ref, type):
-        self._ref = ref
-        self._type = type
-        self.dump()
+        if ref != self._ref or type != self._type:
+            self._ref = ref
+            self._type = type
+            self.dump()
     def setEntry(self, entry):
         self._entry = entry
         self.dump()
