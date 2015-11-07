@@ -597,6 +597,27 @@ class MainWindow(QMainWindow):
         sf.actionClassify_Entries.triggered.connect(self.onClassify)
         sf.actionChange_page.triggered.connect(self.onOccChangePage)
         sf.actionLetter_Distribution_Check.triggered.connect(self.onLetterDistro)
+        sf.actionTabulate_Relations.triggered.connect(self.onTabulateRelations)
+
+    def onTabulateRelations(self):
+        # TODO: or do we search through occurrences?
+        occs = db.occurrences.allOccurrences()
+
+        relations = {}
+        for occ in occs:
+            nearby = occ.getNearby(2) # change to actual value later
+            if nearby:
+                #TODO: unicode error trying to print lists containing unicode
+                # string reprs with non-ascii characters
+                tmin = unicode(min(nearby))
+                print nearby,
+                print u"::",
+                print tmin
+            else:
+                print "no tmin"
+
+
+
 
     def onLetterDistro(self):
         """

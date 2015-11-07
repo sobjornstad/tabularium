@@ -60,6 +60,13 @@ class Entry(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __unicode__(self):
+        return u"<" + self._name + u">"
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+    def __repr__(self):
+        return self.__unicode__()
+
     def getName(self):
         return self._name
     def getEid(self):
@@ -168,7 +175,6 @@ def allEntries():
     """
     Return a list of all entries in the database.
     """
-
     d.cursor.execute('SELECT eid FROM entries')
     return [Entry(i[0]) for i in d.cursor.fetchall()]
 

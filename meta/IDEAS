@@ -1,3 +1,7 @@
+DEFINITE BUGS:
+- You can enter a range "25-5" and it will happily add the range "25-25".
+
+
 These are things that could be added AFTER things that are in the interface to
 be taken care of are implemented...
 

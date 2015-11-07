@@ -920,7 +920,7 @@ If the interface is sluggish, try turning this off.</string>
     <string>Add a single new entry.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+E, A</string>
+    <string>Ctrl+A</string>
    </property>
   </action>
   <action name="actionAdd_Redirect_To">

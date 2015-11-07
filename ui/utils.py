@@ -125,6 +125,7 @@ class ConfirmationDialog(QDialog):
         sf = self.form
         sf.acceptButton.setEnabled(sf.confirmationCheck.isChecked())
 
+
 class ReportDialog(QDialog):
     """
     Report dialog with a read-only QTextEdit and an OK button, to display
