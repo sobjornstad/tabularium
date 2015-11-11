@@ -182,7 +182,7 @@ def makeSimplification():
     occDictionary = {}
     for occ in allOccs:
         occDictionary[modifiedRangeKey(occ)] = \
-                occDictionary.get(str(occ), []) + [occ]
+                occDictionary.get(modifiedRangeKey(occ), []) + [occ]
 
     # Now form a sorted list using the first occurrence of each string repr.
     # We can then pull the appropriate list by getting the str repr of the
