@@ -448,6 +448,9 @@ class MainWindow(QMainWindow):
             except TypeError: # not connected in the first place
                 pass
 
+        self.onSearch() # immediately update search based on new options
+
+
     def onEnteredToggled(self):
         state = self.form.enteredCheck.isChecked()
         self.form.occurrencesAddedDateSpin1.setEnabled(state)
