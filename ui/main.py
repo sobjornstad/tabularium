@@ -758,7 +758,6 @@ class MainWindow(QMainWindow):
         self._printEntries(entries=None) # none is interpreted as whole db
 
     def onPrintSimplification(self):
-        print "yay simplifications!"
         db.printing.makeSimplification()
 
     def _printEntries(self, entries):

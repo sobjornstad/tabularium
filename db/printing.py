@@ -165,7 +165,8 @@ def makeSimplification():
         """
         Return a string representation of provided occurrence that uses only
         its start page if it is a range; if it is a number or redir, return the
-        original string repr.
+        original string repr. This allows ranges to be collated under the place
+        they start along with non-range entries.
         """
         if occ.isRefType('range'):
             start, end = occ.getRef()[0].split('-')

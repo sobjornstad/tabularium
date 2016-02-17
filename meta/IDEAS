@@ -8,6 +8,11 @@ be taken care of are implemented...
 * Some way to mark an entry/occurrence as bogus, to edit it later?
 * A way to look up BACKWARDS: that is, find entries that have a given occurrence. (Basically the simplification printout, only not on paper.)
 * A filter box for the sources tree.
+* "Standard Abbreviations" feature: a list in the program, and warn if trying to search or add an entry with the full pattern. As with, say, autocorrect or vim abbreviations, this could be used for things that aren't actually abbreviations but more of simply synonyms.
+* Fuzzy match to warn on similar entries/at least spelling errors?
+* Flymake-style validation of UOF, and maybe checking of above for entries
+* Reconsider UOF, both the format and the parsing thereof. It has not turned out all that well, unfortunately. Braces kind of suck to type and are often not actually necessary for clarity, despite covering tons of corner cases things that look obvious to a person still aren't handled properly...etc. Oh, and the parser is like 400 lines of spaghetti code.
+* Somehow search for things added today, or the 200 most recently added entries in order, or something of that nature.
 
 
 
