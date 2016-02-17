@@ -601,6 +601,7 @@ class MainWindow(QMainWindow):
         sf.actionChange_page.triggered.connect(self.onOccChangePage)
         sf.actionLetter_Distribution_Check.triggered.connect(self.onLetterDistro)
         sf.actionTabulate_Relations.triggered.connect(self.onTabulateRelations)
+        sf.actionFollow_redirect.triggered.connect(self.onFollowRedirect)
 
     def onTabulateRelations(self):
         # TODO: or do we search through occurrences?
@@ -741,6 +742,14 @@ class MainWindow(QMainWindow):
         self.onSearch()
         #self.updateAndRestoreSelections()
 
+    def onFollowRedirect(self):
+        occ = self._fetchCurrentOccurrence()
+        assert occ is not None, "Follow redirect called with no occ selected!"
+        assert occ.isRefType('redir'), \
+                "Follow redirect called with a non-redirect occurrence!"
+        ref = occ.getRef()[0]
+        self._changeSearch(ref)
+
     def onPrintVisible(self):
         entries = self._getEntriesForSearch()
         self._printEntries(entries)
@@ -769,14 +778,9 @@ class MainWindow(QMainWindow):
         pw = ui.settings.PreferencesWindow(self, self.sh)
         pw.exec_()
 
-
     def onInspect_FollowNearby(self):
         entryName = unicode(self.form.nearbyList.currentItem().text())
-        self.form.searchBox.setText(entryName)
-        self.onSearch()
-        item = self.form.entriesList.findItems(entryName, Qt.MatchExactly)[0]
-        self.form.entriesList.setCurrentItem(item)
-        self.form.entriesList.setFocus()
+        self._changeSearch(entryName)
         #TODO: Ideally we would autoselect the occurrence that was nearby,
         #      but that's a LOT more work, so not right away.
 
@@ -951,6 +955,17 @@ class MainWindow(QMainWindow):
         if row == -1: # no occurrence selected
             return None
         return self.currentOccs[row]
+
+    def _changeSearch(self, searchFor):
+        """
+        Change the text in the search box, rerun search, and select the
+        particular item. Used when doing things like following redirects.
+        """
+        self.form.searchBox.setText(searchFor)
+        self.onSearch()
+        item = self.form.entriesList.findItems(searchFor, Qt.MatchExactly)[0]
+        self.form.entriesList.setCurrentItem(item)
+        self.form.entriesList.setFocus()
 
     ### Reset functions: since more or less needs to be reset for each, do a
     ### sort of cascade.
