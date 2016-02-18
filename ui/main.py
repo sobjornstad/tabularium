@@ -904,8 +904,12 @@ class MainWindow(QMainWindow):
         sf.actionChange_volume.setEnabled(ifNoOccurrence)
         sf.actionDelete_occ.setEnabled(ifNoOccurrence)
         sf.actionMove_to_entry.setEnabled(ifNoOccurrence)
-        #TODO: next should actually be enabled only if selection is a redirect
-        sf.actionFollow_redirect.setEnabled(ifNoOccurrence)
+        curOcc = self._fetchCurrentOccurrence()
+        if((ifNoOccurrence) and (curOcc is not None) and
+           (curOcc.isRefType('redir'))):
+            sf.actionFollow_redirect.setEnabled(True)
+        else:
+            sf.actionFollow_redirect.setEnabled(False)
         ifNoEntry = sf.entriesList.currentRow() != -1
         sf.actionAdd_occ.setEnabled(ifNoEntry)
 
