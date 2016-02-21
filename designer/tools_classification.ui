@@ -116,7 +116,7 @@
      <item>
       <widget class="QLabel" name="countLabel">
        <property name="text">
-        <string>99 entries left to classify.</string>
+        <string>0 entries left to classify.</string>
        </property>
       </widget>
      </item>
