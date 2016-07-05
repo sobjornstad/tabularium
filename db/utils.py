@@ -51,6 +51,8 @@ def minMaxDatesOccurrenceEnteredModified():
 
     return dateDeserializer(early), dateDeserializer(late)
 
+# I copied this function from somewhere on the Web, but unfortunately I
+# neglected to keep track of where I got it from...
 def generate_index(str):
     """
     Splits a string into alpha and numeric elements, which

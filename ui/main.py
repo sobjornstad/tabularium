@@ -270,14 +270,12 @@ class MainWindow(QMainWindow):
         """
 
         self.form.statusBar.showMessage("Searching...")
-        doClearStatusBarAtEnd = True
         QApplication.processEvents()
         self._resetForEntry()
         entries = self._getEntriesForSearch()
         self._fillListWidgetWithEntries(self.form.entriesList, entries)
         self.updateMatchesStatus()
-        if doClearStatusBarAtEnd:
-            self.form.statusBar.clearMessage()
+        self.form.statusBar.clearMessage()
 
     def _getEntriesForSearch(self):
         """
@@ -538,15 +536,9 @@ class MainWindow(QMainWindow):
                            if ol.currentItem() else "")
 
     def updateAndRestoreSelections(self):
-        #TODO: Consider whether there should be an option to go highlight
+        # TODO: Consider whether there should be an option to go highlight
         # the just-added entry
-        self._resetForEntry()
         self.fillEntries()
-        #except AttributeError:
-            # If we just deleted something, fillOccurrences will fail, but it's
-            # no big deal as we select an item further down which will signal
-            # it to fill them.
-        #    pass
 
         self.form.statusBar.showMessage("Reloading...")
         el = self.form.entriesList
@@ -957,8 +949,8 @@ class MainWindow(QMainWindow):
                 return None
     def _fetchCurrentOccurrence(self):
         """
-        Get an Occurrence object for the currently selected entry. Return None if
-        nothing is selected.
+        Get an Occurrence object for the currently selected occurrence. Return
+        None if nothing is selected.
         """
         row = self.form.occurrencesList.currentRow()
         if row == -1: # no occurrence selected
