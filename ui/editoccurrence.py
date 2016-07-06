@@ -35,7 +35,12 @@ class EditOccurrenceWindow(QDialog):
         uof = "%s: %s.%s" % (self.source.getAbbrev(),
                              self.form.volumeSpin.value(), ref)
         if self._referenceOk(uof):
-            db.occurrences.makeOccurrencesFromString(uof, self.entry)
+            _, dupe = db.occurrences.makeOccurrencesFromString(uof, self.entry)
+            if dupe:
+                # otherwise, if we click OK without changing anything, the
+                # occurrence is deleted!
+                self.reject()
+                return
             self.occ.delete()
             super(EditOccurrenceWindow, self).accept()
 
