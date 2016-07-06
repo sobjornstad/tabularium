@@ -108,6 +108,7 @@ class MainWindow(QMainWindow):
         self.currentOccs = None
         self.searchStack = []
         self.searchForward = []
+        self.lastSearch = ""
         sf.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
         sf.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
         self.onChangeSearchOptions()
@@ -637,27 +638,48 @@ class MainWindow(QMainWindow):
 
         The error handling is needed even though the back/forward options are disabled on shortcut keys because one might hold down the alt key and press back/forward a few times, and the handler only runs the first time the key is depressed. Therefore, we could reach the bottom of the stack without the event filter getting a chance to disable the option.
         """
-        print "stack: %r" % self.searchStack
-        print "forward: %r" % self.searchForward
+        if self.searchOptions['incremental']:
+            # Fake a focus lost event to save the current search value on the
+            # stack before going back, so user can go forward to it again.
+            self.searchFocusLost(self.form.searchBox, self.form.searchBox)
+
         try:
             cur = self.searchStack.pop()
-            last = self.searchStack.pop()
         except IndexError:
             return
+        try:
+            last = self.searchStack.pop()
+        except IndexError:
+            self.searchStack.append(cur)
+            return
         if len(self.searchForward) == 0 or cur != self.searchForward[-1]:
+            # if not already on the forward stack
             self.searchForward.append(cur)
+
+        # Block signals as we change the search so that the forward history
+        # isn't wiped out by an automatic search here.
+        oldBlockSignals = self.form.searchBox.blockSignals(True)
         self.form.searchBox.setText(last)
+        self.form.searchBox.blockSignals(oldBlockSignals)
+        if self.searchOptions['incremental']:
+            # Since onSearch() doesn't push the current search onto the stack
+            # if incremental mode is on, we have to do it ourselves first.
+            self.searchStack.append(last)
         self.onSearch(wentForwardBack=True)
 
     def onGoForward(self):
         "Go forward to the next (last back'd) search. See onGoBack() for more."
-        print "stack: %r" % self.searchStack
-        print "forward: %r" % self.searchForward
         try:
             last = self.searchForward.pop()
         except IndexError:
             return
+        oldBlockSignals = self.form.searchBox.blockSignals(True)
         self.form.searchBox.setText(last)
+        self.form.searchBox.blockSignals(oldBlockSignals)
+        if self.searchOptions['incremental']:
+            # Since onSearch() doesn't push the current search onto the stack
+            # if incremental mode is on, we have to do it ourselves first.
+            self.searchStack.append(last)
         self.onSearch(wentForwardBack=True)
 
     ## Entry menu
@@ -937,7 +959,7 @@ class MainWindow(QMainWindow):
 
 
     ### Other actions ###
-    def onSearch(self, wentForwardBack=False):
+    def onSearch(self, _=None, wentForwardBack=False):
         """
         Called when clicking the "go" button, or from other methods when the
         view needs to be updated for a changed search (e.g., after following a
@@ -950,10 +972,13 @@ class MainWindow(QMainWindow):
         wentForwardBack will disable this behavior.
         """
         self.search = unicode(self.form.searchBox.text())
-        if len(self.searchStack) == 0 or self.search != self.searchStack[-1]:
+        isDupe = (len(self.searchStack) != 0
+                  and self.search == self.searchStack[-1])
+        if not self.searchOptions['incremental'] and not isDupe:
             self.searchStack.append(self.search)
         if not wentForwardBack:
             self.searchForward = []
+        self.lastSearch = self.search
         self.fillEntries()
 
     def onAddFromSearch(self):
@@ -1031,6 +1056,18 @@ class MainWindow(QMainWindow):
         self.form.nearbyList.clear()
         self.form.inspectBox.clear()
 
+    def searchFocusLost(self, old, new):
+        """
+        If incremental search mode is on, store the search in the history
+        whenever focus to the search box is lost. (Otherwise, the search is
+        stored by onSearch(), when Enter or Go is pressed.)
+        """
+        if old != self.form.searchBox:
+            return
+        search = unicode(self.form.searchBox.text())
+        if len(self.searchStack) and search != self.searchStack[-1]:
+            self.searchStack.append(search)
+
 
 def selectFirstAndFocus(widget):
     widget.setCurrentRow(0)
@@ -1050,5 +1087,6 @@ def start():
     qfilter = MwEventFilter()
     app.installEventFilter(qfilter)
     mw = MainWindow(qfilter)
+    app.focusChanged.connect(mw.searchFocusLost)
     mw.show()
     app.exec_()
