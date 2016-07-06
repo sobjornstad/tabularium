@@ -618,7 +618,7 @@ class MainWindow(QMainWindow):
         QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
         try:
             self.form.statusBar.showMessage(
-                    "Generating PDF (this may take a few seconds)...")
+                    "Generating PDF (this may take some time)...")
             QApplication.processEvents()
             printFunc()
         except db.printing.PrintingError as e:
@@ -689,6 +689,11 @@ class MainWindow(QMainWindow):
             # if incremental mode is on, we have to do it ourselves first.
             self.searchStack.append(last)
         self.onSearch(wentForwardBack=True)
+
+    def onGoSearch(self):
+        self.form.searchBox.selectAll()
+        self.form.searchBox.setFocus()
+
 
     ## Entry menu
     def onAddEntry(self, entry=None, redirTo=None, edit=False, text=None):
@@ -930,7 +935,7 @@ class MainWindow(QMainWindow):
         sf.actionGoBack.triggered.connect(self.onGoBack)
         sf.actionGoForward.triggered.connect(self.onGoForward)
         sf.actionMerge_into.triggered.connect(self.onMergeEntry)
-        sf.actionGoSearch.triggered.connect(sf.searchBox.setFocus)
+        sf.actionGoSearch.triggered.connect(self.onGoSearch)
         sf.actionGoEntries.triggered.connect(sf.entriesList.setFocus)
         sf.actionGoOccurrences.triggered.connect(sf.occurrencesList.setFocus)
         sf.actionGoInspect.triggered.connect(sf.inspectBox.setFocus)

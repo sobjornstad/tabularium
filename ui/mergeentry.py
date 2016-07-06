@@ -8,7 +8,6 @@ Called from onMergeEntry() in main.
 
 from PyQt4.QtGui import QDialog
 from ui.forms.mergeentry import Ui_Dialog
-import db.entries
 
 class MergeEntryDialog(QDialog):
     """
@@ -23,11 +22,13 @@ class MergeEntryDialog(QDialog):
         QDialog.__init__(self)
         self.form = Ui_Dialog()
         self.form.setupUi(self)
+        self.mw = parent
         self.form.mergeButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
 
     def setFrom(self, entry):
         self.form.fromBox.setText(entry.getName())
+        self.setWindowTitle("Merge '%s' into..." % entry.getName())
 
     def getTo(self):
         return unicode(self.form.toBox.text())

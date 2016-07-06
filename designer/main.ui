@@ -23,7 +23,7 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>&amp;Search</string>
+         <string>Search</string>
         </property>
         <property name="buddy">
          <cstring>searchBox</cstring>
@@ -42,7 +42,7 @@
          </size>
         </property>
         <property name="text">
-         <string>&amp;Go</string>
+         <string>Go</string>
         </property>
        </widget>
       </item>
@@ -58,7 +58,7 @@
          <string>Add a new entry using the text in the search box.</string>
         </property>
         <property name="text">
-         <string>&amp;Add</string>
+         <string>Add</string>
         </property>
         <property name="autoDefault">
          <bool>true</bool>
@@ -698,6 +698,9 @@ If the interface is sluggish, try turning this off.</string>
      <string>&amp;File</string>
     </property>
     <widget class="QMenu" name="menu_Print">
+     <property name="statusTip">
+      <string>Generate printable PDFs of your Tabularium database.</string>
+     </property>
      <property name="title">
       <string>&amp;Print</string>
      </property>
@@ -870,6 +873,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Preferences...</string>
    </property>
+   <property name="statusTip">
+    <string>Change your user preferences.</string>
+   </property>
   </action>
   <action name="actionEdit">
    <property name="text">
@@ -879,7 +885,7 @@ If the interface is sluggish, try turning this off.</string>
     <string>Edit the name, sort key, or classification of the current entry.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+E, E</string>
+    <string>Ctrl+E</string>
    </property>
   </action>
   <action name="actionMerge_into">
@@ -888,6 +894,9 @@ If the interface is sluggish, try turning this off.</string>
    </property>
    <property name="statusTip">
     <string>Move all of this entry's occurrences into another entry and delete this entry.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
    </property>
   </action>
   <action name="actionDelete">
@@ -898,7 +907,7 @@ If the interface is sluggish, try turning this off.</string>
     <string>Delete this entry and all of its occurrences.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+E, D</string>
+    <string>Del</string>
    </property>
   </action>
   <action name="actionAdd">
@@ -920,7 +929,7 @@ If the interface is sluggish, try turning this off.</string>
     <string>Add a new entry redirecting to the currently selected entry.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+E, R</string>
+    <string>Ctrl+R</string>
    </property>
   </action>
   <action name="actionAdd_Multiple">
@@ -942,7 +951,7 @@ If the interface is sluggish, try turning this off.</string>
     <string>Add a new entry, starting with the values of the entry currently selected.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+E, B</string>
+    <string>Ctrl+B</string>
    </property>
   </action>
   <action name="actionMove_to_entry">
@@ -961,18 +970,18 @@ If the interface is sluggish, try turning this off.</string>
     <string>Delete this occurrence without otherwise modifying the entry.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+O, D</string>
+    <string>Shift+Del</string>
    </property>
   </action>
   <action name="actionAdd_occ">
    <property name="text">
-    <string>Add to entry...</string>
+    <string>Add to Entry...</string>
    </property>
    <property name="statusTip">
     <string>Create a new occurrence in the currently selected entry.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+O, A</string>
+    <string>Ctrl+Shift+A</string>
    </property>
   </action>
   <action name="actionFollow_redirect">
@@ -985,7 +994,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionChange_page">
    <property name="text">
-    <string>Change Page...</string>
+    <string>Change Reference...</string>
    </property>
    <property name="statusTip">
     <string>Change the page number of the selected occurrence.</string>
@@ -1012,7 +1021,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionSource_notes">
    <property name="text">
-    <string>&amp;Source notes...</string>
+    <string>&amp;Source Notes...</string>
    </property>
    <property name="statusTip">
     <string>Open the notes browser to the notes for the source used by the selected occurrence.</string>
@@ -1023,7 +1032,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionDiary_notes">
    <property name="text">
-    <string>&amp;Diary notes...</string>
+    <string>&amp;Diary Notes...</string>
    </property>
    <property name="statusTip">
     <string>Open the notes browser to the notes for the diary volume that was open when this occurrence was added.</string>
@@ -1034,7 +1043,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionManage_sources">
    <property name="text">
-    <string>Manage sources...</string>
+    <string>Manage Sources...</string>
    </property>
    <property name="statusTip">
     <string>Open the source manager to view, add, edit, and delete sources.</string>
@@ -1045,7 +1054,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionManage_volumes">
    <property name="text">
-    <string>Manage volumes...</string>
+    <string>Manage Volumes...</string>
    </property>
    <property name="statusTip">
     <string>Open the volume manager to view, add, edit, and delete volumes of your sources.</string>
@@ -1107,10 +1116,22 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>&amp;Entire index</string>
    </property>
+   <property name="statusTip">
+    <string>Print an index of the entire database, displaying occurrences next to entries in alphabetical order.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
   </action>
   <action name="actionVisible_entries">
    <property name="text">
     <string>&amp;Visible entries</string>
+   </property>
+   <property name="statusTip">
+    <string>Print an index of only the entries visible in the current view.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+P</string>
    </property>
   </action>
   <action name="action_Notes">
@@ -1122,8 +1143,11 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>&amp;Simplification</string>
    </property>
+   <property name="statusTip">
+    <string>Print all occurrences in chronological order, with their associated entries.</string>
+   </property>
    <property name="shortcut">
-    <string>Ctrl+P</string>
+    <string>Ctrl+Alt+P</string>
    </property>
   </action>
   <action name="actionLetter_Distribution_Check">
@@ -1143,6 +1167,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>&amp;Back</string>
    </property>
+   <property name="statusTip">
+    <string>Go back to the previous search.</string>
+   </property>
    <property name="shortcut">
     <string>Alt+Left</string>
    </property>
@@ -1150,6 +1177,9 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionGoForward">
    <property name="text">
     <string>&amp;Forward</string>
+   </property>
+   <property name="statusTip">
+    <string>Go to the next search in your history (before you went back).</string>
    </property>
    <property name="shortcut">
     <string>Alt+Right</string>
@@ -1159,6 +1189,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>&amp;Search</string>
    </property>
+   <property name="statusTip">
+    <string>Place focus in the search box.</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+F</string>
    </property>
@@ -1166,6 +1199,9 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionGoEntries">
    <property name="text">
     <string>&amp;Entries</string>
+   </property>
+   <property name="statusTip">
+    <string>Place focus in the entries list (use the arrow keys to highlight items).</string>
    </property>
    <property name="shortcut">
     <string>Alt+E</string>
@@ -1175,6 +1211,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>&amp;Occurrences</string>
    </property>
+   <property name="statusTip">
+    <string>Place focus in the occurrences list (use the arrow keys to highlight items).</string>
+   </property>
    <property name="shortcut">
     <string>Alt+O</string>
    </property>
@@ -1183,6 +1222,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>&amp;Inspect</string>
    </property>
+   <property name="statusTip">
+    <string>Place focus in the inspect box.</string>
+   </property>
    <property name="shortcut">
     <string>Alt+I</string>
    </property>
@@ -1190,6 +1232,9 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionGoNearby">
    <property name="text">
     <string>&amp;Nearby</string>
+   </property>
+   <property name="statusTip">
+    <string>Place focus in the nearby list (use arrow keys to highlight items).</string>
    </property>
    <property name="shortcut">
     <string>Alt+N</string>
