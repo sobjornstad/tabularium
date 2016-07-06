@@ -981,9 +981,15 @@ class MainWindow(QMainWindow):
         sf = self.form
         ifCondition = sf.nearbyList.currentRow() != -1
         sf.actionFollow_Nearby_Entry.setEnabled(ifCondition)
-        ifCondition = sf.occurrencesList.currentRow() != -1
-        sf.actionSource_notes.setEnabled(ifCondition)
-        sf.actionDiary_notes.setEnabled(ifCondition)
+        occSelected = sf.occurrencesList.currentRow() != -1
+        sf.actionSource_notes.setEnabled(occSelected)
+
+        if occSelected:
+            occ = self._fetchCurrentOccurrence()
+            diary = db.volumes.findDateInDiary(occ.getAddedDate()) is not None
+            sf.actionDiary_notes.setEnabled(diary)
+        else:
+            sf.actionDiary_notes.setEnabled(False)
 
 
     ### Other actions ###
