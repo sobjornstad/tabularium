@@ -920,10 +920,10 @@ class MainWindow(QMainWindow):
         sf.actionGoForward.triggered.connect(self.onGoForward)
         sf.actionMerge_into.triggered.connect(self.onMergeEntry)
         sf.actionGoSearch.triggered.connect(self.onGoSearch)
-        sf.actionGoEntries.triggered.connect(sf.entriesList.setFocus)
-        sf.actionGoOccurrences.triggered.connect(sf.occurrencesList.setFocus)
+        sf.actionGoEntries.triggered.connect(lambda: selectFirstAndFocus(sf.entriesList))
+        sf.actionGoOccurrences.triggered.connect(lambda: selectFirstAndFocus(sf.occurrencesList))
         sf.actionGoInspect.triggered.connect(sf.inspectBox.setFocus)
-        sf.actionGoNearby.triggered.connect(sf.nearbyList.setFocus)
+        sf.actionGoNearby.triggered.connect(lambda: selectFirstAndFocus(sf.nearbyList))
 
     def checkAllMenus(self):
         """
@@ -1125,9 +1125,14 @@ class MainWindow(QMainWindow):
             self.searchStack.append(search)
 
 
-def selectFirstAndFocus(widget):
-    widget.setCurrentRow(0)
-    widget.setFocus()
+def selectFirstAndFocus(listWidget):
+    """
+    If there is no selection in listWidget currently, select the first row.
+    Regardless, focus the widget.
+    """
+    if listWidget.currentRow() == -1:
+        listWidget.setCurrentRow(0)
+    listWidget.setFocus()
 
 def fillListWidgetWithEntries(widget, entries):
     entries.sort(key=lambda i: i.getSortKey().lower())
