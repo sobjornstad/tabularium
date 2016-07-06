@@ -745,8 +745,7 @@ If the interface is sluggish, try turning this off.</string>
     </property>
     <addaction name="actionAdd_occ"/>
     <addaction name="separator"/>
-    <addaction name="actionChange_page"/>
-    <addaction name="actionChange_volume"/>
+    <addaction name="actionEditOcc"/>
     <addaction name="actionMove_to_entry"/>
     <addaction name="actionDelete_occ"/>
     <addaction name="separator"/>
@@ -992,12 +991,15 @@ If the interface is sluggish, try turning this off.</string>
     <string>Search for the entry that the selected occurrence redirects to.</string>
    </property>
   </action>
-  <action name="actionChange_page">
+  <action name="actionEditOcc">
    <property name="text">
-    <string>Change Reference...</string>
+    <string>Edit...</string>
    </property>
    <property name="statusTip">
-    <string>Change the page number of the selected occurrence.</string>
+    <string>Change the volume or page number/reference of the selected occurrence.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+E</string>
    </property>
   </action>
   <action name="actionChange_volume">

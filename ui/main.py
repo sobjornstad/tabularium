@@ -24,6 +24,7 @@ import db.sources
 import ui.addentry
 import ui.addoccurrence
 import ui.editnotes
+import ui.editoccurrence
 import ui.mergeentry
 import ui.settings
 import ui.sourcemanager
@@ -563,7 +564,7 @@ class MainWindow(QMainWindow):
         ol = self.form.occurrencesList
         self.savedSelections = (el.currentRow(), ol.currentRow())
         self.savedTexts = (el.currentItem().text() if el.currentItem() else "",
-                           ol.currentItem().text if ol.currentItem() else "")
+                           ol.currentItem().text() if ol.currentItem() else "")
 
     def updateAndRestoreSelections(self):
         """
@@ -782,27 +783,13 @@ class MainWindow(QMainWindow):
         if r:
             self.updateAndRestoreSelections()
 
-    def onOccChangePage(self):
-        "Change the page number of an occurrence (presumably a correction)."
+    def onEditOccurrence(self):
+        self.saveSelections()
         occ = self._fetchCurrentOccurrence()
-        ref, reftype = occ.getRef()
-        if reftype != db.consts.refTypes['num']:
-            ui.utils.errorBox("This option only works with numeric pages at "
-                              "this time.", "Can't edit this type")
-            return
-
-        newpage, accepted = ui.utils.inputBox("New page number:",
-                                              "Change Occurrence Page",
-                                              defaultText=unicode(ref))
-        if accepted:
-            try:
-                newpage = int(newpage)
-            except ValueError:
-                ui.utils.errorBox("You may only change to a numeric page at "
-                                  "this time.", "Can't change to this type")
-            occ.setRef(newpage, reftype)
-            # this isn't working...
-            #self.updateAndRestoreSelections()
+        entry = occ.getEntry()
+        dialog = ui.editoccurrence.EditOccurrenceWindow(self, entry, occ)
+        if dialog.exec_():
+            self.updateAndRestoreSelections()
 
     def onDeleteOccurrence(self):
         """
@@ -927,7 +914,7 @@ class MainWindow(QMainWindow):
         sf.action_Simplification.triggered.connect(self.onPrintSimplification)
         sf.actionPreferences.triggered.connect(self.onPrefs)
         sf.actionClassify_Entries.triggered.connect(self.onClassify)
-        sf.actionChange_page.triggered.connect(self.onOccChangePage)
+        sf.actionEditOcc.triggered.connect(self.onEditOccurrence)
         sf.actionLetter_Distribution_Check.triggered.connect(
                 self.onLetterDistro)
         sf.actionTabulate_Relations.triggered.connect(self.onTabulateRelations)
@@ -974,10 +961,9 @@ class MainWindow(QMainWindow):
         "Enable/disable items on Occurrences menu for current window state."
         sf = self.form
         ifNoOccurrence = sf.occurrencesList.currentRow() != -1
-        sf.actionChange_page.setEnabled(ifNoOccurrence)
-        sf.actionChange_volume.setEnabled(ifNoOccurrence)
-        sf.actionDelete_occ.setEnabled(ifNoOccurrence)
+        sf.actionEditOcc.setEnabled(ifNoOccurrence)
         sf.actionMove_to_entry.setEnabled(ifNoOccurrence)
+        sf.actionDelete_occ.setEnabled(ifNoOccurrence)
         curOcc = self._fetchCurrentOccurrence()
         if((ifNoOccurrence) and (curOcc is not None) and
            (curOcc.isRefType('redir'))):
