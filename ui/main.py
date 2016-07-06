@@ -2,14 +2,11 @@
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QApplication, QMainWindow, QFileDialog, QMessageBox, \
-        QCursor
-from PyQt4.QtCore import QObject, QEvent, Qt
-from forms.main import Ui_MainWindow
-from passlib.hash import pbkdf2_sha256 as pbkdf
+from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, QCursor
+from PyQt4.QtCore import QObject, Qt
+from ui.forms.main import Ui_MainWindow
 import sqlite3
 import sys
-import time
 
 import config
 import db.consts
@@ -49,11 +46,11 @@ class MwEventFilter(QObject):
         self.mw = mw
 
     def eventFilter(self, receiver, event):
-       if event.type() == 51:
-           #print event.key()
-           if event.key() in self.actOnKeys and self.mw is not None:
-               self.mw.checkAllMenus()
-       return super(MwEventFilter,self).eventFilter(receiver, event)
+        if event.type() == 51:
+            #print event.key()
+            if event.key() in self.actOnKeys and self.mw is not None:
+                self.mw.checkAllMenus()
+        return super(MwEventFilter, self).eventFilter(receiver, event)
 
 class MainWindow(QMainWindow):
     ### Application lifecycle functions ###
@@ -107,7 +104,7 @@ class MainWindow(QMainWindow):
             pw, accepted = ui.utils.passwordEntry()
             if not accepted:
                 sys.exit(0)
-            if not checkPassword(pw, self.sh):
+            if not ui.settings.checkPassword(pw, self.sh):
                 ui.utils.errorBox("Invalid password, exiting program.",
                                   "No dice!")
                 sys.exit(1)
@@ -115,12 +112,13 @@ class MainWindow(QMainWindow):
         # fill entries
         self.fillEntries()
         self.savedTexts = ("", "")
-        self.savedSelections = (-1,-1)
+        self.savedSelections = (-1, -1)
 
         # set up inspection options
         self.inspectOptions = {}
-        items = (sf.showInspectCheck, sf.showSourceNameCheck, sf.showAddedCheck,
-                 sf.showEnteredCheck, sf.showNearbyCheck, sf.showDiaryCheck)
+        items = (sf.showInspectCheck, sf.showSourceNameCheck,
+                 sf.showAddedCheck, sf.showEnteredCheck,
+                 sf.showNearbyCheck, sf.showDiaryCheck)
         for i in items:
             i.toggled.connect(self.onChangeInspectionOptions)
         self.onChangeInspectionOptions()
@@ -177,7 +175,8 @@ class MainWindow(QMainWindow):
         sh.put('entriesQuotationsCheck', sf.entriesQuotationsCheck.isChecked())
         sh.put('entriesTitlesCheck', sf.entriesTitlesCheck.isChecked())
         sh.put('entriesCommonsCheck', sf.entriesCommonsCheck.isChecked())
-        sh.put('entriesUnclassifiedCheck', sf.entriesUnclassifiedCheck.isChecked())
+        sh.put('entriesUnclassifiedCheck',
+               sf.entriesUnclassifiedCheck.isChecked())
         sh.put('enteredCheck', sf.enteredCheck.isChecked())
         sh.put('modifiedCheck', sf.modifiedCheck.isChecked())
         sh.put('sourceCheck', sf.sourceCheck.isChecked())
@@ -214,7 +213,8 @@ class MainWindow(QMainWindow):
 
         # splitters
         wrapper(sf.mainSplitter.restoreState, 'mainSplitterState')
-        wrapper(sf.inspectNearbySplitter.restoreState, 'secondarySplitterState')
+        wrapper(sf.inspectNearbySplitter.restoreState,
+                'secondarySplitterState')
 
         # checkboxes
         wrapper(sf.incrementalCheckbox.setChecked, 'incrementalCheck')
@@ -230,7 +230,8 @@ class MainWindow(QMainWindow):
         wrapper(sf.entriesQuotationsCheck.setChecked, 'entriesQuotationsCheck')
         wrapper(sf.entriesTitlesCheck.setChecked, 'entriesTitlesCheck')
         wrapper(sf.entriesCommonsCheck.setChecked, 'entriesCommonsCheck')
-        wrapper(sf.entriesUnclassifiedCheck.setChecked, 'entriesUnclassifiedCheck')
+        wrapper(sf.entriesUnclassifiedCheck.setChecked,
+                'entriesUnclassifiedCheck')
         wrapper(sf.enteredCheck.setChecked, 'enteredCheck')
         wrapper(sf.modifiedCheck.setChecked, 'modifiedCheck')
         wrapper(sf.sourceCheck.setChecked, 'sourceCheck')
@@ -254,7 +255,8 @@ class MainWindow(QMainWindow):
         entryString = "E: %i" % entryCount
         occCount = self.form.occurrencesList.count()
         occString = ", O: %i" % occCount
-        self.matchesWidget.setText(entryString + ("" if not occCount else occString))
+        self.matchesWidget.setText(
+                entryString + ("" if not occCount else occString))
 
     def fillEntries(self):
         """
@@ -573,7 +575,8 @@ class MainWindow(QMainWindow):
     def _setupMenus(self):
         sf = self.form
         sf.actionQuit.triggered.connect(self.quit)
-        sf.actionFollow_Nearby_Entry.triggered.connect(self.onInspect_FollowNearby)
+        sf.actionFollow_Nearby_Entry.triggered.connect(
+                self.onInspect_FollowNearby)
         sf.actionAdd.triggered.connect(self.onAddEntry)
         sf.actionNew_based_on.triggered.connect(self.onAddEntryBasedOn)
         sf.actionAdd_Redirect_To.triggered.connect(self.onAddRedirect)
@@ -592,7 +595,8 @@ class MainWindow(QMainWindow):
         sf.actionPreferences.triggered.connect(self.onPrefs)
         sf.actionClassify_Entries.triggered.connect(self.onClassify)
         sf.actionChange_page.triggered.connect(self.onOccChangePage)
-        sf.actionLetter_Distribution_Check.triggered.connect(self.onLetterDistro)
+        sf.actionLetter_Distribution_Check.triggered.connect(
+                self.onLetterDistro)
         sf.actionTabulate_Relations.triggered.connect(self.onTabulateRelations)
         sf.actionFollow_redirect.triggered.connect(self.onFollowRedirect)
 
@@ -811,7 +815,6 @@ class MainWindow(QMainWindow):
         self.onAddEntry(entry, edit=True)
     def onDeleteEntry(self):
         self.saveSelections()
-        row = self.form.entriesList.currentRow()
         entry = self._fetchCurrentEntry()
         eName = entry.getName()
         occsAffected = len(db.occurrences.fetchForEntry(entry))
@@ -833,12 +836,13 @@ class MainWindow(QMainWindow):
             self.updateAndRestoreSelections()
     def onDeleteOccurrence(self):
         self.saveSelections()
-        row = self.form.occurrencesList.currentRow()
         occ = self._fetchCurrentOccurrence()
-        qString = "Do you really want to delete the occurrence '%s'?" % str(occ)
+        qString = "Do you really want to delete the occurrence '%s'?" % (
+                str(occ))
         if len(occ.getOccsOfEntry()) == 1:
             entry = occ.getEntry()
-            qString +=" (The entry '%s' will be deleted too.)" % entry.getName()
+            qString += " (The entry '%s' will be deleted too.)" % (
+                    entry.getName())
         r = ui.utils.questionBox(qString, "Delete entry?")
         if r == QMessageBox.Yes:
             occ.delete()
@@ -983,17 +987,6 @@ class MainWindow(QMainWindow):
     def _selectFirstAndFocus(self, widget):
         widget.setCurrentRow(0)
         widget.setFocus()
-
-def checkPassword(password, conf):
-    """
-    Check if the /password/ matches the one in conf; return True if yes, False
-    if no. Return True if no password is set in the database.
-    """
-
-    if conf.get('password'):
-        return pbkdf.verify(password, conf.get('password'))
-    else:
-        return True
 
 
 def start():

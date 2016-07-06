@@ -70,6 +70,7 @@ class PreferencesWindow(QDialog):
     def reject(self):
         super(PreferencesWindow, self).reject()
 
+
 class SettingsHandler(QObject):
     """
     This class, often instantiated as 'sh', can be used to get and set various
@@ -120,3 +121,15 @@ class SettingsHandler(QObject):
         """
         d.cursor.execute('UPDATE conf SET conf=?', (pickle.dumps(self.conf),))
         d.checkAutosave()
+
+
+def checkPassword(password, conf):
+    """
+    Check if the /password/ matches the one in conf; return True if yes, False
+    if no. Return True if no password is set in the database.
+    """
+
+    if conf.get('password'):
+        return pbkdf.verify(password, conf.get('password'))
+    else:
+        return True
