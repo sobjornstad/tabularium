@@ -1093,6 +1093,7 @@ class MainWindow(QMainWindow):
         Change the text in the search box, rerun search, and select the
         particular item. Used when following redirects.
         """
+        self._saveSearchToStack()
         self.form.searchBox.setText(searchFor)
         self.onSearch()
         try:
