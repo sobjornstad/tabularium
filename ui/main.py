@@ -110,7 +110,6 @@ class MainWindow(QMainWindow):
         self.currentOccs = None
         self.searchStack = []
         self.searchForward = []
-        self.lastSearch = ""
         sf.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
         sf.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
         self.onChangeSearchOptions()
@@ -648,9 +647,7 @@ class MainWindow(QMainWindow):
         option.
         """
         if self.searchOptions['incremental']:
-            # Fake a focus lost event to save the current search value on the
-            # stack before going back, so user can go forward to it again.
-            self.searchFocusLost(self.form.searchBox, self.form.searchBox)
+            self._saveSearchToStack()
 
         try:
             cur = self.searchStack.pop()
@@ -943,8 +940,19 @@ class MainWindow(QMainWindow):
         self.checkInspectMenu()
 
     def checkGoMenu(self):
-        ifCondition = len([i for i in self.searchStack if len(i)])
-        self.form.actionGoBack.setEnabled(ifCondition)
+        """
+        Check to see if we are allowed to go forward/back.
+
+        We can always go back to an empty search, even beyond the beginning of
+        the stack (since we always start with an empty search). The empty
+        search is not always placed on the stack, so we can go back either if
+        the stack is non-empty or if the search box is non-empty. Thus, the
+        only time we *can't* go back is if we've already reached the beginning
+        state.
+        """
+        somethingOnStack = bool(len([i for i in self.searchStack if len(i)]))
+        searchIsEmpty = unicode(self.form.searchBox.text()) == ""
+        self.form.actionGoBack.setEnabled(somethingOnStack or not searchIsEmpty)
         self.form.actionGoForward.setEnabled(len(self.searchForward))
 
     def checkEntryMenu(self):
@@ -1009,7 +1017,6 @@ class MainWindow(QMainWindow):
             self.searchStack.append(self.search)
         if not wentForwardBack:
             self.searchForward = []
-        self.lastSearch = self.search
         self.fillEntries()
 
     def onAddFromSearch(self):
@@ -1084,6 +1091,15 @@ class MainWindow(QMainWindow):
         self.form.entriesList.setCurrentItem(item)
         self.form.entriesList.setFocus()
 
+    def _saveSearchToStack(self):
+        """
+        Fake a focus lost event to save the current search value on the stack
+        before going back, so user can go forward to it again. This is only an
+        issue when incremental search is in use, but it won't do any harm to
+        call if it's not.
+        """
+        self.searchFocusLost(self.form.searchBox, self.form.searchBox)
+
     ### Reset functions: since more or less needs to be reset for each, do a
     ### sort of cascade.
     def _resetForEntry(self):
@@ -1105,7 +1121,7 @@ class MainWindow(QMainWindow):
         if old != self.form.searchBox:
             return
         search = unicode(self.form.searchBox.text())
-        if len(self.searchStack) and search != self.searchStack[-1]:
+        if len(self.searchStack) == 0 or search != self.searchStack[-1]:
             self.searchStack.append(search)
 
 

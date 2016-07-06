@@ -51,7 +51,8 @@ class EditOccurrenceWindow(QDialog):
             ui.utils.warningBox("%s" % e, "Error editing occurrence")
             return False
         except db.occurrences.NonexistentVolumeError as e:
-            # only way to get this is by using a pipe in the reference field
+            # only way to get this is by using a pipe in the reference field,
+            # since spinbox is limited to the valid values
             self._noMultipleOccurrences()
         except db.occurrences.InvalidUOFError as e:
             ui.utils.warningBox("That is not a valid way to specify a "
