@@ -90,6 +90,7 @@ class MainWindow(QMainWindow):
         sf.entriesList.itemDoubleClicked.connect(self.onEditEntry)
         sf.occurrencesList.itemDoubleClicked.connect(self.onFollowRedirect)
         sf.nearbyList.itemDoubleClicked.connect(self.onInspectFollowNearby)
+        sf.entriesList.itemSelectionChanged.connect(self.onEntrySelected)
 
         # connect menus and check functions (for enable/disable)
         sf.menuGo.aboutToShow.connect(self.checkGoMenu)
@@ -305,6 +306,7 @@ class MainWindow(QMainWindow):
                keystroke appears as soon as it is entered, rather than not
                until the search is complete.
         """
+        oldBlockSignals = self.form.entriesList.blockSignals(True)
         self.form.statusBar.showMessage("Searching...")
         QApplication.processEvents()
         self._resetForEntry()
@@ -312,6 +314,7 @@ class MainWindow(QMainWindow):
         fillListWidgetWithEntries(self.form.entriesList, entries)
         self.updateMatchesStatus()
         self.form.statusBar.clearMessage()
+        self.form.entriesList.blockSignals(oldBlockSignals)
 
     def _getEntriesForSearch(self):
         """
@@ -998,6 +1001,15 @@ class MainWindow(QMainWindow):
 
 
     ### Other actions ###
+    def onEntrySelected(self):
+        """
+        Automatically select the first occurrence when selecting an entry, but
+        don't leave the occurrences list focused so that we can still scroll
+        through the entries list with the arrow keys.
+        """
+        selectFirstAndFocus(self.form.occurrencesList)
+        self.form.entriesList.setFocus()
+
     def onSearch(self, _=None, wentForwardBack=False):
         """
         Called when clicking the "go" button, or from other methods when the

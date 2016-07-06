@@ -61,6 +61,10 @@ def questionBox(text, title=None):
         msgBox.setWindowTitle(title)
     return msgBox.exec_()
 
+def moo():
+    "A very advanced debug tool."
+    print("MOOOOO!")
+
 
 def inputBox(label, title=None, defaultText=None):
     """
