@@ -111,13 +111,10 @@ If the interface is sluggish, try turning this off.</string>
         <item>
          <widget class="QLabel" name="entriesLabel">
           <property name="text">
-           <string>&amp;Entries</string>
+           <string>&lt;u&gt;E&lt;/u&gt;ntries</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-          </property>
-          <property name="buddy">
-           <cstring>entriesList</cstring>
           </property>
          </widget>
         </item>
@@ -153,13 +150,10 @@ If the interface is sluggish, try turning this off.</string>
         <item>
          <widget class="QLabel" name="occurrencesLabel">
           <property name="text">
-           <string>&amp;Occurrences</string>
+           <string>&lt;u&gt;O&lt;/u&gt;ccurrences</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="buddy">
-           <cstring>occurrencesList</cstring>
           </property>
          </widget>
         </item>
@@ -187,13 +181,10 @@ If the interface is sluggish, try turning this off.</string>
          <item>
           <widget class="QLabel" name="inspectLabel">
            <property name="text">
-            <string>&amp;Inspect</string>
+            <string>&lt;u&gt;I&lt;/u&gt;nspect</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
-           </property>
-           <property name="buddy">
-            <cstring>inspectBox</cstring>
            </property>
           </widget>
          </item>
@@ -220,13 +211,10 @@ If the interface is sluggish, try turning this off.</string>
          <item>
           <widget class="QLabel" name="nearbyLabel">
            <property name="text">
-            <string>Near&amp;by</string>
+            <string>&lt;u&gt;N&lt;/u&gt;earby</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
-           </property>
-           <property name="buddy">
-            <cstring>nearbyList</cstring>
            </property>
           </widget>
          </item>
@@ -737,7 +725,7 @@ If the interface is sluggish, try turning this off.</string>
    </widget>
    <widget class="QMenu" name="menuEntry">
     <property name="title">
-     <string>E&amp;ntry</string>
+     <string>Ent&amp;ry</string>
     </property>
     <addaction name="actionAdd"/>
     <addaction name="actionNew_based_on"/>
@@ -811,11 +799,11 @@ If the interface is sluggish, try turning this off.</string>
     <addaction name="actionGoBack"/>
     <addaction name="actionGoForward"/>
     <addaction name="separator"/>
-    <addaction name="actionSearch"/>
-    <addaction name="actionEntries"/>
-    <addaction name="actionOccurrences"/>
-    <addaction name="actionInspect"/>
-    <addaction name="actionNearby"/>
+    <addaction name="actionGoSearch"/>
+    <addaction name="actionGoEntries"/>
+    <addaction name="actionGoOccurrences"/>
+    <addaction name="actionGoInspect"/>
+    <addaction name="actionGoNearby"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -1167,7 +1155,7 @@ If the interface is sluggish, try turning this off.</string>
     <string>Alt+Right</string>
    </property>
   </action>
-  <action name="actionSearch">
+  <action name="actionGoSearch">
    <property name="text">
     <string>&amp;Search</string>
    </property>
@@ -1175,7 +1163,7 @@ If the interface is sluggish, try turning this off.</string>
     <string>Ctrl+F</string>
    </property>
   </action>
-  <action name="actionEntries">
+  <action name="actionGoEntries">
    <property name="text">
     <string>&amp;Entries</string>
    </property>
@@ -1183,7 +1171,7 @@ If the interface is sluggish, try turning this off.</string>
     <string>Alt+E</string>
    </property>
   </action>
-  <action name="actionOccurrences">
+  <action name="actionGoOccurrences">
    <property name="text">
     <string>&amp;Occurrences</string>
    </property>
@@ -1191,7 +1179,7 @@ If the interface is sluggish, try turning this off.</string>
     <string>Alt+O</string>
    </property>
   </action>
-  <action name="actionInspect">
+  <action name="actionGoInspect">
    <property name="text">
     <string>&amp;Inspect</string>
    </property>
@@ -1199,12 +1187,12 @@ If the interface is sluggish, try turning this off.</string>
     <string>Alt+I</string>
    </property>
   </action>
-  <action name="actionNearby">
+  <action name="actionGoNearby">
    <property name="text">
     <string>&amp;Nearby</string>
    </property>
    <property name="shortcut">
-    <string>Alt+B</string>
+    <string>Alt+N</string>
    </property>
   </action>
  </widget>

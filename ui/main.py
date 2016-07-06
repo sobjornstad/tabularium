@@ -732,6 +732,7 @@ class MainWindow(QMainWindow):
         self.onAddEntry(entry, edit=True)
 
     def onMergeEntry(self):
+        "Merge the selected entry with one typed in by the user."
         curEntry = self._fetchCurrentEntry()
         dialog = ui.mergeentry.MergeEntryDialog(self)
         dialog.setFrom(curEntry)
@@ -929,6 +930,11 @@ class MainWindow(QMainWindow):
         sf.actionGoBack.triggered.connect(self.onGoBack)
         sf.actionGoForward.triggered.connect(self.onGoForward)
         sf.actionMerge_into.triggered.connect(self.onMergeEntry)
+        sf.actionGoSearch.triggered.connect(sf.searchBox.setFocus)
+        sf.actionGoEntries.triggered.connect(sf.entriesList.setFocus)
+        sf.actionGoOccurrences.triggered.connect(sf.occurrencesList.setFocus)
+        sf.actionGoInspect.triggered.connect(sf.inspectBox.setFocus)
+        sf.actionGoNearby.triggered.connect(sf.nearbyList.setFocus)
 
     def checkAllMenus(self):
         """
@@ -1082,7 +1088,7 @@ class MainWindow(QMainWindow):
                     "not visible in the current view. Most likely the current "
                     "limits exclude the target, and adjusting the limits "
                     "will show the item. Otherwise, the redirect may be "
-                    "invalid." % searchFor , "Redirect not found")
+                    "invalid." % searchFor, "Redirect not found")
             return
         self.form.entriesList.setCurrentItem(item)
         self.form.entriesList.setFocus()
