@@ -41,7 +41,7 @@ DOC_STARTSTR = """\\documentclass{article}
     \\fancyhf{}
     \\pagestyle{fancy}
     \\renewcommand{\\headrulewidth}{0.5pt}
-    \\fancyhead[LO,LE]{\\scshape The Complete Records Project Index}
+    \\fancyhead[LO,LE]{\\scshape Tabularium -- Complete Index}
     \\fancyhead[CO,CE]{\\thepage\ / \\pageref{LastPage}}
     \\fancyhead[RO,RE]{\\scshape \\today}
     \\renewcommand{\\indexname}{\\vskip -0.55in}
@@ -111,7 +111,7 @@ def getFormattedEntriesList(entries):
                 occList.append("%s~%s.%s" % (sourceAbbrev, volNum,
                                              ref.replace('-', '--')))
             else:
-                occList.append("%s~%s: \emph{see} %s" % (
+                occList.append("%s~%s: \\emph{see} %s" % (
                                sourceAbbrev, volNum, ref))
 
         entryStr = ''.join([ENTRY_STARTSTR, mungeLatex(newEname), ENTRY_ENDSTR,
@@ -135,7 +135,7 @@ SIMPLIFICATION_HEADER = r"""
 \fancyhf{}
 \pagestyle{fancy}
 \renewcommand{\headrulewidth}{0.5pt}
-\fancyhead[LO,LE]{\scshape Complete Simplification of the Records Project}
+\fancyhead[LO,LE]{\scshape Tabularium -- Complete Simplification}
 \fancyhead[CO,CE]{\thepage\ / \pageref{LastPage}}
 \fancyhead[RO,RE]{\scshape \today}
 \renewcommand{\indexname}{\vskip -0.55in}

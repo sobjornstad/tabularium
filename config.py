@@ -1,4 +1,4 @@
-DATABASE_FILENAME = "/home/soren/current/indexer/records.db"
+DATABASE_FILENAME = "/home/soren/current/tabularium/records.db"
 
 ##### The following are no longer used.
 
