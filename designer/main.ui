@@ -893,7 +893,7 @@ If the interface is sluggish, try turning this off.</string>
     <string>Merge &amp;Into...</string>
    </property>
    <property name="statusTip">
-    <string>Move all of these entry's occurrences into another entry and delete this entry.</string>
+    <string>Move all of this entry's occurrences into another entry and delete this entry.</string>
    </property>
   </action>
   <action name="actionDelete">

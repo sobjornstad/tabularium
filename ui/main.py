@@ -9,7 +9,6 @@ other functions are started.
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, QCursor
 from PyQt4.QtCore import QObject, Qt
-from ui.forms.main import Ui_MainWindow
 import sqlite3
 import sys
 
@@ -25,12 +24,14 @@ import db.sources
 import ui.addentry
 import ui.addoccurrence
 import ui.editnotes
+import ui.mergeentry
 import ui.settings
 import ui.sourcemanager
 import ui.volmanager
 import ui.utils
-
 import ui.tools_classification
+
+from ui.forms.main import Ui_MainWindow
 
 class MwEventFilter(QObject):
     """
@@ -636,7 +637,12 @@ class MainWindow(QMainWindow):
         """
         Go back to the previous search.
 
-        The error handling is needed even though the back/forward options are disabled on shortcut keys because one might hold down the alt key and press back/forward a few times, and the handler only runs the first time the key is depressed. Therefore, we could reach the bottom of the stack without the event filter getting a chance to disable the option.
+        The error handling is needed even though the back/forward options are
+        disabled on shortcut keys because one might hold down the alt key and
+        press back/forward a few times, and the handler only runs the first
+        time the key is depressed. Therefore, we could reach the bottom of
+        the stack without the event filter getting a chance to disable the
+        option.
         """
         if self.searchOptions['incremental']:
             # Fake a focus lost event to save the current search value on the
@@ -722,6 +728,26 @@ class MainWindow(QMainWindow):
     def onEditEntry(self):
         entry = self._fetchCurrentEntry()
         self.onAddEntry(entry, edit=True)
+
+    def onMergeEntry(self):
+        curEntry = self._fetchCurrentEntry()
+        dialog = ui.mergeentry.MergeEntryDialog(self)
+        dialog.setFrom(curEntry)
+        if not dialog.exec_():
+            return
+
+        newEntryName = dialog.getTo()
+        newEntry = db.entries.find(newEntryName)[0]
+        if not newEntry:
+            ui.utils.informationBox(
+                    "The entry %s does not exist." % newEntryName,
+                    "Cannot merge entry")
+            return
+
+        for occ in db.occurrences.fetchForEntry(curEntry):
+            occ.setEntry(newEntry)
+        curEntry.delete()
+        self.updateAndRestoreSelections()
 
     def onDeleteEntry(self):
         "After getting confirmation, delete an entry and its occurrences."
@@ -900,7 +926,7 @@ class MainWindow(QMainWindow):
         sf.actionFollow_redirect.triggered.connect(self.onFollowRedirect)
         sf.actionGoBack.triggered.connect(self.onGoBack)
         sf.actionGoForward.triggered.connect(self.onGoForward)
-
+        sf.actionMerge_into.triggered.connect(self.onMergeEntry)
 
     def checkAllMenus(self):
         """
@@ -1056,7 +1082,7 @@ class MainWindow(QMainWindow):
         self.form.nearbyList.clear()
         self.form.inspectBox.clear()
 
-    def searchFocusLost(self, old, new):
+    def searchFocusLost(self, old, _):
         """
         If incremental search mode is on, store the search in the history
         whenever focus to the search box is lost. (Otherwise, the search is
