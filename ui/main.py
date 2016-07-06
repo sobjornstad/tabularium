@@ -85,12 +85,11 @@ class MainWindow(QMainWindow):
         sf.searchGoButton.clicked.connect(self.onSearch)
         sf.searchBox.returnPressed.connect(self.onReturnInSearch)
         sf.searchAddButton.clicked.connect(self.onAddFromSearch)
-        sf.entriesList.itemSelectionChanged.connect(self.fillOccurrences)
-        sf.occurrencesList.itemSelectionChanged.connect(self.fillInspect)
-        sf.entriesList.itemDoubleClicked.connect(self.onEditEntry)
-        sf.occurrencesList.itemDoubleClicked.connect(self.onFollowRedirect)
-        sf.nearbyList.itemDoubleClicked.connect(self.onInspectFollowNearby)
         sf.entriesList.itemSelectionChanged.connect(self.onEntrySelected)
+        sf.occurrencesList.itemSelectionChanged.connect(self.fillInspect)
+        sf.entriesList.itemActivated.connect(self.onEditEntry)
+        sf.occurrencesList.itemActivated.connect(self.onEditOccurrence)
+        sf.nearbyList.itemActivated.connect(self.onInspectFollowNearby)
 
         # connect menus and check functions (for enable/disable)
         sf.menuGo.aboutToShow.connect(self.checkGoMenu)
@@ -305,6 +304,10 @@ class MainWindow(QMainWindow):
             2) It makes incremental searching feel faster: the user's
                keystroke appears as soon as it is entered, rather than not
                until the search is complete.
+
+        We block signals to the entries list so we don't try to auto-select the
+        first occurrence and refocus the entries list while we're typing a
+        search.
         """
         oldBlockSignals = self.form.entriesList.blockSignals(True)
         self.form.statusBar.showMessage("Searching...")
@@ -1003,10 +1006,12 @@ class MainWindow(QMainWindow):
     ### Other actions ###
     def onEntrySelected(self):
         """
-        Automatically select the first occurrence when selecting an entry, but
-        don't leave the occurrences list focused so that we can still scroll
-        through the entries list with the arrow keys.
+        Fill the occurrences for the current entry. Then, automatically select
+        the first occurrence when selecting an entry, but don't leave the
+        occurrences list focused, so that we can still scroll through the
+        entries list with the arrow keys.
         """
+        self.fillOccurrences()
         selectFirstAndFocus(self.form.occurrencesList)
         self.form.entriesList.setFocus()
 
