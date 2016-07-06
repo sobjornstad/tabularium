@@ -497,7 +497,7 @@ class MainWindow(QMainWindow):
 
     def onSourceToggled(self):
         "Update window state for modified source occurrence limits."
-        #TODO: call updateSourceCombo() so it has newly added sources
+        self.updateSourceCombo() # in case sources have changed
         state = self.form.sourceCheck.isChecked()
         self.form.occurrencesSourceCombo.setEnabled(state)
         if state:
