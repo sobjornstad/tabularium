@@ -586,6 +586,7 @@ class MainWindow(QMainWindow):
                 ol.setCurrentRow(self.savedSelections[1])
             else:
                 ol.setCurrentRow(ol.count() - 1)
+            ol.setFocus()
         else:
             # Maybe the item was removed; try going to that row number, so we
             # end up next to where we were before.
@@ -593,6 +594,7 @@ class MainWindow(QMainWindow):
                 el.setCurrentRow(self.savedSelections[0])
             else:
                 el.setCurrentRow(self.form.entriesList.count() - 1)
+            el.setFocus()
         self.form.statusBar.clearMessage()
 
 
