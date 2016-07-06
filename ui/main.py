@@ -90,9 +90,10 @@ class MainWindow(QMainWindow):
         sf.nearbyList.itemDoubleClicked.connect(self.onInspectFollowNearby)
 
         # connect menus and check functions (for enable/disable)
+        sf.menuGo.aboutToShow.connect(self.checkGoMenu)
         sf.menuEntry.aboutToShow.connect(self.checkEntryMenu)
-        sf.menuInspect.aboutToShow.connect(self.checkInspectMenu)
         sf.menuOccurrence.aboutToShow.connect(self.checkOccurrenceMenu)
+        sf.menuInspect.aboutToShow.connect(self.checkInspectMenu)
         self._setupMenus()
 
         # set up statusbar
@@ -105,6 +106,8 @@ class MainWindow(QMainWindow):
         self.search = ""
         self.searchOptions = {}
         self.currentOccs = None
+        self.searchStack = []
+        self.searchForward = []
         sf.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
         sf.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
         self.onChangeSearchOptions()
@@ -592,25 +595,7 @@ class MainWindow(QMainWindow):
 
 
     ### Menu callback functions ###
-    def onTabulateRelations(self): # for now, pylint: disable=no-self-use
-        # analytics.py/tabulateRelations
-        ui.utils.informationBox("This feature is not currently implemented.")
-
-    def onLetterDistro(self):
-        ui.utils.reportBox(self, db.analytics.letterDistribution(),
-                           "Letter distribution statistics")
-
-    def onClassify(self):
-        "Load the entry classification tool."
-        self.form.statusBar.showMessage("Loading entry classification tool, "
-                "this may take a moment...")
-        QApplication.processEvents()
-        cw = ui.tools_classification.ClassificationWindow(self)
-        self.form.statusBar.clearMessage()
-        cw.exec_()
-        self.onSearch()
-        #self.updateAndRestoreSelections()
-
+    ## File menu
     def onPrintAll(self):
         self._printWrapper(db.printing.printEntriesAsIndex)
 
@@ -638,10 +623,44 @@ class MainWindow(QMainWindow):
             QApplication.restoreOverrideCursor()
             self.form.statusBar.clearMessage()
 
+
+    ## Edit menu
     def onPrefs(self):
         pw = ui.settings.PreferencesWindow(self, self.sh)
         pw.exec_()
 
+
+    ## Go menu
+    def onGoBack(self):
+        """
+        Go back to the previous search.
+
+        The error handling is needed even though the back/forward options are disabled on shortcut keys because one might hold down the alt key and press back/forward a few times, and the handler only runs the first time the key is depressed. Therefore, we could reach the bottom of the stack without the event filter getting a chance to disable the option.
+        """
+        print "stack: %r" % self.searchStack
+        print "forward: %r" % self.searchForward
+        try:
+            cur = self.searchStack.pop()
+            last = self.searchStack.pop()
+        except IndexError:
+            return
+        if len(self.searchForward) == 0 or cur != self.searchForward[-1]:
+            self.searchForward.append(cur)
+        self.form.searchBox.setText(last)
+        self.onSearch(wentForwardBack=True)
+
+    def onGoForward(self):
+        "Go forward to the next (last back'd) search. See onGoBack() for more."
+        print "stack: %r" % self.searchStack
+        print "forward: %r" % self.searchForward
+        try:
+            last = self.searchForward.pop()
+        except IndexError:
+            return
+        self.form.searchBox.setText(last)
+        self.onSearch(wentForwardBack=True)
+
+    ## Entry menu
     def onAddEntry(self, entry=None, redirTo=None, edit=False, text=None):
         """
         Add a new entry. This function is called directly by the standard add
@@ -787,6 +806,7 @@ class MainWindow(QMainWindow):
                                        jumpToVolume=diaryVolume)
         nb.exec_()
 
+
     ## Sources menu
     def onViewNotes(self):
         nb = ui.editnotes.NotesBrowser(self)
@@ -799,6 +819,29 @@ class MainWindow(QMainWindow):
     def onManageVolumes(self):
         mv = ui.volmanager.VolumeManager(self)
         mv.exec_()
+
+
+    ## Tools menu
+    def onClassify(self):
+        "Load the entry classification tool."
+        self.form.statusBar.showMessage("Loading entry classification tool, "
+                "this may take a moment...")
+        QApplication.processEvents()
+        cw = ui.tools_classification.ClassificationWindow(self)
+        self.form.statusBar.clearMessage()
+        cw.exec_()
+        self.onSearch()
+        #self.updateAndRestoreSelections()
+
+
+    ## Analytics menu
+    def onTabulateRelations(self): # for now, pylint: disable=no-self-use
+        # analytics.py/tabulateRelations
+        ui.utils.informationBox("This feature is not currently implemented.")
+
+    def onLetterDistro(self):
+        ui.utils.reportBox(self, db.analytics.letterDistribution(),
+                           "Letter distribution statistics")
 
 
     ### Menu implementation ###
@@ -833,6 +876,9 @@ class MainWindow(QMainWindow):
                 self.onLetterDistro)
         sf.actionTabulate_Relations.triggered.connect(self.onTabulateRelations)
         sf.actionFollow_redirect.triggered.connect(self.onFollowRedirect)
+        sf.actionGoBack.triggered.connect(self.onGoBack)
+        sf.actionGoForward.triggered.connect(self.onGoForward)
+
 
     def checkAllMenus(self):
         """
@@ -843,9 +889,15 @@ class MainWindow(QMainWindow):
         The three functions below are called individually when clicking on that
         menu, since that's the only one that then needs to be checked
         """
+        self.checkGoMenu()
         self.checkEntryMenu()
-        self.checkInspectMenu()
         self.checkOccurrenceMenu()
+        self.checkInspectMenu()
+
+    def checkGoMenu(self):
+        ifCondition = len([i for i in self.searchStack if len(i)])
+        self.form.actionGoBack.setEnabled(ifCondition)
+        self.form.actionGoForward.setEnabled(len(self.searchForward))
 
     def checkEntryMenu(self):
         "Enable/disable items on the Entry menu for the current window state."
@@ -856,15 +908,6 @@ class MainWindow(QMainWindow):
         sf.actionEdit.setEnabled(ifCondition)
         sf.actionMerge_into.setEnabled(ifCondition)
         sf.actionDelete.setEnabled(ifCondition)
-
-    def checkInspectMenu(self):
-        "Enable/disable items on Inspect menu for the current window state."
-        sf = self.form
-        ifCondition = sf.nearbyList.currentRow() != -1
-        sf.actionFollow_Nearby_Entry.setEnabled(ifCondition)
-        ifCondition = sf.occurrencesList.currentRow() != -1
-        sf.actionSource_notes.setEnabled(ifCondition)
-        sf.actionDiary_notes.setEnabled(ifCondition)
 
     def checkOccurrenceMenu(self):
         "Enable/disable items on Occurrences menu for current window state."
@@ -883,15 +926,34 @@ class MainWindow(QMainWindow):
         ifNoEntry = sf.entriesList.currentRow() != -1
         sf.actionAdd_occ.setEnabled(ifNoEntry)
 
+    def checkInspectMenu(self):
+        "Enable/disable items on Inspect menu for the current window state."
+        sf = self.form
+        ifCondition = sf.nearbyList.currentRow() != -1
+        sf.actionFollow_Nearby_Entry.setEnabled(ifCondition)
+        ifCondition = sf.occurrencesList.currentRow() != -1
+        sf.actionSource_notes.setEnabled(ifCondition)
+        sf.actionDiary_notes.setEnabled(ifCondition)
+
 
     ### Other actions ###
-    def onSearch(self):
+    def onSearch(self, wentForwardBack=False):
         """
         Called when clicking the "go" button, or from other methods when the
         view needs to be updated for a changed search (e.g., after following a
         redirect).
+
+        By default anything in the "forward" stack will be cleared when this
+        method is called, but if we just popped an item off the back/forward
+        stack, we obviously don't want to do that (or it would never be
+        possible to use the forward button). The optional argument
+        wentForwardBack will disable this behavior.
         """
         self.search = unicode(self.form.searchBox.text())
+        if len(self.searchStack) == 0 or self.search != self.searchStack[-1]:
+            self.searchStack.append(self.search)
+        if not wentForwardBack:
+            self.searchForward = []
         self.fillEntries()
 
     def onAddFromSearch(self):

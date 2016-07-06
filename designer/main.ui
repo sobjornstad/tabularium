@@ -804,8 +804,16 @@ If the interface is sluggish, try turning this off.</string>
     <addaction name="actionLetter_Distribution_Check"/>
     <addaction name="actionTabulate_Relations"/>
    </widget>
+   <widget class="QMenu" name="menuGo">
+    <property name="title">
+     <string>&amp;Go</string>
+    </property>
+    <addaction name="actionGoBack"/>
+    <addaction name="actionGoForward"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuGo"/>
    <addaction name="menuEntry"/>
    <addaction name="menuOccurrence"/>
    <addaction name="menuInspect"/>
@@ -815,19 +823,6 @@ If the interface is sluggish, try turning this off.</string>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <widget class="QToolBar" name="toolBar">
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="actionBack"/>
-   <addaction name="actionForward"/>
-  </widget>
   <action name="actionBack">
    <property name="text">
     <string>Back</string>
@@ -1148,6 +1143,22 @@ If the interface is sluggish, try turning this off.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="actionGoBack">
+   <property name="text">
+    <string>&amp;Back</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Left</string>
+   </property>
+  </action>
+  <action name="actionGoForward">
+   <property name="text">
+    <string>&amp;Forward</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Right</string>
    </property>
   </action>
  </widget>
