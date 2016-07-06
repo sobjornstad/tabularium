@@ -1070,11 +1070,20 @@ class MainWindow(QMainWindow):
     def _changeSearch(self, searchFor):
         """
         Change the text in the search box, rerun search, and select the
-        particular item. Used when doing things like following redirects.
+        particular item. Used when following redirects.
         """
         self.form.searchBox.setText(searchFor)
         self.onSearch()
-        item = self.form.entriesList.findItems(searchFor, Qt.MatchExactly)[0]
+        try:
+            item = self.form.entriesList.findItems(searchFor,
+                                                   Qt.MatchExactly)[0]
+        except IndexError:
+            ui.utils.warningBox("The target of this redirect ('%s') is "
+                    "not visible in the current view. Most likely the current "
+                    "limits exclude the target, and adjusting the limits "
+                    "will show the item. Otherwise, the redirect may be "
+                    "invalid." % searchFor , "Redirect not found")
+            return
         self.form.entriesList.setCurrentItem(item)
         self.form.entriesList.setFocus()
 
