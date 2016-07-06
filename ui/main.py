@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
+# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
+
+"""
+Implementation of the main window for Tabularium, where searches are done and
+other functions are started.
+"""
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, QCursor
@@ -9,6 +14,7 @@ import sqlite3
 import sys
 
 import config
+import db.analytics
 import db.consts
 import db.database
 import db.entries
@@ -46,24 +52,34 @@ class MwEventFilter(QObject):
         self.mw = mw
 
     def eventFilter(self, receiver, event):
+        """
+        Intercept keypress events, I think: the value of event.type() was
+        determined entirely by experimentation!
+        """
         if event.type() == 51:
             #print event.key()
             if event.key() in self.actOnKeys and self.mw is not None:
                 self.mw.checkAllMenus()
         return super(MwEventFilter, self).eventFilter(receiver, event)
 
+
+# pylint: disable=too-many-public-methods, too-many-instance-attributes
 class MainWindow(QMainWindow):
+    "Main window class."
+
     ### Application lifecycle functions ###
     def __init__(self, qfilter):
         # set up form and window
         QMainWindow.__init__(self)
         self.form = Ui_MainWindow()
         self.form.setupUi(self)
-        sf = self.form
         self.qfilter = qfilter
         self.qfilter.setupFilter(self)
+        self.nearbySplitterState = None
+        self.noInspectsDisplayed = False
 
         # connect buttons and signals
+        sf = self.form
         sf.searchGoButton.clicked.connect(self.onSearch)
         sf.searchBox.returnPressed.connect(self.onReturnInSearch)
         sf.searchAddButton.clicked.connect(self.onAddFromSearch)
@@ -71,14 +87,12 @@ class MainWindow(QMainWindow):
         sf.occurrencesList.itemSelectionChanged.connect(self.fillInspect)
         sf.entriesList.itemDoubleClicked.connect(self.onEditEntry)
         sf.occurrencesList.itemDoubleClicked.connect(self.onFollowRedirect)
-        sf.nearbyList.itemDoubleClicked.connect(self.onInspect_FollowNearby)
+        sf.nearbyList.itemDoubleClicked.connect(self.onInspectFollowNearby)
 
-        # connect menu check functions (for enable/disable)
+        # connect menus and check functions (for enable/disable)
         sf.menuEntry.aboutToShow.connect(self.checkEntryMenu)
         sf.menuInspect.aboutToShow.connect(self.checkInspectMenu)
         sf.menuOccurrence.aboutToShow.connect(self.checkOccurrenceMenu)
-
-        # connect menu actions
         self._setupMenus()
 
         # set up statusbar
@@ -90,8 +104,7 @@ class MainWindow(QMainWindow):
         self.initDb()
         self.search = ""
         self.searchOptions = {}
-        sf.incrementalCheckbox.setChecked(True) # later, get from prefs?
-        sf.regexCheckbox.setChecked(False) # ditto
+        self.currentOccs = None
         sf.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
         sf.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
         self.onChangeSearchOptions()
@@ -123,41 +136,30 @@ class MainWindow(QMainWindow):
             i.toggled.connect(self.onChangeInspectionOptions)
         self.onChangeInspectionOptions()
 
-        # set up limits: for occurrences
-        self.updateSourceCombo()
-        sf.enteredCheck.toggled.connect(self.onEnteredToggled)
-        sf.modifiedCheck.toggled.connect(self.onModifiedToggled)
-        sf.sourceCheck.toggled.connect(self.onSourceToggled)
-        sf.occurrencesSourceCombo.activated.connect(self.onSourceToggled)
-        sf.volumeCheck.toggled.connect(self.onVolumeToggled)
-        self.onEnteredToggled()
-        self.onModifiedToggled()
-        self.onSourceToggled()
-        self.onVolumeToggled()
-        # for entries
-        for i in (sf.entriesCommonsCheck, sf.entriesNamesCheck,
-                  sf.entriesPlacesCheck, sf.entriesQuotationsCheck,
-                  sf.entriesTitlesCheck, sf.entriesUnclassifiedCheck):
-            i.toggled.connect(self.fillEntries)
-
-
-        # finally, restore user preferences
+        # finally, set up checkboxes etc., and restore state from last run
+        self.initialWindowState()
         self.restoreWindowState()
 
-
-    def initDb(self):
+    def initDb(self): # pylint: disable=no-self-use
         db.database.connect(config.DATABASE_FILENAME)
 
-    def closeEvent(self, event):
-        "Catch click of the X button, etc., and properly quit."
+    def closeEvent(self, event): # pylint: disable=unused-argument
+        "Call quit() for a proper exit on click of the X button, etc."
         self.quit()
 
     def quit(self):
+        "Quit the application in an orderly fashion."
         self.saveWindowState()
         db.database.close()
         sys.exit(0)
 
     def saveWindowState(self):
+        """
+        Save the state of limit checkboxes, splitter sizes, etc., before
+        quitting, so the application will open about the same as it was closed.
+        The state is saved to the database and can be restored with
+        restoreWindowState.
+        """
         sf = self.form
         sh = self.sh
         sh.put('mainSplitterState', sf.mainSplitter.saveState())
@@ -191,7 +193,34 @@ class MainWindow(QMainWindow):
         sh.put('maxDateEdited', sf.occurrencesEditedDateSpin2.date())
         sh.sync()
 
+    def initialWindowState(self):
+        """
+        Set up window with defaults, so that if any are missing from config,
+        weird things won't happen. This also runs some of the toggled handlers
+        for the first time to set up some initial state.
+        """
+        sf = self.form
+        sf.incrementalCheckbox.setChecked(True)
+        sf.regexCheckbox.setChecked(False)
+        # set up limits: for occurrences
+        self.updateSourceCombo()
+        sf.enteredCheck.toggled.connect(self.onEnteredToggled)
+        sf.modifiedCheck.toggled.connect(self.onModifiedToggled)
+        sf.sourceCheck.toggled.connect(self.onSourceToggled)
+        sf.occurrencesSourceCombo.activated.connect(self.onSourceToggled)
+        sf.volumeCheck.toggled.connect(self.onVolumeToggled)
+        self.onEnteredToggled()
+        self.onModifiedToggled()
+        self.onSourceToggled()
+        self.onVolumeToggled()
+        # for entries
+        for i in (sf.entriesCommonsCheck, sf.entriesNamesCheck,
+                  sf.entriesPlacesCheck, sf.entriesQuotationsCheck,
+                  sf.entriesTitlesCheck, sf.entriesUnclassifiedCheck):
+            i.toggled.connect(self.fillEntries)
+
     def restoreWindowState(self):
+        "Restore state saved by saveWindowState."
         sf = self.form
         sh = self.sh
         def wrapper(func, key):
@@ -251,6 +280,7 @@ class MainWindow(QMainWindow):
 
     ### Setting, resetting, and filling the data windows ###
     def updateMatchesStatus(self):
+        "Update the number of entry/occurrence matches in the status bar."
         entryCount = self.form.entriesList.count()
         entryString = "E: %i" % entryCount
         occCount = self.form.occurrencesList.count()
@@ -270,12 +300,11 @@ class MainWindow(QMainWindow):
                keystroke appears as soon as it is entered, rather than not
                until the search is complete.
         """
-
         self.form.statusBar.showMessage("Searching...")
         QApplication.processEvents()
         self._resetForEntry()
         entries = self._getEntriesForSearch()
-        self._fillListWidgetWithEntries(self.form.entriesList, entries)
+        fillListWidgetWithEntries(self.form.entriesList, entries)
         self.updateMatchesStatus()
         self.form.statusBar.clearMessage()
 
@@ -296,13 +325,11 @@ class MainWindow(QMainWindow):
                                       classification)
         return entries
 
-
     def fillOccurrences(self):
         """
         Fill the Occurrences box with all occurrences of the current entry,
         assuming they match limit criteria. (Right now limits are ignored.)
         """
-
         self._resetForOccurrence()
         entry = self._fetchCurrentEntry()
         if entry is not None:
@@ -317,7 +344,6 @@ class MainWindow(QMainWindow):
         """
         Dig up the inspection information and fill the boxes with it.
         """
-
         self._resetForNearby()
 
         # fetch inspection info
@@ -357,14 +383,9 @@ class MainWindow(QMainWindow):
         # fill nearby list
         nearby = occ.getNearby()
         if nearby:
-            self._fillListWidgetWithEntries(self.form.nearbyList, nearby)
+            fillListWidgetWithEntries(self.form.nearbyList, nearby)
         else:
             self.form.nearbyList.addItem("(No entries nearby)")
-
-    def _fillListWidgetWithEntries(self, widget, entries):
-        entries.sort(key=lambda i: i.getSortKey().lower())
-        for i in entries:
-            widget.addItem(i.getName())
 
     def _getOKClassifications(self):
         """
@@ -386,6 +407,7 @@ class MainWindow(QMainWindow):
 
     ### Checkbox / options handling ###
     def onChangeInspectionOptions(self):
+        "Update window state for changed options in 'display' limit section."""
         sf = self.form
 
         doShowNearby = self.form.showNearbyCheck.isChecked()
@@ -404,11 +426,6 @@ class MainWindow(QMainWindow):
         # current state (i.e., the size of the splits) if and only if we are
         # moving from a state of both showing to a state of one showing, and we
         # don't have information about which state we were in before.
-        try:
-            self.nearbySplitterState
-        except AttributeError:
-            self.nearbySplitterState = None
-            self.noInspectsDisplayed = False
         if doShowInspect and doShowNearby:
             if self.nearbySplitterState is not None:
                 sf.inspectNearbySplitter.restoreState(self.nearbySplitterState)
@@ -432,6 +449,7 @@ class MainWindow(QMainWindow):
         self.fillInspect()
 
     def onChangeSearchOptions(self):
+        "Update window state for changed regex/incremental checkboxes."
         doRegex = self.form.regexCheckbox.isChecked()
         doIncremental = self.form.incrementalCheckbox.isChecked()
 
@@ -451,8 +469,8 @@ class MainWindow(QMainWindow):
 
         self.onSearch() # immediately update search based on new options
 
-
     def onEnteredToggled(self):
+        "Update window state for entered date occurrence limits."
         state = self.form.enteredCheck.isChecked()
         self.form.occurrencesAddedDateSpin1.setEnabled(state)
         self.form.occurrencesAddedDateSpin2.setEnabled(state)
@@ -465,6 +483,7 @@ class MainWindow(QMainWindow):
         self.form.occurrencesAddedDateSpin2.setDate(maxd)
 
     def onModifiedToggled(self):
+        "Update window state for modified date occurrence limits."
         state = self.form.modifiedCheck.isChecked()
         self.form.occurrencesEditedDateSpin1.setEnabled(state)
         self.form.occurrencesEditedDateSpin2.setEnabled(state)
@@ -477,6 +496,8 @@ class MainWindow(QMainWindow):
         self.form.occurrencesEditedDateSpin2.setDate(maxd)
 
     def onSourceToggled(self):
+        "Update window state for modified source occurrence limits."
+        #TODO: call updateSourceCombo() so it has newly added sources
         state = self.form.sourceCheck.isChecked()
         self.form.occurrencesSourceCombo.setEnabled(state)
         if state:
@@ -495,6 +516,7 @@ class MainWindow(QMainWindow):
             self.form.occurrencesSourceCombo.setCurrentIndex(0) # all
 
     def onVolumeToggled(self):
+        "Update window state for modified volume occurrence limits."
         state = self.form.volumeCheck.isChecked()
         self.form.occurrencesVolumeSpin1.setEnabled(state)
         self.form.occurrencesVolumeSpin2.setEnabled(state)
@@ -528,16 +550,20 @@ class MainWindow(QMainWindow):
             return db.sources.byName(name)
 
     def saveSelections(self):
+        """
+        Keep track of the current row in the entries list and occurrences list
+        so that we can restore user selections after another action.
+        """
         el = self.form.entriesList
         ol = self.form.occurrencesList
-        self.savedSelections = (el.currentRow(),
-                                ol.currentRow())
-        self.savedTexts = (el.currentItem().text()
-                           if el.currentItem() else "",
-                           ol.currentItem().text
-                           if ol.currentItem() else "")
+        self.savedSelections = (el.currentRow(), ol.currentRow())
+        self.savedTexts = (el.currentItem().text() if el.currentItem() else "",
+                           ol.currentItem().text if ol.currentItem() else "")
 
     def updateAndRestoreSelections(self):
+        """
+        Restore the selections saved by saveSelections().
+        """
         # TODO: Consider whether there should be an option to go highlight
         # the just-added entry
         self.fillEntries()
@@ -549,188 +575,33 @@ class MainWindow(QMainWindow):
         result = el.findItems(self.savedTexts[0], Qt.MatchExactly)
         if result:
             el.setCurrentItem(result[0])
-            # since we've found the exact item, we can also sensibly restore
-            # the occurrence selection
+            # Since we've found the exact item, we can also sensibly restore
+            # the occurrence selection.
             if self.savedSelections[1] <= ol.count() - 1:
                 ol.setCurrentRow(self.savedSelections[1])
             else:
                 ol.setCurrentRow(ol.count() - 1)
         else:
-            print "by row"
-            # try by row, so we end up near where we were before
+            # Maybe the item was removed; try going to that row number, so we
+            # end up next to where we were before.
             if self.savedSelections[0] <= el.count() - 1:
                 el.setCurrentRow(self.savedSelections[0])
-                print "set row to %r" % self.savedSelections[0]
             else:
-                print "set row to end"
                 el.setCurrentRow(self.form.entriesList.count() - 1)
-
         self.form.statusBar.clearMessage()
 
 
-    ### Functions from the menu ###
-    #TODO: When returning from a menu like "add entry," make sure the view is
-    # updated. This is harder than just running _resetForEntry(), though, as
-    # we don't want to wipe out the user's selection.
-    def _setupMenus(self):
-        sf = self.form
-        sf.actionQuit.triggered.connect(self.quit)
-        sf.actionFollow_Nearby_Entry.triggered.connect(
-                self.onInspect_FollowNearby)
-        sf.actionAdd.triggered.connect(self.onAddEntry)
-        sf.actionNew_based_on.triggered.connect(self.onAddEntryBasedOn)
-        sf.actionAdd_Redirect_To.triggered.connect(self.onAddRedirect)
-        sf.actionEdit.triggered.connect(self.onEditEntry)
-        sf.actionManage_sources.triggered.connect(self.onManageSources)
-        sf.actionManage_volumes.triggered.connect(self.onManageVolumes)
-        sf.actionNotes.triggered.connect(self.onViewNotes)
-        sf.actionDelete.triggered.connect(self.onDeleteEntry)
-        sf.actionAdd_occ.triggered.connect(self.onAddOccurrence)
-        sf.actionDelete_occ.triggered.connect(self.onDeleteOccurrence)
-        sf.actionSource_notes.triggered.connect(self.onSourceNotes)
-        sf.actionDiary_notes.triggered.connect(self.onDiaryNotes)
-        sf.actionEntire_index.triggered.connect(self.onPrintAll)
-        sf.actionVisible_entries.triggered.connect(self.onPrintVisible)
-        sf.action_Simplification.triggered.connect(self.onPrintSimplification)
-        sf.actionPreferences.triggered.connect(self.onPrefs)
-        sf.actionClassify_Entries.triggered.connect(self.onClassify)
-        sf.actionChange_page.triggered.connect(self.onOccChangePage)
-        sf.actionLetter_Distribution_Check.triggered.connect(
-                self.onLetterDistro)
-        sf.actionTabulate_Relations.triggered.connect(self.onTabulateRelations)
-        sf.actionFollow_redirect.triggered.connect(self.onFollowRedirect)
-
-    def onTabulateRelations(self):
-        # TODO: or do we search through occurrences?
-        occs = db.occurrences.allOccurrences()
-
-        relations = {}
-        for occ in occs:
-            nearby = occ.getNearby(2) # change to actual value later
-            if nearby:
-                #TODO: unicode error trying to print lists containing unicode
-                # string reprs with non-ascii characters
-                tmin = unicode(min(nearby))
-                print nearby,
-                print u"::",
-                print tmin
-            else:
-                print "no tmin"
-
-
-
+    ### Menu callback functions ###
+    def onTabulateRelations(self): # for now, pylint: disable=no-self-use
+        # analytics.py/tabulateRelations
+        ui.utils.informationBox("This feature is not currently implemented.")
 
     def onLetterDistro(self):
-        """
-        Calculate the distribution of first letters in index entries. This
-        uses the sort keys, since the presumed purpose is to get an idea of
-        how much space should be allowed for each letter in a paper index
-        (averaged over the whole database).
-
-        The report includes four columns:
-            Letter - self-explanatory.
-            Freq(uency) - how many times that letter appears as the first of
-                an entry's sort key.
-            Percent - the frequency divided by the total number of index
-                entries, expressed as a percentage.
-            Resid(ual) - the mean frequency minus this letter's frequency. A
-                positive value indicates this letter is more common than
-                average; a negative that it is less common than average.
-        """
-        entries = db.entries.allEntries()
-        totalEntries = len(entries)
-
-        # Find the first character of every sort key and tally them up.
-        firstChars = {}
-        for entry in entries:
-            char = entry.getSortKey()[:1].lower()
-            firstChars[char] = firstChars.get(char, 0) + 1
-
-        # Combine digits and symbols into single entries.
-        cleanedChars = {}
-        for char in firstChars:
-            if char.isalpha():
-                cleanedChars[char] = firstChars[char]
-            elif char.isdigit():
-                cleanedChars['num'] = cleanedChars.get('num', 0) + \
-                                      firstChars[char]
-            else: # symbol
-                cleanedChars['sym'] = cleanedChars.get('sym', 0) + \
-                                      firstChars[char]
-
-        # Get a list indicating the order to sort our dictionary elements in
-        # for display, placing 'num' and 'sym' at top in that order.
-        sortOrder = sorted(cleanedChars.keys(), key=lambda i:
-                i if i not in ('num', 'sym')
-                else ('01' if i == 'num' else '02'))
-
-        # Find the longest count so we know how to justify that column.
-        maxLen = 0
-        for letter in sortOrder:
-            thisLen = len(str(cleanedChars[letter]))
-            if thisLen > maxLen:
-                maxLen = thisLen
-
-        # Calculate summary statistics and print them out.
-        avgfreq = float(totalEntries) / len(sortOrder)
-        avgperc = 100 * float(avgfreq) / totalEntries
-        report = ["<html>"
-                  "There are %i entries in your database.<br>" % totalEntries,
-                  "The average frequency is %.02f (%.02f%%)." % (avgfreq,
-                                                                 avgperc)]
-        # Set up headers.
-        report.append('''<br><table><thead><tr>
-                             <th>Letter&nbsp;</th>
-                             <th align=right>Freq&nbsp;</th>
-                             <th align=right>Percent&nbsp;</th>
-                             <th align=right>Resid&nbsp;</th>
-                         </tr></thead>''')
-
-        # Create a table row for each letter.
-        for letter in sortOrder:
-            if letter not in ('num', 'sym'):
-                printLetter = letter.upper()
-            else:
-                printLetter = 'Digit' if letter == 'num' else 'Symbol'
-
-            count = cleanedChars[letter]
-            percentage = 100 * float(cleanedChars[letter]) / totalEntries
-            resid = count - avgfreq
-            color = "color:red;" if resid < 0 else ""
-            report.append("<tr><td>%s</td>"
-                          "<td align=right>%i&nbsp;</td>"
-                          "<td align=right>%.02f%%&nbsp;</td>"
-                          '<td align=right style="%s">%.02f&nbsp;</td>'
-                          % (printLetter, count, percentage, color, resid))
-        report.append("</table></html>")
-
-        # Deliver results!
-        ui.utils.reportBox(self, '\n'.join(report),
+        ui.utils.reportBox(self, db.analytics.letterDistribution(),
                            "Letter distribution statistics")
 
-    def onOccChangePage(self):
-        occ = self._fetchCurrentOccurrence()
-        ref, type = occ.getRef()
-        if type != db.consts.refTypes['num']:
-            ui.utils.errorBox("This option only works with numeric pages at "
-                              "this time.", "Can't edit this type")
-            return
-
-        newpage, accepted = ui.utils.inputBox("New page number:",
-                                              "Change Occurrence Page",
-                                              defaultText=unicode(ref))
-        if accepted:
-            try:
-                newpage = int(newpage)
-            except ValueError:
-                ui.utils.errorBox("You may only change to a numeric page at "
-                                  "this time.", "Can't change to this type")
-            occ.setRef(newpage, type)
-            # this isn't working...
-            #self.updateAndRestoreSelections()
-
-
     def onClassify(self):
+        "Load the entry classification tool."
         self.form.statusBar.showMessage("Loading entry classification tool, "
                 "this may take a moment...")
         QApplication.processEvents()
@@ -740,20 +611,12 @@ class MainWindow(QMainWindow):
         self.onSearch()
         #self.updateAndRestoreSelections()
 
-    def onFollowRedirect(self):
-        occ = self._fetchCurrentOccurrence()
-        assert occ is not None, "Follow redirect called with no occ selected!"
-        assert occ.isRefType('redir'), \
-                "Follow redirect called with a non-redirect occurrence!"
-        ref = occ.getRef()[0]
-        self._changeSearch(ref)
+    def onPrintAll(self):
+        self._printWrapper(db.printing.printEntriesAsIndex)
 
     def onPrintVisible(self):
         entries = self._getEntriesForSearch()
         self._printWrapper(lambda: db.printing.printEntriesAsIndex(entries))
-
-    def onPrintAll(self):
-        self._printWrapper(db.printing.printEntriesAsIndex)
 
     def onPrintSimplification(self):
         self._printWrapper(db.printing.makeSimplification)
@@ -779,13 +642,15 @@ class MainWindow(QMainWindow):
         pw = ui.settings.PreferencesWindow(self, self.sh)
         pw.exec_()
 
-    def onInspect_FollowNearby(self):
-        entryName = unicode(self.form.nearbyList.currentItem().text())
-        self._changeSearch(entryName)
-        #TODO: Ideally we would autoselect the occurrence that was nearby,
-        #      but that's a LOT more work, so not right away.
-
     def onAddEntry(self, entry=None, redirTo=None, edit=False, text=None):
+        """
+        Add a new entry. This function is called directly by the standard add
+        function, and with optional arguments by the callback functions
+        associated with each menu choice. See the ui.addentry.AddEntryWindow
+        class for details on how this works.
+        """
+        # TODO: Consider doing an _addEntry() internal method and calling that
+        # from the standard one instead of this funky optional-arguments stuff
         self.saveSelections()
         ae = ui.addentry.AddEntryWindow(self)
         if entry:
@@ -804,16 +669,21 @@ class MainWindow(QMainWindow):
         r = ae.exec_()
         if r:
             self.updateAndRestoreSelections()
+
     def onAddEntryBasedOn(self):
         entry = self._fetchCurrentEntry()
         self.onAddEntry(entry)
+
     def onAddRedirect(self):
         entry = self._fetchCurrentEntry()
         self.onAddEntry(redirTo=entry)
+
     def onEditEntry(self):
         entry = self._fetchCurrentEntry()
         self.onAddEntry(entry, edit=True)
+
     def onDeleteEntry(self):
+        "After getting confirmation, delete an entry and its occurrences."
         self.saveSelections()
         entry = self._fetchCurrentEntry()
         eName = entry.getName()
@@ -827,14 +697,43 @@ class MainWindow(QMainWindow):
         self.updateAndRestoreSelections()
 
 
+    ## Occurrences menu
     def onAddOccurrence(self):
+        "Add a new occurrence to the currently selected entry."
         self.saveSelections()
         # Anna-Christina's window
         ac = ui.addoccurrence.AddOccWindow(self, self._fetchCurrentEntry())
         r = ac.exec_()
         if r:
             self.updateAndRestoreSelections()
+
+    def onOccChangePage(self):
+        "Change the page number of an occurrence (presumably a correction)."
+        occ = self._fetchCurrentOccurrence()
+        ref, reftype = occ.getRef()
+        if reftype != db.consts.refTypes['num']:
+            ui.utils.errorBox("This option only works with numeric pages at "
+                              "this time.", "Can't edit this type")
+            return
+
+        newpage, accepted = ui.utils.inputBox("New page number:",
+                                              "Change Occurrence Page",
+                                              defaultText=unicode(ref))
+        if accepted:
+            try:
+                newpage = int(newpage)
+            except ValueError:
+                ui.utils.errorBox("You may only change to a numeric page at "
+                                  "this time.", "Can't change to this type")
+            occ.setRef(newpage, reftype)
+            # this isn't working...
+            #self.updateAndRestoreSelections()
+
     def onDeleteOccurrence(self):
+        """
+        Delete the currently selected occurrence, and its entry if this is the
+        last occurrence.
+        """
         self.saveSelections()
         occ = self._fetchCurrentOccurrence()
         qString = "Do you really want to delete the occurrence '%s'?" % (
@@ -849,14 +748,38 @@ class MainWindow(QMainWindow):
             db.entries.deleteOrphaned()
             self.updateAndRestoreSelections()
 
+    def onFollowRedirect(self):
+        "Follow a redirect occurrence to the entry it points to."
+        occ = self._fetchCurrentOccurrence()
+        assert occ is not None, "Follow redirect called with no occ selected!"
+        assert occ.isRefType('redir'), \
+                "Follow redirect called with a non-redirect occurrence!"
+        ref = occ.getRef()[0]
+        self._changeSearch(ref)
+
+
+    ## Inspect menu
+    def onInspectFollowNearby(self):
+        "Search for an entry listed in the nearby window."
+        entryName = unicode(self.form.nearbyList.currentItem().text())
+        self._changeSearch(entryName)
+        #TODO: Ideally we would autoselect the occurrence that was nearby,
+        #      but that's a LOT more work, so not right away.
+
     def onSourceNotes(self):
+        "Open the notes for the source of the currently selected occurrence."
         occ = self._fetchCurrentOccurrence()
         volume = occ.getVolume()
         source = volume.getSource()
         nb = ui.editnotes.NotesBrowser(self, jumpToSource=source,
                                        jumpToVolume=volume)
         nb.exec_()
+
     def onDiaryNotes(self):
+        """
+        Open the notes for the diary volume that was open at the time this
+        occurrence was entered.
+        """
         occ = self._fetchCurrentOccurrence()
         diaryVolume = db.volumes.findDateInDiary(occ.getAddedDate())
         source = diaryVolume.getSource()
@@ -864,23 +787,68 @@ class MainWindow(QMainWindow):
                                        jumpToVolume=diaryVolume)
         nb.exec_()
 
-    def onManageSources(self):
-        ms = ui.sourcemanager.SourceManager(self)
-        ms.exec_()
-    def onManageVolumes(self):
-        mv = ui.volmanager.VolumeManager(self)
-        mv.exec_()
+    ## Sources menu
     def onViewNotes(self):
         nb = ui.editnotes.NotesBrowser(self)
         nb.exec_()
 
-    ### Menu check functions ###
+    def onManageSources(self):
+        ms = ui.sourcemanager.SourceManager(self)
+        ms.exec_()
+
+    def onManageVolumes(self):
+        mv = ui.volmanager.VolumeManager(self)
+        mv.exec_()
+
+
+    ### Menu implementation ###
+    #TODO: When returning from a menu like "add entry," make sure the view is
+    # updated. This is harder than just running _resetForEntry(), though, as
+    # we don't want to wipe out the user's selection.
+    def _setupMenus(self):
+        "Connect all menu choices to their respective methods."
+        sf = self.form
+        sf.actionQuit.triggered.connect(self.quit)
+        sf.actionFollow_Nearby_Entry.triggered.connect(
+                self.onInspectFollowNearby)
+        sf.actionAdd.triggered.connect(self.onAddEntry)
+        sf.actionNew_based_on.triggered.connect(self.onAddEntryBasedOn)
+        sf.actionAdd_Redirect_To.triggered.connect(self.onAddRedirect)
+        sf.actionEdit.triggered.connect(self.onEditEntry)
+        sf.actionManage_sources.triggered.connect(self.onManageSources)
+        sf.actionManage_volumes.triggered.connect(self.onManageVolumes)
+        sf.actionNotes.triggered.connect(self.onViewNotes)
+        sf.actionDelete.triggered.connect(self.onDeleteEntry)
+        sf.actionAdd_occ.triggered.connect(self.onAddOccurrence)
+        sf.actionDelete_occ.triggered.connect(self.onDeleteOccurrence)
+        sf.actionSource_notes.triggered.connect(self.onSourceNotes)
+        sf.actionDiary_notes.triggered.connect(self.onDiaryNotes)
+        sf.actionEntire_index.triggered.connect(self.onPrintAll)
+        sf.actionVisible_entries.triggered.connect(self.onPrintVisible)
+        sf.action_Simplification.triggered.connect(self.onPrintSimplification)
+        sf.actionPreferences.triggered.connect(self.onPrefs)
+        sf.actionClassify_Entries.triggered.connect(self.onClassify)
+        sf.actionChange_page.triggered.connect(self.onOccChangePage)
+        sf.actionLetter_Distribution_Check.triggered.connect(
+                self.onLetterDistro)
+        sf.actionTabulate_Relations.triggered.connect(self.onTabulateRelations)
+        sf.actionFollow_redirect.triggered.connect(self.onFollowRedirect)
+
     def checkAllMenus(self):
-        # called from the event filter to check keyboard shortcuts
+        """
+        Called from the keyboard-press event filter to check whether items need
+        to be enabled/disabled before the keyboard shortcut entry is complete.
+        Checks all menus.
+
+        The three functions below are called individually when clicking on that
+        menu, since that's the only one that then needs to be checked
+        """
         self.checkEntryMenu()
         self.checkInspectMenu()
         self.checkOccurrenceMenu()
+
     def checkEntryMenu(self):
+        "Enable/disable items on the Entry menu for the current window state."
         sf = self.form
         ifCondition = sf.entriesList.currentRow() != -1
         sf.actionNew_based_on.setEnabled(ifCondition)
@@ -888,14 +856,18 @@ class MainWindow(QMainWindow):
         sf.actionEdit.setEnabled(ifCondition)
         sf.actionMerge_into.setEnabled(ifCondition)
         sf.actionDelete.setEnabled(ifCondition)
+
     def checkInspectMenu(self):
+        "Enable/disable items on Inspect menu for the current window state."
         sf = self.form
         ifCondition = sf.nearbyList.currentRow() != -1
         sf.actionFollow_Nearby_Entry.setEnabled(ifCondition)
         ifCondition = sf.occurrencesList.currentRow() != -1
         sf.actionSource_notes.setEnabled(ifCondition)
         sf.actionDiary_notes.setEnabled(ifCondition)
+
     def checkOccurrenceMenu(self):
+        "Enable/disable items on Occurrences menu for current window state."
         sf = self.form
         ifNoOccurrence = sf.occurrencesList.currentRow() != -1
         sf.actionChange_page.setEnabled(ifNoOccurrence)
@@ -911,27 +883,39 @@ class MainWindow(QMainWindow):
         ifNoEntry = sf.entriesList.currentRow() != -1
         sf.actionAdd_occ.setEnabled(ifNoEntry)
 
-    ### Other action functions ###
+
+    ### Other actions ###
+    def onSearch(self):
+        """
+        Called when clicking the "go" button, or from other methods when the
+        view needs to be updated for a changed search (e.g., after following a
+        redirect).
+        """
+        self.search = unicode(self.form.searchBox.text())
+        self.fillEntries()
+
+    def onAddFromSearch(self):
+        "Add an entry typed in the search box."
+        entryName = unicode(self.form.searchBox.text())
+        self.onAddEntry(text=entryName)
+
     def onReturnInSearch(self):
+        """
+        Adaptive return key in the search box. That's the idea anyway; I need
+        to have a think about whether the current behavior really makes sense.
+        """
         self.onSearch()
         numResults = self.form.entriesList.count()
 
         if self.searchOptions['incremental']:
             if numResults > 0:
-                self._selectFirstAndFocus(self.form.entriesList)
+                selectFirstAndFocus(self.form.entriesList)
             else:
                 self.onAddFromSearch()
         else:
             if numResults == 0:
                 self.form.searchAddButton.setFocus()
 
-    def onSearch(self):
-        self.search = unicode(self.form.searchBox.text())
-        self.fillEntries()
-
-    def onAddFromSearch(self):
-        entryName = unicode(self.form.searchBox.text())
-        self.onAddEntry(text=entryName)
 
 
     ### UTILITIES ###
@@ -951,6 +935,7 @@ class MainWindow(QMainWindow):
             except IndexError:
                 # entry was just deleted
                 return None
+
     def _fetchCurrentOccurrence(self):
         """
         Get an Occurrence object for the currently selected occurrence. Return
@@ -984,12 +969,21 @@ class MainWindow(QMainWindow):
         self.form.nearbyList.clear()
         self.form.inspectBox.clear()
 
-    def _selectFirstAndFocus(self, widget):
-        widget.setCurrentRow(0)
-        widget.setFocus()
 
+def selectFirstAndFocus(widget):
+    widget.setCurrentRow(0)
+    widget.setFocus()
+
+def fillListWidgetWithEntries(widget, entries):
+    entries.sort(key=lambda i: i.getSortKey().lower())
+    for i in entries:
+        widget.addItem(i.getName())
 
 def start():
+    """
+    Initialize the application and main window and run. This function should be
+    called from the 'tabularium' executable to start the program.
+    """
     app = QApplication(sys.argv)
     qfilter = MwEventFilter()
     app.installEventFilter(qfilter)
