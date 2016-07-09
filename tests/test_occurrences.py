@@ -249,8 +249,6 @@ class OccTests(utils.DbTestCase):
         with self.assertRaises(InvalidUOFError):
             parseUnifiedFormat('CB: 2.46--qq')
         with self.assertRaises(InvalidUOFError):
-            parseUnifiedFormat('CB 2.45-3')
-        with self.assertRaises(InvalidUOFError):
             parseUnifiedFormat('CB 2.gc')
         with self.assertRaises(NonexistentSourceError):
             parseUnifiedFormat('Flibbertygibberty: 2.15')
@@ -258,6 +256,16 @@ class OccTests(utils.DbTestCase):
             parseUnifiedFormat('CB: 9000.15')
         with self.assertRaises(InvalidReferenceError):
             parseUnifiedFormat('CB: 1.800')
+        with self.assertRaises(InvalidReferenceError):
+            parseUnifiedFormat('CB: 2.16-2000')
+        with self.assertRaises(InvalidReferenceError):
+            parseUnifiedFormat('CB: 2.2000-16')
+        with self.assertRaises(InvalidReferenceError):
+            parseUnifiedFormat('CB: 2.18-16')
+        with self.assertRaises(InvalidReferenceError):
+            parseUnifiedFormat('CB: 2.16-16')
+        with self.assertRaises(InvalidReferenceError):
+            parseUnifiedFormat('CB 2.45-3')
         with self.assertRaises(NonexistentVolumeError):
             parseUnifiedFormat('CB: 4.48')
         with self.assertRaises(InvalidUOFError):

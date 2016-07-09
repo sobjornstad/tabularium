@@ -35,7 +35,7 @@ class NonexistentVolumeError(Exception):
         return "The volume %s in source %s does not exist." % (
                 self.volName, self.sourceName)
 class InvalidReferenceError(Exception):
-    def __init__(self, what, value, source):
+    def __init__(self, what, value=None, source=None):
         self.what = what
         self.value = value
         self.source = source
@@ -44,9 +44,9 @@ class InvalidReferenceError(Exception):
             validation = self.source.getPageVal()
         elif self.what == 'volume':
             validation = self.source.getVolVal()
-        #else:
-            #assert False, "Invalid invalid thing in instantiating " \
-                          #"InvalidReferenceError!"
+        elif self.what == 'page range':
+            return "The second number in a range must be larger than the first."
+
         val = "The %s %s does not meet the validation parameters for %s, " \
               "which state that %ss must be between %i and %i." % (
                       self.what, self.value, self.source.getName(), self.what,
@@ -515,7 +515,7 @@ def parseUnifiedFormat(s):
             ret = rangeUncollapse(first, second)
             if ret is None:
                 # range couldn't be uncollapsed
-                raise InvalidUOFError()
+                raise InvalidReferenceError('page range')
             else:
                 first, second = ret
                 refnum = "%i-%i" % (first, second)
@@ -548,7 +548,12 @@ def parseUnifiedFormat(s):
             if not sourceObj.isValidPage(refnum):
                 raise InvalidReferenceError('page', refnum, sourceObj)
         elif reftype == refTypes['range']:
-            pass
+            first, second = [int(i) for i in refnum.split('-')]
+            if first >= second:
+                raise InvalidReferenceError('page range')
+            for i in (first, second):
+                if not sourceObj.isValidPage(i):
+                    raise InvalidReferenceError('page', i, sourceObj)
         elif reftype == refTypes['redir']:
             # I've decided checking whether the target of the redirect exists
             # is more bother than it's worth -- if we're simply adding entries
