@@ -615,22 +615,25 @@ class MainWindow(QMainWindow):
 
     def onPrintVisible(self):
         entries = self._getEntriesForSearch()
-        self._printWrapper(lambda: db.printing.printEntriesAsIndex(entries))
+        self._printWrapper(db.printing.printEntriesAsIndex, entries)
 
     def onPrintSimplification(self):
         self._printWrapper(db.printing.makeSimplification)
 
-    def _printWrapper(self, printFunc):
+    def _printWrapper(self, printFunc, *args, **kwargs):
         """
         Call printFunc() to print something, handling progress and error
         reporting.
         """
+        def progress_callback(progress):
+            self.form.statusBar.showMessage(progress)
+            QApplication.processEvents()
+
         QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
         try:
-            self.form.statusBar.showMessage(
-                    "Generating PDF (this may take some time)...")
+            self.form.statusBar.showMessage("Printing...")
             QApplication.processEvents()
-            printFunc()
+            printFunc(callback=progress_callback, *args, **kwargs)
         except db.printing.PrintingError as e:
             ui.utils.errorBox(str(e), "Printing not successful")
         finally:

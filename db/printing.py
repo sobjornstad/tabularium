@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
+from __future__ import division
 import codecs
 import os
 import re
@@ -54,30 +55,44 @@ DOC_STARTSTR = """\\documentclass{article}
 INDEX_ENDSTR = """\\end{theindex}\end{document}"""
 
 
-def printEntriesAsIndex(entries=None):
+def printEntriesAsIndex(entries=None, callback=None):
     """
     Given a list of Entries, print it as an index, write it to LaTeX, and open
     in the system PDF viewer. If entries is None (default), use all entries in
     the db.
-    
+
+    As we get the formatted entries list (the slow part), periodically call
+    callback function (if supplied) with a progress message.
+
     No return.
     """
 
     if entries is None:
         entries = db.entries.allEntries()
 
-    formatted = getFormattedEntriesList(entries)
+    formatted = getFormattedEntriesList(entries, callback)
     document = '\n\n'.join([DOC_STARTSTR, '\n'.join(formatted), INDEX_ENDSTR])
 
+    if callback:
+        callback("Compiling PDF...")
     compileLatex(document)
 
 
-def getFormattedEntriesList(entries):
+def getFormattedEntriesList(entries, callback=None):
     entries.sort(key=lambda i: i.getSortKey().lower())
 
     formatted = []
     prevEname = [None]
-    for entry in entries:
+    lastPercent = 0
+    for step, entry in enumerate(entries):
+        # update caller on progress, every 50 entries so we don't waste time
+        if callback and step % 50:
+            percent = step * 100 // len(entries)
+            if percent > lastPercent:
+                callback("Generating PDF (%i%%)..." % percent)
+                lastPercent = percent
+
+        # process entry
         eName = entry.getName()
         eNameList = eName.split(',')
         # update prevEname list, while keeping our own copy
@@ -154,13 +169,12 @@ SIMPLIFICATION_FOOTER = r"""
 \end{document}
 """
 
-def makeSimplification():
+def makeSimplification(callback):
     """
     Create a "simplification", essentially a reverse index, of all occurrences
     in the database. (In the future we'll make it possible to choose subsets of
     that, just like in the index.)
     """
-
     def modifiedRangeKey(occ):
         """
         Return a string representation of provided occurrence that uses only
@@ -175,11 +189,13 @@ def makeSimplification():
         else:
             return str(occ)
 
+    callback("Fetching occurrences...")
     allOccs = db.occurrences.allOccurrences()
 
     # Collate all occurrences into a dictionary of lists where the key is the
     # string representation of the occurrence and the value is a list of the
     # actual occurrences that go with it.
+    callback("Collating occurrences...")
     occDictionary = {}
     for occ in allOccs:
         occDictionary[modifiedRangeKey(occ)] = \
@@ -194,6 +210,7 @@ def makeSimplification():
     # value will be grouped under the same key, so this makes no difference.
     sortList = sorted([occDictionary[i][0] for i in occDictionary.keys()])
 
+    callback("Formatting output...")
     latexAccumulator = []
     for occGroup in sortList:
         if occGroup.isRefType('redir'):
@@ -216,6 +233,8 @@ def makeSimplification():
 
     body = '\n\n'.join(latexAccumulator)
     document = SIMPLIFICATION_HEADER + body + SIMPLIFICATION_FOOTER
+    if callback:
+        callback("Compiling PDF...")
     compileLatex(document)
 
 
