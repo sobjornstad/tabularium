@@ -673,22 +673,22 @@ def _isColonlessValid(s):
 def rangeUncollapse(first, second):
     """
     "Uncollapse" a range that looks like:
-       56-7
-       720-57
-    and so on. The algorithm works for a number of any length (as long as we
-    don't exceed max recursion depth, which is platform-dependent but is at
-    least 1000). There's no particular reason why this should be a
-    (tail-)recursive function except that I felt like writing one. :-)
+       56-7   => 56-57
+       720-57 => 720-757
+       107-8  => 107-108
+    and so on. The algorithm works for a number of any length (as long as you
+    don't run out of memory, I suppose)
 
     I believe the test for whether this is not actually a valid collapsed range
     covers all possible cases in which it's possible to determine empirically
     from the numbers that the user didn't intend it to be a collapsed range,
     but I have not proven it.
     """
-    if first <= second: # end of algorithm
-        return first, second
-    place = len(str(second))
-    if place == len(str(first)): # same number of places and still wrong order
-        return None
-    second = int(str(first)[-(place+1)] + str(second))
-    return rangeUncollapse(first, second)
+    first, second = str(first), str(second)
+    while int(first) > int(second):
+        place = len(second)
+        if place == len(first): # same number of places and still wrong order
+            return None
+        second = first[-(place+1)] + second
+
+    return int(first), int(second)
