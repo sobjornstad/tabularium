@@ -114,7 +114,7 @@ class Occurrence(object):
             source = self._volume.getSource()
             vol = self._volume.getNum()
             if source.isSingleVol():
-                return "%s: see %s" % (source.getAbbrev(), self._ref)
+                return '%s: see "%s"' % (source.getAbbrev(), self._ref)
             else:
                 return '%s %s: see "%s"' % (source.getAbbrev(), vol, self._ref)
         else:
