@@ -223,6 +223,10 @@ class MainWindow(QMainWindow):
                   sf.entriesPlacesCheck, sf.entriesQuotationsCheck,
                   sf.entriesTitlesCheck, sf.entriesUnclassifiedCheck):
             i.toggled.connect(self.fillEntries)
+        sf.entriesAllButton.clicked.connect(
+                lambda: self._setAllEntryCheckboxes(True))
+        sf.entriesNoneButton.clicked.connect(
+                lambda: self._setAllEntryCheckboxes(False))
 
     def restoreWindowState(self):
         "Restore state saved by saveWindowState."
@@ -1117,6 +1121,18 @@ class MainWindow(QMainWindow):
         call if it's not.
         """
         self.searchFocusLost(self.form.searchBox, self.form.searchBox)
+
+    def _setAllEntryCheckboxes(self, state):
+        assert state in (True, False)
+        sf = self.form
+        for i in (sf.entriesCommonsCheck, sf.entriesNamesCheck,
+                  sf.entriesPlacesCheck, sf.entriesQuotationsCheck,
+                  sf.entriesTitlesCheck, sf.entriesUnclassifiedCheck):
+            oldBlockSignals = i.blockSignals(True)
+            i.setChecked(state)
+            i.blockSignals(oldBlockSignals)
+        self.fillEntries()
+
 
     ### Reset functions: since more or less needs to be reset for each, do a
     ### sort of cascade.
