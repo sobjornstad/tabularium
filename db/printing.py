@@ -169,7 +169,7 @@ SIMPLIFICATION_FOOTER = r"""
 \end{document}
 """
 
-def makeSimplification(callback):
+def makeSimplification(callback=None):
     """
     Create a "simplification", essentially a reverse index, of all occurrences
     in the database. (In the future we'll make it possible to choose subsets of
@@ -189,13 +189,15 @@ def makeSimplification(callback):
         else:
             return str(occ)
 
-    callback("Fetching occurrences...")
+    if callback:
+        callback("Fetching occurrences...")
     allOccs = db.occurrences.allOccurrences()
 
     # Collate all occurrences into a dictionary of lists where the key is the
     # string representation of the occurrence and the value is a list of the
     # actual occurrences that go with it.
-    callback("Collating occurrences...")
+    if callback:
+        callback("Collating occurrences...")
     occDictionary = {}
     for occ in allOccs:
         occDictionary[modifiedRangeKey(occ)] = \
@@ -210,7 +212,8 @@ def makeSimplification(callback):
     # value will be grouped under the same key, so this makes no difference.
     sortList = sorted([occDictionary[i][0] for i in occDictionary.keys()])
 
-    callback("Formatting output...")
+    if callback:
+        callback("Formatting output...")
     latexAccumulator = []
     for occGroup in sortList:
         if occGroup.isRefType('redir'):
