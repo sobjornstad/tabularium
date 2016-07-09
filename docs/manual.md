@@ -73,7 +73,8 @@ of grouping – for instance, when printing an index, entries that share a
 first-level word or phrase with the entry above them will be abbreviated using
 an em-dash, like so:
 
-    bowling, cosmic — Dodgeville
+    bowling, cosmic
+    — Dodgeville
 
 ...where the second entry began as “bowling, Dodgeville”.
 
@@ -90,13 +91,15 @@ can also point to sequentially numbered entries, paragraphs, or any other
 positive integers that make it easy to find the requested information.
 
 Occurrences, when displayed in the *Occurrences* column of the main window or
-elsewhere in Tabularium, normally take the following format:
+elsewhere in Tabularium, normally take one of the following formats:
 
-    ABBREV REFNUM ABBREV VOLUME.REFNUM
+    ABBREV REFNUM
+    ABBREV VOLUME.REFNUM
 
 For example:
 
-    RT 4571 CB 27.46
+    RT 4571
+    CB 27.46
 
 When you need to enter occurrences, you normally specify them in *Unified
 Occurrence Format* (UOF). UOF is a simple, flexible language that can be used
