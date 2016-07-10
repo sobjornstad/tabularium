@@ -60,7 +60,7 @@ class ClassificationWindow(QDialog):
             return          # only want to run this func once for a reselect
 
         row = self.form.entryList.currentRow()
-        for button, value in self.buttonToVal.iteritems():
+        for button, value in self.buttonToVal.items():
             if button.isChecked():
                 self.entries[row].setClassification(value)
                 break

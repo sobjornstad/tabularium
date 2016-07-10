@@ -35,7 +35,7 @@ class VolumeTableModel(QAbstractTableModel):
 
     def data(self, index, role):
         if role != QtCore.Qt.DisplayRole:
-            return QtCore.QVariant()
+            return None
 
         robj = self.vols[index.row()]
         col = index.column()
@@ -81,8 +81,8 @@ class VolumeTableModel(QAbstractTableModel):
         # note: I don't know why, but if this if-statement is left out, the
         # headers silently don't show up
         if role != QtCore.Qt.DisplayRole:
-            return QtCore.QVariant()
-        return QtCore.QVariant(self.headerdata[col])
+            return None
+        return self.headerdata[col]
 
     def replaceData(self, volList):
         self.beginResetModel()
@@ -163,7 +163,7 @@ class VolumeManager(QDialog):
     def _currentSource(self):
         if self.form.sourceList.currentItem():
             return db.sources.byName(
-                    unicode(self.form.sourceList.currentItem().text()))
+                    self.form.sourceList.currentItem().text())
         else:
             return None
 

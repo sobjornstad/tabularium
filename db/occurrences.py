@@ -123,10 +123,10 @@ class Occurrence(object):
     def __repr__(self):
         return '<' + self.__str__() + '>'
 
-    def __cmp__(self, other):
+    def __lt__(self, other):
         if hasattr(other, '_volume') and hasattr(other, '_ref'):
-            return cmp(generate_index(self.getOccSortKey()),
-                       generate_index(other.getOccSortKey()))
+            return (generate_index(self.getOccSortKey()) <
+                    generate_index(other.getOccSortKey()))
 
     def getOccSortKey(self):
         """

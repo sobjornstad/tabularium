@@ -27,7 +27,7 @@ do
         echo "Updating: $moduleName"
         pyuic4 "$i" -o "$into/$moduleName.py"
     fi
-    echo "import $moduleName" >> "$packageInit"
+    echo "from . import $moduleName" >> "$packageInit"
 done
 
 if [ $didUpdate != 1 ]; then

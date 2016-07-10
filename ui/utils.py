@@ -61,13 +61,13 @@ def questionBox(text, title=None):
 
 def moo():
     "A very advanced debug tool."
-    print "MOOOOO!"
+    print("MOOOOO!")
 
 
 def inputBox(label, title=None, defaultText=None):
     """
     Basic input box. Returns a tuple:
-        [0] The text entered, as a Unicode string.
+        [0] The text entered.
         [1] True if dialog accepted, False if rejected.
 
     See also passwordEntry().
@@ -76,7 +76,7 @@ def inputBox(label, title=None, defaultText=None):
         ret = QInputDialog.getText(None, title, label, text=defaultText)
     else:
         ret = QInputDialog.getText(None, title, label)
-    return unicode(ret[0]), ret[1]
+    return ret[0], ret[1]
 
 def passwordEntry(title="Password required", label="Database password:"):
     """
@@ -87,11 +87,11 @@ def passwordEntry(title="Password required", label="Database password:"):
     enabled.
 
     Returns a tuple:
-        [0] The text entered, as a Unicode string.
+        [0] The text entered.
         [1] True if dialog accepted, False if dialog rejected.
     """
     ret = QInputDialog.getText(None, title, label, QLineEdit.Password)
-    return unicode(ret[0]), ret[1]
+    return ret[0], ret[1]
 
 def forceExtension(filename, ext):
     """
@@ -115,7 +115,6 @@ def forceExtension(filename, ext):
         overwrite it.
     """
     # on linux, the extension might not be automatically appended
-    filename = unicode(filename)
     if not filename.endswith('.%s' % ext):
         filename += ".%s" % ext
         if os.path.exists(filename):

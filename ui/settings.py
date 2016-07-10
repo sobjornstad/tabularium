@@ -59,7 +59,7 @@ class PreferencesWindow(QDialog):
     def accept(self):
         "Save the settings back to the db, if changed."
         if self.form.passwordCheck.isChecked():
-            newPw = unicode(self.form.passwordBox.text())
+            newPw = self.form.passwordBox.text()
             if newPw != self.DUMMYPASSWORD:
                 # i.e., user changed the "password" we put in the box.
                 # Mostly academic note: this prevents the user from using the
@@ -91,7 +91,7 @@ class SettingsHandler(QObject):
 
     def exists(self, key):
         """Return True if /key/ is defined in the configuration."""
-        return self.conf.has_key(key)
+        return key in self.conf
 
     def get(self, key):
         """Return the value of /key/, or None if key doesn't exist."""
@@ -143,5 +143,5 @@ def saveDbLocation(loc):
 def getDbLocation():
     "Read path to last-used database from system config area."
     qs = QSettings("562 Software", "Tabularium")
-    val = qs.value("lastDatabaseLocation", "None").toString()
-    return None if val == "None" else unicode(val)
+    val = qs.value("lastDatabaseLocation", "None")
+    return None if val == "None" else val

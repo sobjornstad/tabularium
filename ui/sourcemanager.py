@@ -36,7 +36,7 @@ class SourceTableModel(QAbstractTableModel):
 
     def data(self, index, role):
         if role != QtCore.Qt.DisplayRole:
-            return QtCore.QVariant()
+            return None
 
         robj = self.sources[index.row()]
         col = index.column()
@@ -72,8 +72,8 @@ class SourceTableModel(QAbstractTableModel):
         # note: I don't know why, but if this if-statement is left out, the
         # headers silently don't show up
         if role != QtCore.Qt.DisplayRole:
-            return QtCore.QVariant()
-        return QtCore.QVariant(self.headerdata[col])
+            return None
+        return self.headerdata[col]
 
 
 class SourceManager(QDialog):
@@ -196,16 +196,15 @@ class NewSourceDialog(QDialog):
     def accept(self, overrideTrounce=None):
         sf = self.form
 
-        newName = unicode(sf.nameBox.text()).strip()
+        newName = sf.nameBox.text().strip()
         if not self.form.multVolCheckbox.isChecked():
             newVolval = (1, 1)
         else:
             newVolval = (sf.valVolStart.value(), sf.valVolStop.value())
         newPageval = (sf.valRefStart.value(), sf.valRefStop.value())
         newNearrange = sf.nearbyRange.value()
-        newAbbr = unicode(sf.abbrevBox.text()).strip()
-        newStype = db.consts.sourceTypesFriendly[
-                        unicode(sf.typeCombo.currentText())]
+        newAbbr = sf.abbrevBox.text().strip()
+        newStype = db.consts.sourceTypesFriendly[sf.typeCombo.currentText()]
 
         if newName == '':
             ui.utils.errorBox("Please enter a name.", "No source name given")

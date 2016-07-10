@@ -550,10 +550,6 @@ class MainWindow(QMainWindow):
         self.form.occurrencesAddedDateSpin1.setEnabled(state)
         self.form.occurrencesAddedDateSpin2.setEnabled(state)
         mind, maxd = db.utils.minMaxDatesOccurrenceEnteredModified()
-        if mind is None:
-            mind = datetime.date.today()
-        if maxd is None:
-            maxd = datetime.date.today()
         self.form.occurrencesAddedDateSpin1.setMinimumDate(mind)
         self.form.occurrencesAddedDateSpin1.setMaximumDate(maxd)
         self.form.occurrencesAddedDateSpin2.setMinimumDate(mind)
@@ -626,7 +622,7 @@ class MainWindow(QMainWindow):
         Return the Source currently selected, or 'all' if all sources option
         is selected.
         """
-        name = unicode(self.form.occurrencesSourceCombo.currentText())
+        name = self.form.occurrencesSourceCombo.currentText()
         if name == db.consts.noSourceLimitText:
             return 'all'
         else:
@@ -683,7 +679,6 @@ class MainWindow(QMainWindow):
         # get filename from user
         fname = QFileDialog.getSaveFileName(caption="New Tabularium Database",
                     filter="Tabularium databases (*.tdb);;All files (*)")
-        fname = unicode(fname)
         if not fname:
             return False
         fname = ui.utils.forceExtension(fname, 'tdb')
@@ -712,7 +707,7 @@ class MainWindow(QMainWindow):
         if db.database.connection is not None:
             self.saveWindowState()
             db.database.close()
-        if self._initDb(unicode(fname)):
+        if self._initDb(fname):
             return True
 
     def onPrintAll(self):
@@ -939,7 +934,7 @@ class MainWindow(QMainWindow):
     ## Inspect menu
     def onInspectFollowNearby(self):
         "Search for an entry listed in the nearby window."
-        entryName = unicode(self.form.nearbyList.currentItem().text())
+        entryName = self.form.nearbyList.currentItem().text()
         self._changeSearch(entryName)
         #TODO: Ideally we would autoselect the occurrence that was nearby,
         #      but that's a LOT more work, so not right away.
@@ -1055,13 +1050,17 @@ class MainWindow(QMainWindow):
         to be enabled/disabled before the keyboard shortcut entry is complete.
         Checks all menus.
 
-        The three functions below are called individually when clicking on that
-        menu, since that's the only one that then needs to be checked
+        The functions below are called individually when clicking on that menu,
+        since that's the only one that then needs to be checked.
         """
-        self.checkGoMenu()
-        self.checkEntryMenu()
-        self.checkOccurrenceMenu()
-        self.checkInspectMenu()
+        try:
+            self.checkGoMenu()
+            self.checkEntryMenu()
+            self.checkOccurrenceMenu()
+            self.checkInspectMenu()
+        except AttributeError:
+            # window not fully loaded; no need to check the menu at all
+            pass
 
     def checkGoMenu(self):
         """
@@ -1075,7 +1074,7 @@ class MainWindow(QMainWindow):
         state.
         """
         somethingOnStack = bool(len([i for i in self.searchStack if len(i)]))
-        searchIsEmpty = unicode(self.form.searchBox.text()) == ""
+        searchIsEmpty = self.form.searchBox.text() == ""
         self.form.actionGoBack.setEnabled(somethingOnStack or not searchIsEmpty)
         self.form.actionGoForward.setEnabled(len(self.searchForward))
 
@@ -1145,7 +1144,7 @@ class MainWindow(QMainWindow):
         possible to use the forward button). The optional argument
         wentForwardBack will disable this behavior.
         """
-        self.search = unicode(self.form.searchBox.text())
+        self.search = self.form.searchBox.text()
         isDupe = (len(self.searchStack) != 0
                   and self.search == self.searchStack[-1])
         if not self.searchOptions['incremental'] and not isDupe:
@@ -1156,7 +1155,7 @@ class MainWindow(QMainWindow):
 
     def onAddFromSearch(self):
         "Add an entry typed in the search box."
-        entryName = unicode(self.form.searchBox.text())
+        entryName = self.form.searchBox.text()
         self.onAddEntry(text=entryName)
 
     def onReturnInSearch(self):
@@ -1186,7 +1185,7 @@ class MainWindow(QMainWindow):
         nothing is selected.
         """
         try:
-            search = unicode(self.form.entriesList.currentItem().text())
+            search = self.form.entriesList.currentItem().text()
         except AttributeError:
             return None
         else:
@@ -1272,7 +1271,7 @@ class MainWindow(QMainWindow):
         """
         if old != self.form.searchBox:
             return
-        search = unicode(self.form.searchBox.text())
+        search = self.form.searchBox.text()
         if len(self.searchStack) == 0 or search != self.searchStack[-1]:
             self.searchStack.append(search)
 

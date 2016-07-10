@@ -41,7 +41,7 @@ class EditOccurrenceWindow(QDialog):
 
     def accept(self):
         "Create new occurrences and delete the old ones."
-        ref = unicode(self.form.referenceBox.text())
+        ref = self.form.referenceBox.text()
         uof = "%s: %s.%s" % (self.source.getAbbrev(),
                              self.form.volumeSpin.value(), ref)
         if referenceOk(uof):

@@ -81,8 +81,7 @@ class AddEntryWindow(QDialog):
         """
         classification = entry.getClassification()
         for i in self.allRadios:
-            if entryTypes[unicode(i.property('cKey').toString())] == \
-                    classification:
+            if entryTypes[i.property('cKey')] == classification:
                 i.setChecked(True)
 
     def putRedirect(self, to):
@@ -108,7 +107,7 @@ class AddEntryWindow(QDialog):
         # We need beforeEditingName so that we can still find the entry we're
         # editing after its text has changed, as we don't have an Entry
         # object handy.
-        self.beforeEditingName = unicode(self.form.nameBox.text())
+        self.beforeEditingName = self.form.nameBox.text()
         self.form.addButton.setText("S&ave")
 
     def resetTitle(self, title):
@@ -131,8 +130,8 @@ class AddEntryWindow(QDialog):
         sort key unless it's actually different than the name. Changing the
         sort key will thus break the autofill link.
         """
-        currentSort = unicode(self.form.sortKeyBox.text())
-        newName = unicode(self.form.nameBox.text())
+        currentSort = self.form.sortKeyBox.text()
+        newName = self.form.nameBox.text()
         if self.oldName == currentSort:
             self.form.sortKeyBox.setText(newName)
         self.oldName = newName # update oldName regardless
@@ -143,7 +142,7 @@ class AddEntryWindow(QDialog):
         See db.entries.sortKeyTransform() for more information about this
         function and the transformation.
         """
-        nameEntered = unicode(self.form.sortKeyBox.text())
+        nameEntered = self.form.sortKeyBox.text()
         sk = db.entries.sortKeyTransform(nameEntered)
         self.form.sortKeyBox.setText(sk)
 
@@ -163,8 +162,8 @@ class AddEntryWindow(QDialog):
             otherwise - update the existing Entry with the new content, and
                 do not open the add occurrences window.
         """
-        newName = unicode(self.form.nameBox.text()).strip()
-        newSk = unicode(self.form.sortKeyBox.text()).strip()
+        newName = self.form.nameBox.text().strip()
+        newSk = self.form.sortKeyBox.text().strip()
         classif = self._getSelectedClassif()
 
         if self.isEditing:
@@ -204,5 +203,5 @@ class AddEntryWindow(QDialog):
 
         for i in self.allRadios:
             if i.isChecked():
-                return entryTypes[unicode(i.property('cKey').toString())]
+                return entryTypes[i.property('cKey')]
         assert False, "No radio button selected!"

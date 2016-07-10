@@ -31,4 +31,4 @@ class MergeEntryDialog(QDialog):
         self.setWindowTitle("Merge '%s' into..." % entry.getName())
 
     def getTo(self):
-        return unicode(self.form.toBox.text())
+        return self.form.toBox.text()

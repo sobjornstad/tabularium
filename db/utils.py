@@ -1,4 +1,3 @@
-
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
 import datetime
@@ -41,12 +40,20 @@ def minMaxDatesOccurrenceEnteredModified():
     minEdit = d.cursor.fetchall()[0][0]
     d.cursor.execute('SELECT MIN(dAdded) FROM occurrences')
     minAdd = d.cursor.fetchall()[0][0]
+    if minEdit is None:
+        minEdit = dateSerializer(datetime.date.today())
+    if minAdd is None:
+        minAdd = dateSerializer(datetime.date.today())
     early = minEdit if minEdit < minAdd else minAdd
 
     d.cursor.execute('SELECT MAX(dEdited) FROM occurrences')
     maxEdit = d.cursor.fetchall()[0][0]
     d.cursor.execute('SELECT MAX(dAdded) FROM occurrences')
     maxAdd = d.cursor.fetchall()[0][0]
+    if maxEdit is None:
+        maxEdit = dateSerializer(datetime.date.today())
+    if maxAdd is None:
+        maxAdd = dateSerializer(datetime.date.today())
     late = maxEdit if maxEdit > maxAdd else maxAdd
 
     return dateDeserializer(early), dateDeserializer(late)

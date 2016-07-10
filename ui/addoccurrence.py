@@ -45,12 +45,12 @@ class AddOccWindow(QDialog):
         occurrences to database and close. If failure, show error and leave
         dialog open for correction or reject().
         """
-        toParse = unicode(self.form.valueBox.text())
+        toParse = self.form.valueBox.text()
         try:
             _, numDupes = db.occurrences.makeOccurrencesFromString(
                     toParse, self.entry)
         except db.occurrences.InvalidUOFError:
-            error = u"The occurrence string is invalid – please check your " \
+            error = "The occurrence string is invalid – please check your " \
                     "syntax and try again."
             #raise
         except db.occurrences.NonexistentSourceError as e:

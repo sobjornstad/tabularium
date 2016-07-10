@@ -91,7 +91,7 @@ class NotesBrowser(QDialog):
             else:
                 found = None
                 for childNum in range(numChildren):
-                    if unicode(item.child(childNum).text(0)) == volumeName:
+                    if item.child(childNum).text(0) == volumeName:
                         found = item.child(childNum)
                         break
             if found is not None:
@@ -154,10 +154,10 @@ class NotesBrowser(QDialog):
         if self.editorTextChanged:
             # we know selection is a volume because it's not possible to
             # change the editor text in a top-level heading, or nothing
-            if not unicode(self.form.editor.toPlainText()).strip():
+            if not self.form.editor.toPlainText().strip():
                 self.currentlySelectedVolume.setNotes('')
             else:
-                newHtml = unicode(self.form.editor.toHtml())
+                newHtml = self.form.editor.toHtml()
                 newHtml = newHtml.replace('&lt;', '<').replace('&gt;', '>')
                 self.currentlySelectedVolume.setNotes(newHtml)
         self.editorTextChanged = False
@@ -214,11 +214,11 @@ class NotesBrowser(QDialog):
 
         selectedItem = self.form.tree.selectedItems()[0]
         if self._selectionType() == 'sourceWithoutVols':
-            source = db.sources.byName(unicode(selectedItem.text(0)))
+            source = db.sources.byName(selectedItem.text(0))
             # there's only one volume, so this will work great
             volume = db.volumes.volumesInSource(source)[0]
         else:
-            source = db.sources.byName(unicode(selectedItem.parent().text(0)))
+            source = db.sources.byName(selectedItem.parent().text(0))
             # cut off the abbreviation to get the volume number
             volumeNum = int(selectedItem.text(0).split(source.getAbbrev())[1])
             volume = db.volumes.byNumAndSource(source, volumeNum)
@@ -243,7 +243,7 @@ class NotesBrowser(QDialog):
         # We know it's not nothing; now check if it's a source.
         if si.parent() is None:
             # A source of what type?
-            source = db.sources.byName(unicode(si.text(0)))
+            source = db.sources.byName(si.text(0))
             if source.isSingleVol():
                 return 'sourceWithoutVols'
             else:
