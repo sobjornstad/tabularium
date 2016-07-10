@@ -32,7 +32,7 @@ sourceTypesFriendly = {
     }
 
 sourceTypesFriendlyReversed = dict(
-        (v, k) for k, v in sourceTypesFriendly.iteritems())
+        (v, k) for k, v in sourceTypesFriendly.items())
 
 sourceTypesKeys = (
     "Other", "Book", "Computer file", "Diary", "Notebook type")

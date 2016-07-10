@@ -1,4 +1,4 @@
-import utils
+from . import utils
 import time
 
 import db.database as database

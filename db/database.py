@@ -16,7 +16,7 @@ saveInterval = 60
 def connect(fname, autosaveInterval=60):
     global connection, cursor, lastSavedTime, saveInterval
     connection = sqlite.connect(fname)
-    connection.text_factory = unicode # fix for some weird Unicode error
+    #connection.text_factory = str # fix for weird Unicode error (not in 3?)
     cursor = connection.cursor()
     lastSavedTime = time.time()
     saveInterval = autosaveInterval
@@ -86,6 +86,6 @@ def makeDatabase(fname):
     return connection
 
 if __name__ == "__main__":
-    print "Create New Indexer DB - Interactive Interface"
-    DATABASE = raw_input("Type the name of the new DB to init: ")
+    print("Create New Indexer DB - Interactive Interface")
+    DATABASE = input("Type the name of the new DB to init: ")
     makeDatabase(DATABASE)

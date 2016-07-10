@@ -60,12 +60,10 @@ class Entry(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __unicode__(self):
-        return u"<" + self._name + u">"
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return "<" + self._name + ">"
     def __repr__(self):
-        return self.__unicode__()
+        return self.__str__()
 
     def getName(self):
         return self._name
@@ -141,8 +139,7 @@ def nameExists(name):
     else:
         return False
 
-def find(search, classification=tuple([i for i in entryTypes.values()]),
-         regex=False):
+def find(search, classification=tuple(entryTypes.values()), regex=False):
     """
     Get a list of Entries matching the given criteria.
 

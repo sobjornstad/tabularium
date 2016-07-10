@@ -1,4 +1,4 @@
-import utils
+from . import utils
 
 import db.database as d
 from db.consts import sourceTypes

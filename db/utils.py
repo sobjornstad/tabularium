@@ -13,8 +13,8 @@ def dateSerializer(obj):
     elif obj is None:
         return None
     else:
-        raise TypeError, 'Object of type %s with value of %s is not ' \
-                'serializable' % (type(obj), repr(obj))
+        raise TypeError('Object of type %s with value of %s is not ' \
+                'serializable' % (type(obj), repr(obj)))
 
 def dateDeserializer(yyyymmdd):
     """

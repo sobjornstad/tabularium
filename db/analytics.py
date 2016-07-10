@@ -11,12 +11,12 @@ def onTabulateRelations():
         if nearby:
             #TODO: unicode error trying to print lists containing unicode
             # string reprs with non-ascii characters
-            tmin = unicode(min(nearby))
-            print nearby,
-            print u"::",
-            print tmin
+            tmin = str(min(nearby))
+            print(nearby, end=' ')
+            print("::", end=' ')
+            print(tmin)
         else:
-            print "no tmin"
+            print("no tmin")
 
 def letterDistribution():
     """
@@ -58,7 +58,7 @@ def letterDistribution():
 
     # Get a list indicating the order to sort our dictionary elements in
     # for display, placing 'num' and 'sym' at top in that order.
-    sortOrder = sorted(cleanedChars.keys(), key=lambda i:
+    sortOrder = sorted(list(cleanedChars.keys()), key=lambda i:
             i if i not in ('num', 'sym')
             else ('01' if i == 'num' else '02'))
 

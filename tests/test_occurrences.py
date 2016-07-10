@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import utils
+from . import utils
 
 import db.database as d
 from db.entries import Entry
@@ -195,7 +195,7 @@ class OccTests(utils.DbTestCase):
                     'RT 2378 | The Invisible Man {56, 78}': 'RT 1.2378 (0) == TIM 1.56 (0) == TIM 1.78 (0) == ',
                     'The 160th Book: 45 | CB1.62': 'T1B 1.45 (0) == CB 1.62 (0) == ',
                     'CB 2.45-56': 'CB 2.45-56 (1) == ',
-                    u'CB 2.45–6': 'CB 2.45-46 (1) == ',
+                    'CB 2.45–6': 'CB 2.45-46 (1) == ',
                     'CB 2.45--56': 'CB 2.45-56 (1) == ',
                     'RT 2348-89': 'RT 1.2348-2389 (1) == ',
                     'RT 1279-89': 'RT 1.1279-1289 (1) == ',
