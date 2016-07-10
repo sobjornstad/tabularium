@@ -813,6 +813,8 @@ If the interface is sluggish, try turning this off.</string>
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="actionManual"/>
+    <addaction name="actionAbout_Tabularium"/>
    </widget>
    <widget class="QMenu" name="menuAnalytics">
     <property name="title">
@@ -1056,7 +1058,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionSource_notes">
    <property name="text">
-    <string>&amp;Source Notes...</string>
+    <string>&amp;Source Notes</string>
    </property>
    <property name="statusTip">
     <string>Open the notes browser to the notes for the source used by the selected occurrence.</string>
@@ -1067,7 +1069,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionDiary_notes">
    <property name="text">
-    <string>&amp;Diary Notes...</string>
+    <string>&amp;Diary Notes</string>
    </property>
    <property name="statusTip">
     <string>Open the notes browser to the notes for the diary volume that was open when this occurrence was added.</string>
@@ -1078,7 +1080,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionManage_sources">
    <property name="text">
-    <string>Manage Sources...</string>
+    <string>Manage Sources</string>
    </property>
    <property name="statusTip">
     <string>Open the source manager to view, add, edit, and delete sources.</string>
@@ -1089,7 +1091,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionManage_volumes">
    <property name="text">
-    <string>Manage Volumes...</string>
+    <string>Manage Volumes</string>
    </property>
    <property name="statusTip">
     <string>Open the volume manager to view, add, edit, and delete volumes of your sources.</string>
@@ -1100,7 +1102,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionNotes">
    <property name="text">
-    <string>Notes...</string>
+    <string>Notes</string>
    </property>
    <property name="statusTip">
     <string>Open the notes browser to view and edit notes on your sources.</string>
@@ -1111,7 +1113,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionClassify_Entries">
    <property name="text">
-    <string>Entry Classification Tool...</string>
+    <string>Classify Entries...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+T, C</string>
@@ -1187,15 +1189,12 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionLetter_Distribution_Check">
    <property name="text">
-    <string>Letter Distribution...</string>
+    <string>Letter Distribution</string>
    </property>
   </action>
   <action name="actionTabulate_Relations">
    <property name="text">
-    <string>Tabulate Relations...</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+D</string>
+    <string>Tabulate Relations</string>
    </property>
   </action>
   <action name="actionGoBack">
@@ -1273,6 +1272,16 @@ If the interface is sluggish, try turning this off.</string>
    </property>
    <property name="shortcut">
     <string>Alt+N</string>
+   </property>
+  </action>
+  <action name="actionManual">
+   <property name="text">
+    <string>Manual</string>
+   </property>
+  </action>
+  <action name="actionAbout_Tabularium">
+   <property name="text">
+    <string>About Tabularium</string>
    </property>
   </action>
  </widget>
