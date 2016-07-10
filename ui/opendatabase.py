@@ -21,6 +21,10 @@ class OpenDatabaseWindow(QDialog):
                     os.path.split(lastUsed)[-1])
             self.form.openLastRadio.setChecked(True)
         else:
+            if lastUsed:
+                self.form.explanatoryText.setText(
+                    "The last database you had open (%s) is not accessible.\n"
+                    "What would you like to do?" % os.path.split(lastUsed)[-1])
             self.form.openLastRadio.setEnabled(False)
             self.form.createNewRadio.setChecked(True)
 

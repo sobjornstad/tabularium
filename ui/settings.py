@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
+# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
 
 """
 Personal Indexer preferences managers
@@ -9,6 +9,11 @@ This module for the Personal Indexer UI contains two classes:
 SettingsHandler :: a QObject used as a convenient interface to get and set
     settings stored in the database
 PreferencesWindow :: implements the dialog displayed on Edit -> Preferences.
+
+There is also saveDbLocation() and getDbLocation(), which use QSettings to
+store the path to the last-used database. Obviously this info can't be stored
+in the normal settings handler, since we can't access the settings stored in
+the database before we've found the database.
 """
 
 # no idea why pylint thinks this function doesn't exist: it works just fine
@@ -79,7 +84,6 @@ class SettingsHandler(QObject):
     table 'conf', which has one row on database creation so that we can read
     from and write to it.
     """
-
     def __init__(self, mw):
         QObject.__init__(self)
         self.mw = mw
@@ -128,18 +132,19 @@ def checkPassword(password, conf):
     Check if the /password/ matches the one in conf; return True if yes, False
     if no. Return True if no password is set in the database.
     """
-
     if conf.get('password'):
         return pbkdf.verify(password, conf.get('password'))
     else:
         return True
 
 def saveDbLocation(loc):
+    "Write path to last-used database to system config area."
     qs = QSettings("562 Software", "Tabularium")
     qs.setValue("lastDatabaseLocation", loc)
     qs.sync()
 
 def getDbLocation():
+    "Read path to last-used database from system config area."
     qs = QSettings("562 Software", "Tabularium")
     val = qs.value("lastDatabaseLocation", "None").toString()
     return None if val == "None" else unicode(val)

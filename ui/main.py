@@ -15,7 +15,6 @@ import os
 import sqlite3
 import sys
 
-import config
 import db.analytics
 import db.consts
 import db.database
@@ -109,10 +108,15 @@ class MainWindow(QMainWindow):
 
         # initialize db and set up searching and entries
         self.dbLocation = ui.settings.getDbLocation()
-        if not self.dbLocation or not self._initDb(self.dbLocation):
+        if not self.dbLocation or not self._initDb(self.dbLocation, False):
             self.onNoDB()
 
     def onNoDB(self):
+        """
+        Dialog displayed when the last-used database (stored with QSettings) is
+        not available, Tabularium has not yet been used/configured on this
+        machine, or the incorrect password to a database was typed.
+        """
         dialog = ui.opendatabase.OpenDatabaseWindow(self, self.dbLocation)
         if not dialog.exec_():
             sys.exit(0)
@@ -128,13 +132,22 @@ class MainWindow(QMainWindow):
         if not r:
             self.onNoDB()
 
-    def _initDb(self, location):
+    def _initDb(self, location, yellOnNonexistence=True):
         """
         Load a database and set up the window for the settings of that
         database.
+
+        Ideally we would use a try-except block instead of os.path.exists, but
+        it doesn't look like SQLite has an option to not create a database if
+        it doesn't currently exist through the connect() method, and it's more
+        trouble than it's worth to set up our own exception handling for this.
+        If there's a particularly unlucky race, then we'll just get an uncaught
+        exception and no real harm done.
         """
         if not os.path.exists(location):
-            ui.utils.errorBox("The database '%s' does not exist!" % location)
+            if yellOnNonexistence:
+                ui.utils.warningBox("The database '%s' no longer exists!" %
+                                    location)
             return False
         db.database.connect(location)
         self.dbLocation = location
@@ -666,6 +679,7 @@ class MainWindow(QMainWindow):
     ### Menu callback functions ###
     ## File menu
     def onNewDB(self):
+        "Get filename for, create, and open a new database."
         # get filename from user
         fname = QFileDialog.getSaveFileName(caption="New Tabularium Database",
                     filter="Tabularium databases (*.tdb);;All files (*)")
@@ -690,6 +704,7 @@ class MainWindow(QMainWindow):
             return True
 
     def onOpenDB(self):
+        "Close the current database and open a different one."
         fname = QFileDialog.getOpenFileName(caption="Open Tabularium Database",
                     filter="Tabularium databases (*.tdb);;All files (*)")
         if not fname:
@@ -715,7 +730,7 @@ class MainWindow(QMainWindow):
         Call printFunc() to print something, handling progress and error
         reporting.
         """
-        def progress_callback(progress):
+        def progressCallback(progress):
             self.form.statusBar.showMessage(progress)
             QApplication.processEvents()
 
@@ -723,7 +738,7 @@ class MainWindow(QMainWindow):
         try:
             self.form.statusBar.showMessage("Printing...")
             QApplication.processEvents()
-            printFunc(callback=progress_callback, *args, **kwargs)
+            printFunc(callback=progressCallback, *args, **kwargs)
         except db.printing.PrintingError as e:
             ui.utils.errorBox(str(e), "Printing not successful")
         finally:
@@ -884,6 +899,7 @@ class MainWindow(QMainWindow):
             self.updateAndRestoreSelections()
 
     def onEditOccurrence(self):
+        "Edit the volume/reference number of an occurrence."
         self.saveSelections()
         occ = self._fetchCurrentOccurrence()
         entry = occ.getEntry()
@@ -1023,10 +1039,13 @@ class MainWindow(QMainWindow):
         sf.actionGoForward.triggered.connect(self.onGoForward)
         sf.actionMerge_into.triggered.connect(self.onMergeEntry)
         sf.actionGoSearch.triggered.connect(self.onGoSearch)
-        sf.actionGoEntries.triggered.connect(lambda: selectFirstAndFocus(sf.entriesList))
-        sf.actionGoOccurrences.triggered.connect(lambda: selectFirstAndFocus(sf.occurrencesList))
+        sf.actionGoEntries.triggered.connect(
+                lambda: selectFirstAndFocus(sf.entriesList))
+        sf.actionGoOccurrences.triggered.connect(
+                lambda: selectFirstAndFocus(sf.occurrencesList))
         sf.actionGoInspect.triggered.connect(sf.inspectBox.setFocus)
-        sf.actionGoNearby.triggered.connect(lambda: selectFirstAndFocus(sf.nearbyList))
+        sf.actionGoNearby.triggered.connect(
+                lambda: selectFirstAndFocus(sf.nearbyList))
         sf.actionNew_DB.triggered.connect(self.onNewDB)
         sf.actionSwitch_Database.triggered.connect(self.onOpenDB)
 
@@ -1039,7 +1058,6 @@ class MainWindow(QMainWindow):
         The three functions below are called individually when clicking on that
         menu, since that's the only one that then needs to be checked
         """
-        #TODO: don't run this if mw isn't initialized yet
         self.checkGoMenu()
         self.checkEntryMenu()
         self.checkOccurrenceMenu()
@@ -1219,6 +1237,10 @@ class MainWindow(QMainWindow):
         self.searchFocusLost(self.form.searchBox, self.form.searchBox)
 
     def _setAllEntryCheckboxes(self, state):
+        """
+        Enable/disable all of the entry classification checkboxes
+        and rerun the search.
+        """
         assert state in (True, False)
         sf = self.form
         for i in (sf.entriesCommonsCheck, sf.entriesNamesCheck,
