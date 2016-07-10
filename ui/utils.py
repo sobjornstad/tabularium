@@ -1,11 +1,13 @@
 # -* coding: utf-8 *-
-# Copyright 2015 Soren Bjornstad. All rights reserved.
+# Copyright 2015-2016 Soren Bjornstad. All rights reserved.
 
 """
 Personal Indexer UI utility functions
 
 These functions primarily create various kinds of simple dialog boxes.
 """
+
+import os
 
 from PyQt4.QtGui import QDialog, QMessageBox, QInputDialog, QLineEdit
 import ui.forms.confirmationwindow
@@ -18,8 +20,7 @@ def informationBox(text, title=None):
     msgBox = QMessageBox()
     msgBox.setText(text)
     msgBox.setIcon(QMessageBox.Information)
-    if title:
-        msgBox.setWindowTitle(title)
+    msgBox.setWindowTitle(title if title else "Tabularium")
     msgBox.exec_()
 
 def errorBox(text, title=None):
@@ -29,8 +30,7 @@ def errorBox(text, title=None):
     msgBox = QMessageBox()
     msgBox.setText(text)
     msgBox.setIcon(QMessageBox.Critical)
-    if title:
-        msgBox.setWindowTitle(title)
+    msgBox.setWindowTitle(title if title else "Tabularium")
     msgBox.exec_()
 
 def warningBox(text, title=None):
@@ -40,8 +40,7 @@ def warningBox(text, title=None):
     msgBox = QMessageBox()
     msgBox.setText(text)
     msgBox.setIcon(QMessageBox.Warning)
-    if title:
-        msgBox.setWindowTitle(title)
+    msgBox.setWindowTitle(title if title else "Tabularium")
     msgBox.exec_()
 
 def questionBox(text, title=None):
@@ -57,8 +56,7 @@ def questionBox(text, title=None):
     msgBox.setIcon(QMessageBox.Question)
     msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     msgBox.setDefaultButton(QMessageBox.No)
-    if title:
-        msgBox.setWindowTitle(title)
+    msgBox.setWindowTitle(title if title else "Tabularium")
     return msgBox.exec_()
 
 def moo():
@@ -94,6 +92,38 @@ def passwordEntry(title="Password required", label="Database password:"):
     """
     ret = QInputDialog.getText(None, title, label, QLineEdit.Password)
     return unicode(ret[0]), ret[1]
+
+def forceExtension(filename, ext):
+    """
+    On Linux, a filename extension might not be automatically appended to the
+    result of a file open/save box. This means we have to do it ourselves and
+    check to be sure we're not overwriting something ourselves.
+
+    This check is not safe from race conditions (if another program wrote a
+    file with the same name between this function running and the output
+    routine, the other file would be overwritten), but the chance of that
+    causing a bad problem are essentially zero in this situation, and
+    neither is the normal file-save routine.
+
+    Arguments:
+        filename: the path to (or simple name of) the file we're checking
+        ext: the extension, without period, you want to ensure is included
+
+    Return:
+      - The filename (modified or not) if the file does not exist;
+      - None if it does exist and the user said she didn't want to
+        overwrite it.
+    """
+    # on linux, the extension might not be automatically appended
+    filename = unicode(filename)
+    if not filename.endswith('.%s' % ext):
+        filename += ".%s" % ext
+        if os.path.exists(filename):
+            r = questionBox("%s already exists.\nDo you want to "
+                            "replace it?" % filename)
+            if r != QMessageBox.Yes: # yes
+                return None
+    return filename
 
 
 class ConfirmationDialog(QDialog):

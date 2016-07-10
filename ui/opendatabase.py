@@ -1,0 +1,37 @@
+# -* coding: utf-8 *-
+# Copyright 2016 Soren Bjornstad. All rights reserved.
+
+from PyQt4.QtGui import QDialog
+import os
+
+import ui.forms.opendatabase
+
+class OpenDatabaseWindow(QDialog):
+    def __init__(self, parent, lastUsed=None):
+        QDialog.__init__(self)
+        self.form = ui.forms.opendatabase.Ui_Dialog()
+        self.form.setupUi(self)
+        self.mw = parent
+        self.result = None
+
+        self.form.quitButton.clicked.connect(self.reject)
+        self.form.okButton.clicked.connect(self.accept)
+        if lastUsed and os.path.exists(lastUsed):
+            self.form.openLastRadio.setText("Open last-used database: %s" %
+                    os.path.split(lastUsed)[-1])
+            self.form.openLastRadio.setChecked(True)
+        else:
+            self.form.openLastRadio.setEnabled(False)
+            self.form.createNewRadio.setChecked(True)
+
+    def getResult(self):
+        return self.result
+
+    def accept(self):
+        if self.form.createNewRadio.isChecked():
+            self.result = 'new'
+        elif self.form.openExistingRadio.isChecked():
+            self.result = 'open'
+        elif self.form.openLastRadio.isChecked():
+            self.result = 'last'
+        super(OpenDatabaseWindow, self).accept()

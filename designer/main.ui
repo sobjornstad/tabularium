@@ -866,10 +866,16 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>New Database...</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
   </action>
   <action name="actionSwitch_Database">
    <property name="text">
-    <string>Switch Database...</string>
+    <string>Open Database...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actionImport">

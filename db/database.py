@@ -82,6 +82,7 @@ def makeDatabase(fname):
     cursor.execute('CREATE TABLE volumes (vid INTEGER PRIMARY KEY, sid INTEGER, num INTEGER, notes TEXT, dopened TEXT, dclosed TEXT)')
     cursor.execute('CREATE TABLE conf (conf TEXT)')
     cursor.execute('INSERT INTO conf (conf) VALUES (?)', (pickle.dumps({}),))
+    connection.commit()
     return connection
 
 if __name__ == "__main__":

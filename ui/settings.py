@@ -16,7 +16,7 @@ from passlib.hash import pbkdf2_sha256 as pbkdf #pylint: disable=E0611
 import pickle
 
 from PyQt4.QtGui import QDialog
-from PyQt4.QtCore import QObject
+from PyQt4.QtCore import QObject, QSettings
 from ui.forms.prefs import Ui_Dialog
 
 import db.database as d
@@ -133,3 +133,13 @@ def checkPassword(password, conf):
         return pbkdf.verify(password, conf.get('password'))
     else:
         return True
+
+def saveDbLocation(loc):
+    qs = QSettings("562 Software", "Tabularium")
+    qs.setValue("lastDatabaseLocation", loc)
+    qs.sync()
+
+def getDbLocation():
+    qs = QSettings("562 Software", "Tabularium")
+    val = qs.value("lastDatabaseLocation", "None").toString()
+    return None if val == "None" else unicode(val)

@@ -7,8 +7,11 @@ other functions are started.
 """
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, QCursor
+from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, QCursor, \
+        QFileDialog
 from PyQt4.QtCore import QObject, Qt
+import datetime
+import os
 import sqlite3
 import sys
 
@@ -31,6 +34,7 @@ import ui.sourcemanager
 import ui.volmanager
 import ui.utils
 import ui.tools_classification
+import ui.opendatabase
 
 from ui.forms.main import Ui_MainWindow
 
@@ -104,15 +108,45 @@ class MainWindow(QMainWindow):
         self.form.statusBar.showMessage("Database loaded.", 1000)
 
         # initialize db and set up searching and entries
-        self.initDb()
+        self.dbLocation = ui.settings.getDbLocation()
+        if not self.dbLocation or not self._initDb(self.dbLocation):
+            self.onNoDB()
+
+    def onNoDB(self):
+        dialog = ui.opendatabase.OpenDatabaseWindow(self, self.dbLocation)
+        if not dialog.exec_():
+            sys.exit(0)
+        doWhat = dialog.getResult()
+        if doWhat == 'new':
+            r = self.onNewDB()
+        elif doWhat == 'open':
+            r = self.onOpenDB()
+        elif doWhat == 'last':
+            r = self._initDb(self.dbLocation)
+        else:
+            assert False, "Illegal return from OpenDatabaseWindow: %r" % doWhat
+        if not r:
+            self.onNoDB()
+
+    def _initDb(self, location):
+        """
+        Load a database and set up the window for the settings of that
+        database.
+        """
+        if not os.path.exists(location):
+            ui.utils.errorBox("The database '%s' does not exist!" % location)
+            return False
+        db.database.connect(location)
+        self.dbLocation = location
+
         self.search = ""
         self.searchOptions = {}
         self.currentOccs = None
         self.searchStack = []
         self.searchForward = []
+        sf = self.form
         sf.incrementalCheckbox.toggled.connect(self.onChangeSearchOptions)
         sf.regexCheckbox.toggled.connect(self.onChangeSearchOptions)
-        self.onChangeSearchOptions()
 
         # set up configuration
         self.sh = ui.settings.SettingsHandler(self)
@@ -121,16 +155,16 @@ class MainWindow(QMainWindow):
         if self.sh.get('password'):
             pw, accepted = ui.utils.passwordEntry()
             if not accepted:
-                sys.exit(0)
+                return False
             if not ui.settings.checkPassword(pw, self.sh):
-                ui.utils.errorBox("Invalid password, exiting program.",
+                ui.utils.errorBox("Invalid password.",
                                   "No dice!")
-                sys.exit(1)
+                return False
 
         # fill entries
-        self.fillEntries()
         self.savedTexts = ("", "")
         self.savedSelections = (-1, -1)
+        self.onChangeSearchOptions()
 
         # set up inspection options
         self.inspectOptions = {}
@@ -144,9 +178,8 @@ class MainWindow(QMainWindow):
         # finally, set up checkboxes etc., and restore state from last run
         self.initialWindowState()
         self.restoreWindowState()
-
-    def initDb(self): # pylint: disable=no-self-use
-        db.database.connect(config.DATABASE_FILENAME)
+        self.onSearch()
+        return True
 
     def closeEvent(self, event): # pylint: disable=unused-argument
         "Call quit() for a proper exit on click of the X button, etc."
@@ -155,6 +188,7 @@ class MainWindow(QMainWindow):
     def quit(self):
         "Quit the application in an orderly fashion."
         self.saveWindowState()
+        ui.settings.saveDbLocation(self.dbLocation)
         db.database.close()
         sys.exit(0)
 
@@ -248,6 +282,19 @@ class MainWindow(QMainWindow):
                 return func(val)
             else:
                 return 'NotExecuted'
+        def checkWrapper(obj, key):
+            """
+            Like wrapper(), but specifically for check boxes, and it is able to
+            block signals on the object before making the change, so that we
+            don't have a really slow re-search loop.
+            """
+            val = sh.get(key)
+            if val is not None:
+                oldState = obj.blockSignals(True)
+                obj.setChecked(val)
+                obj.blockSignals(oldState)
+            else:
+                return 'NotExecuted'
 
         # splitters
         wrapper(sf.mainSplitter.restoreState, 'mainSplitterState')
@@ -255,25 +302,25 @@ class MainWindow(QMainWindow):
                 'secondarySplitterState')
 
         # checkboxes
-        wrapper(sf.incrementalCheckbox.setChecked, 'incrementalCheck')
-        wrapper(sf.regexCheckbox.setChecked, 'regexCheck')
-        wrapper(sf.showInspectCheck.setChecked, 'showInspectCheck')
-        wrapper(sf.showSourceNameCheck.setChecked, 'showSourceNameCheck')
-        wrapper(sf.showAddedCheck.setChecked, 'showAddedCheck')
-        wrapper(sf.showEnteredCheck.setChecked, 'showEnteredCheck')
-        wrapper(sf.showDiaryCheck.setChecked, 'showDiaryCheck')
-        wrapper(sf.showNearbyCheck.setChecked, 'showNearbyCheck')
-        wrapper(sf.entriesNamesCheck.setChecked, 'entriesNamesCheck')
-        wrapper(sf.entriesPlacesCheck.setChecked, 'entriesPlacesCheck')
-        wrapper(sf.entriesQuotationsCheck.setChecked, 'entriesQuotationsCheck')
-        wrapper(sf.entriesTitlesCheck.setChecked, 'entriesTitlesCheck')
-        wrapper(sf.entriesCommonsCheck.setChecked, 'entriesCommonsCheck')
-        wrapper(sf.entriesUnclassifiedCheck.setChecked,
+        checkWrapper(sf.incrementalCheckbox, 'incrementalCheck')
+        checkWrapper(sf.regexCheckbox, 'regexCheck')
+        checkWrapper(sf.showInspectCheck, 'showInspectCheck')
+        checkWrapper(sf.showSourceNameCheck, 'showSourceNameCheck')
+        checkWrapper(sf.showAddedCheck, 'showAddedCheck')
+        checkWrapper(sf.showEnteredCheck, 'showEnteredCheck')
+        checkWrapper(sf.showDiaryCheck, 'showDiaryCheck')
+        checkWrapper(sf.showNearbyCheck, 'showNearbyCheck')
+        checkWrapper(sf.entriesNamesCheck, 'entriesNamesCheck')
+        checkWrapper(sf.entriesPlacesCheck, 'entriesPlacesCheck')
+        checkWrapper(sf.entriesQuotationsCheck, 'entriesQuotationsCheck')
+        checkWrapper(sf.entriesTitlesCheck, 'entriesTitlesCheck')
+        checkWrapper(sf.entriesCommonsCheck, 'entriesCommonsCheck')
+        checkWrapper(sf.entriesUnclassifiedCheck,
                 'entriesUnclassifiedCheck')
-        wrapper(sf.enteredCheck.setChecked, 'enteredCheck')
-        wrapper(sf.modifiedCheck.setChecked, 'modifiedCheck')
-        wrapper(sf.sourceCheck.setChecked, 'sourceCheck')
-        wrapper(sf.volumeCheck.setChecked, 'volumeCheck')
+        checkWrapper(sf.enteredCheck, 'enteredCheck')
+        checkWrapper(sf.modifiedCheck, 'modifiedCheck')
+        checkWrapper(sf.sourceCheck, 'sourceCheck')
+        checkWrapper(sf.volumeCheck, 'volumeCheck')
         def setupSourceCombo(value):
             i = sf.occurrencesSourceCombo.findText(value)
             sf.occurrencesSourceCombo.setCurrentIndex(i)
@@ -490,6 +537,10 @@ class MainWindow(QMainWindow):
         self.form.occurrencesAddedDateSpin1.setEnabled(state)
         self.form.occurrencesAddedDateSpin2.setEnabled(state)
         mind, maxd = db.utils.minMaxDatesOccurrenceEnteredModified()
+        if mind is None:
+            mind = datetime.date.today()
+        if maxd is None:
+            maxd = datetime.date.today()
         self.form.occurrencesAddedDateSpin1.setMinimumDate(mind)
         self.form.occurrencesAddedDateSpin1.setMaximumDate(maxd)
         self.form.occurrencesAddedDateSpin2.setMinimumDate(mind)
@@ -503,6 +554,10 @@ class MainWindow(QMainWindow):
         self.form.occurrencesEditedDateSpin1.setEnabled(state)
         self.form.occurrencesEditedDateSpin2.setEnabled(state)
         mind, maxd = db.utils.minMaxDatesOccurrenceEnteredModified()
+        if mind is None:
+            mind = datetime.date.today()
+        if maxd is None:
+            maxd = datetime.date.today()
         self.form.occurrencesEditedDateSpin1.setMinimumDate(mind)
         self.form.occurrencesEditedDateSpin1.setMaximumDate(maxd)
         self.form.occurrencesEditedDateSpin2.setMinimumDate(mind)
@@ -610,6 +665,41 @@ class MainWindow(QMainWindow):
 
     ### Menu callback functions ###
     ## File menu
+    def onNewDB(self):
+        # get filename from user
+        fname = QFileDialog.getSaveFileName(caption="New Tabularium Database",
+                    filter="Tabularium databases (*.tdb);;All files (*)")
+        fname = unicode(fname)
+        if not fname:
+            return False
+        fname = ui.utils.forceExtension(fname, 'tdb')
+        if fname is None:
+            return False
+
+        # close current database, delete db to be overwritten, create new db
+        if db.database.connection is not None:
+            self.saveWindowState()
+            db.database.close()
+        try:
+            os.remove(fname)
+        except OSError:
+            pass
+        connection = db.database.makeDatabase(fname)
+        connection.close()
+        if self._initDb(fname):
+            return True
+
+    def onOpenDB(self):
+        fname = QFileDialog.getOpenFileName(caption="Open Tabularium Database",
+                    filter="Tabularium databases (*.tdb);;All files (*)")
+        if not fname:
+            return False
+        if db.database.connection is not None:
+            self.saveWindowState()
+            db.database.close()
+        if self._initDb(unicode(fname)):
+            return True
+
     def onPrintAll(self):
         self._printWrapper(db.printing.printEntriesAsIndex)
 
@@ -937,6 +1027,8 @@ class MainWindow(QMainWindow):
         sf.actionGoOccurrences.triggered.connect(lambda: selectFirstAndFocus(sf.occurrencesList))
         sf.actionGoInspect.triggered.connect(sf.inspectBox.setFocus)
         sf.actionGoNearby.triggered.connect(lambda: selectFirstAndFocus(sf.nearbyList))
+        sf.actionNew_DB.triggered.connect(self.onNewDB)
+        sf.actionSwitch_Database.triggered.connect(self.onOpenDB)
 
     def checkAllMenus(self):
         """
@@ -947,6 +1039,7 @@ class MainWindow(QMainWindow):
         The three functions below are called individually when clicking on that
         menu, since that's the only one that then needs to be checked
         """
+        #TODO: don't run this if mw isn't initialized yet
         self.checkGoMenu()
         self.checkEntryMenu()
         self.checkOccurrenceMenu()
