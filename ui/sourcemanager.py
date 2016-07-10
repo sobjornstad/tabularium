@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
 
-from PyQt4 import QtCore
-from PyQt4.QtGui import QDialog
-from PyQt4.QtCore import QAbstractTableModel
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QDialog
+from PyQt5.QtCore import QAbstractTableModel
 import ui.forms.managesources
 import ui.forms.newsource
 

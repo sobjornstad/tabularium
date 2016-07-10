@@ -3,9 +3,9 @@
 
 import datetime
 
-from PyQt4 import QtCore
-from PyQt4.QtGui import QDialog
-from PyQt4.QtCore import QAbstractTableModel
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QDialog
+from PyQt5.QtCore import QAbstractTableModel
 import ui.forms.managevols
 import ui.forms.newsource
 

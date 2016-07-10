@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
 
-from PyQt4.QtGui import QDialog
+from PyQt5.QtWidgets import QDialog
 import ui.forms.tools_classification
 
 import ui.addoccurrence

@@ -3,7 +3,7 @@
 
 "Implementation for the Add Occurrences window class AddOccWindow, q.v."
 
-from PyQt4.QtGui import QDialog
+from PyQt5.QtWidgets import QDialog
 
 import ui.forms.newoccs
 import ui.utils

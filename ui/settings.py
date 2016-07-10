@@ -20,8 +20,8 @@ the database before we've found the database.
 from passlib.hash import pbkdf2_sha256 as pbkdf #pylint: disable=E0611
 import pickle
 
-from PyQt4.QtGui import QDialog
-from PyQt4.QtCore import QObject, QSettings
+from PyQt5.QtWidgets import QDialog
+from PyQt5.QtCore import QObject, QSettings
 from ui.forms.prefs import Ui_Dialog
 
 import db.database as d
@@ -114,7 +114,7 @@ class SettingsHandler(QObject):
         d.cursor.execute('SELECT conf FROM conf')
         try:
             self.conf = pickle.loads(d.cursor.fetchall()[0][0])
-        except EOFError:
+        except (EOFError, TypeError):
             # no configuration initialized
             self.conf = {}
 

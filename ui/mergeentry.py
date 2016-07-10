@@ -6,7 +6,7 @@ Implementation of selection dialog for Entry -> Merge into... menu choice.
 Called from onMergeEntry() in main.
 """
 
-from PyQt4.QtGui import QDialog
+from PyQt5.QtWidgets import QDialog
 from ui.forms.mergeentry import Ui_Dialog
 
 class MergeEntryDialog(QDialog):

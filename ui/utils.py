@@ -9,7 +9,7 @@ These functions primarily create various kinds of simple dialog boxes.
 
 import os
 
-from PyQt4.QtGui import QDialog, QMessageBox, QInputDialog, QLineEdit
+from PyQt5.QtWidgets import QDialog, QMessageBox, QInputDialog, QLineEdit
 import ui.forms.confirmationwindow
 import ui.forms.report
 

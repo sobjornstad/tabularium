@@ -3,7 +3,7 @@
 
 "Implementation of the EditOccurrenceWindow (and helper functions), q.v."
 
-from PyQt4.QtGui import QDialog
+from PyQt5.QtWidgets import QDialog
 
 import db.occurrences
 import ui.utils

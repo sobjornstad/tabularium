@@ -11,8 +11,8 @@ dialog.
 
 import re
 
-from PyQt4.QtGui import QDialog, QMessageBox, QTreeWidgetItem
-from PyQt4.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QMessageBox, QTreeWidgetItem
+from PyQt5.QtCore import Qt
 import ui.forms.editnotes
 
 import ui.utils

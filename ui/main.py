@@ -6,10 +6,11 @@ Implementation of the main window for Tabularium, where searches are done and
 other functions are started.
 """
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, QCursor, \
-        QFileDialog
-from PyQt4.QtCore import QObject, Qt
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, \
+        QFileDialog, QLabel
+from PyQt5.QtGui import QCursor
+from PyQt5.QtCore import QObject, Qt
 import datetime
 import os
 import sqlite3
@@ -102,7 +103,7 @@ class MainWindow(QMainWindow):
         self._setupMenus()
 
         # set up statusbar
-        self.matchesWidget = QtGui.QLabel("")
+        self.matchesWidget = QLabel("")
         self.form.statusBar.addPermanentWidget(self.matchesWidget)
         self.form.statusBar.showMessage("Database loaded.", 1000)
 
@@ -678,7 +679,7 @@ class MainWindow(QMainWindow):
         "Get filename for, create, and open a new database."
         # get filename from user
         fname = QFileDialog.getSaveFileName(caption="New Tabularium Database",
-                    filter="Tabularium databases (*.tdb);;All files (*)")
+                    filter="Tabularium databases (*.tdb);;All files (*)")[0]
         if not fname:
             return False
         fname = ui.utils.forceExtension(fname, 'tdb')
@@ -701,7 +702,7 @@ class MainWindow(QMainWindow):
     def onOpenDB(self):
         "Close the current database and open a different one."
         fname = QFileDialog.getOpenFileName(caption="Open Tabularium Database",
-                    filter="Tabularium databases (*.tdb);;All files (*)")
+                    filter="Tabularium databases (*.tdb);;All files (*)")[0]
         if not fname:
             return False
         if db.database.connection is not None:

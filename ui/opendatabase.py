@@ -5,7 +5,7 @@
 Implementation of OpenDatabaseWindow (aka "Welcome to Tabularium!"), q.v.
 """
 
-from PyQt4.QtGui import QDialog
+from PyQt5.QtWidgets import QDialog
 import os
 
 import ui.forms.opendatabase

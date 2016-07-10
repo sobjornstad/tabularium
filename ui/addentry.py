@@ -9,7 +9,7 @@ ones. The developer is referred to the documentation for the AddEntryWindow
 class, which is the entire contents of this module.
 """
 
-from PyQt4.QtGui import QDialog
+from PyQt5.QtWidgets import QDialog
 
 import ui.addoccurrence
 import ui.forms.newentry

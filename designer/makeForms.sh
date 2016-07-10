@@ -25,7 +25,7 @@ do
     if [ "$i" -nt "$into/$moduleName.py" ]; then
         didUpdate=1
         echo "Updating: $moduleName"
-        pyuic4 "$i" -o "$into/$moduleName.py"
+        pyuic5 "$i" -o "$into/$moduleName.py"
     fi
     echo "from . import $moduleName" >> "$packageInit"
 done
