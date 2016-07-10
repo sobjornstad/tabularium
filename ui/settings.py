@@ -35,7 +35,6 @@ class PreferencesWindow(QDialog):
 
     This class should be quite self-explanatory.
     """
-
     DUMMYPASSWORD = '*' * 8 # used to fill the pw field if not edited by user
     def __init__(self, mw, sh):
         QDialog.__init__(self)
@@ -120,9 +119,7 @@ class SettingsHandler(QObject):
             self.conf = {}
 
     def sync(self):
-        """
-        Write current dictionary state out to the database.
-        """
+        "Write current dictionary state out to the database."
         d.cursor.execute('UPDATE conf SET conf=?', (pickle.dumps(self.conf),))
         d.checkAutosave()
 

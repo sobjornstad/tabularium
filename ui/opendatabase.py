@@ -1,12 +1,28 @@
 # -* coding: utf-8 *-
 # Copyright 2016 Soren Bjornstad. All rights reserved.
 
+"""
+Implementation of OpenDatabaseWindow (aka "Welcome to Tabularium!"), q.v.
+"""
+
 from PyQt4.QtGui import QDialog
 import os
 
 import ui.forms.opendatabase
 
 class OpenDatabaseWindow(QDialog):
+    """
+    Window displayed when the program is run for the first time, when opening
+    the previously used database fails, or when user mistypes or doesn't know
+    the password on opening the program. Provides options for creating a new
+    database, opening an existing one, or (if appropriate) trying again to open
+    the previously used database.
+
+    This is a dumb dialog that contains no logic except that necessary to
+    display appropriate messages; after exec'ing the dialog one calls the
+    getResult() method and acts as appropriate for the options 'new', 'open',
+    or 'last'.
+    """
     def __init__(self, parent, lastUsed=None):
         QDialog.__init__(self)
         self.form = ui.forms.opendatabase.Ui_Dialog()
@@ -32,6 +48,10 @@ class OpenDatabaseWindow(QDialog):
         return self.result
 
     def accept(self):
+        """
+        Save user's radio button selection to self.result for retrieval by
+        caller.
+        """
         if self.form.createNewRadio.isChecked():
             self.result = 'new'
         elif self.form.openExistingRadio.isChecked():

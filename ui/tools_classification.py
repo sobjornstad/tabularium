@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
+# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QDialog, QLineEdit, QFocusEvent
-import forms.tools_classification
+from PyQt4.QtGui import QDialog
+import ui.forms.tools_classification
 
-import utils
 import ui.addoccurrence
 
 import db.entries
@@ -14,7 +12,7 @@ import db.consts
 class ClassificationWindow(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self)
-        self.form = forms.tools_classification.Ui_Dialog()
+        self.form = ui.forms.tools_classification.Ui_Dialog()
         self.form.setupUi(self)
         self.mw = parent
 
@@ -34,6 +32,7 @@ class ClassificationWindow(QDialog):
         self.form.closeButton.clicked.connect(self.reject)
         self.form.entryList.itemSelectionChanged.connect(self.onSelect)
 
+        self.entries = None
         self.fillEntries()
         self.form.entryList.setCurrentRow(0)
 
@@ -57,8 +56,8 @@ class ClassificationWindow(QDialog):
             'y' if remains == 1 else 'ies'))
 
     def onSet(self, wasSelected):
-        if not wasSelected: # this is the deselect (not select) operation; we 
-            return          # only want to run this function once for a reselect
+        if not wasSelected: # this is the deselect (not select) operation; we
+            return          # only want to run this func once for a reselect
 
         row = self.form.entryList.currentRow()
         for button, value in self.buttonToVal.iteritems():

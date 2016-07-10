@@ -61,7 +61,7 @@ def questionBox(text, title=None):
 
 def moo():
     "A very advanced debug tool."
-    print("MOOOOO!")
+    print "MOOOOO!"
 
 
 def inputBox(label, title=None, defaultText=None):

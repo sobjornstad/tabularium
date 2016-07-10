@@ -1,25 +1,32 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
+# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
 
-from PyQt4 import QtGui, QtCore
+"Implementation for the Add Occurrences window class AddOccWindow, q.v."
+
 from PyQt4.QtGui import QDialog
 
-import forms.newoccs
+import ui.forms.newoccs
 import ui.utils
 
 import db.occurrences
 
 class AddOccWindow(QDialog):
+    """
+    Window that accepts a string of UOF and creates occurrences from it. The
+    dialog displays the entry that the occurrences will be created from (this
+    is read-only), and may also start with some text already placed in the box
+    (for instance, when adding a redirect entry).
+    """
     def __init__(self, parent, entry, preparedOccurrence=None):
         """
         Arguments:
             parent: The usual.
             entry: The entry to add occurrences to.
-            preparedOccurrence (optional): Text to place in the occurrences box.
+            preparedOccurrence (optional): Text to put in the occurrences box.
         """
 
         QDialog.__init__(self)
-        self.form = forms.newoccs.Ui_Dialog()
+        self.form = ui.forms.newoccs.Ui_Dialog()
         self.form.setupUi(self)
         self.parent = parent # may be mw or entry dialog
         self.entry = entry
@@ -40,7 +47,7 @@ class AddOccWindow(QDialog):
         """
         toParse = unicode(self.form.valueBox.text())
         try:
-            occs, numDupes = db.occurrences.makeOccurrencesFromString(
+            _, numDupes = db.occurrences.makeOccurrencesFromString(
                     toParse, self.entry)
         except db.occurrences.InvalidUOFError:
             error = u"The occurrence string is invalid – please check your " \
@@ -65,8 +72,10 @@ class AddOccWindow(QDialog):
         return
 
     def reject(self):
+        """
+        If entry has no occurrences (i.e., if it was new), delete the entry,
+        because we can't have entries without occurrences.
+        """
         if not self.entry.getOccurrences():
-            # entry was new and had no occurrences; delete so we're not left
-            # with a blank entry in the db
             self.entry.delete()
         super(AddOccWindow, self).reject()

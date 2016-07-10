@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
+# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
 
 import datetime
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QDialog, QLineEdit, QTableWidgetItem, QStandardItem
+from PyQt4 import QtCore
+from PyQt4.QtGui import QDialog
 from PyQt4.QtCore import QAbstractTableModel
-import forms.managevols
-import forms.newsource
+import ui.forms.managevols
+import ui.forms.newsource
 
 import ui.addoccurrence
 import ui.editnotes
@@ -57,7 +57,7 @@ class VolumeTableModel(QAbstractTableModel):
         if isReversed:
             rev = isReversed
         else:
-            rev = not (order == QtCore.Qt.AscendingOrder)
+            rev = not order == QtCore.Qt.AscendingOrder
         # Save the column we've chosen for use after replaceData(). isReversed
         # parameter is used to support this, since we can't cleanly negate the
         # constant QtCore.Qt.AscendingOrder.
@@ -94,7 +94,7 @@ class VolumeTableModel(QAbstractTableModel):
 class VolumeManager(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self)
-        self.form = forms.managevols.Ui_Dialog()
+        self.form = ui.forms.managevols.Ui_Dialog()
         self.form.setupUi(self)
         self.parent = parent
 
@@ -172,7 +172,7 @@ class VolumeManager(QDialog):
 class NewVolumeDialog(QDialog):
     def __init__(self, parent, source, editVol=None):
         QDialog.__init__(self)
-        self.form = forms.newvol.Ui_Dialog()
+        self.form = ui.forms.newvol.Ui_Dialog()
         self.form.setupUi(self)
         self.parent = parent
         self.source = source

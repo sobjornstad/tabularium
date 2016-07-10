@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
+# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QDialog, QLineEdit, QTableWidgetItem, QStandardItem
+from PyQt4 import QtCore
+from PyQt4.QtGui import QDialog
 from PyQt4.QtCore import QAbstractTableModel
-import forms.managesources
-import forms.newsource
+import ui.forms.managesources
+import ui.forms.newsource
 
 import ui.utils
 import ui.addoccurrence
@@ -13,11 +13,14 @@ import db.consts
 import db.sources
 import db.volumes
 
+# pylint: disable=too-many-public-methods
+# (not sure why that counts superclass methods in the first place)
 class SourceTableModel(QAbstractTableModel):
     def __init__(self, parent, *args):
         QAbstractTableModel.__init__(self)
         self.parent = parent
         self.headerdata = ["Name", "Abbrev", "Type", "Volumes"]
+        self.sources = None
         self.doUpdate()
 
     def rowCount(self, parent):
@@ -50,7 +53,7 @@ class SourceTableModel(QAbstractTableModel):
             return None
 
     def sort(self, column, order=QtCore.Qt.AscendingOrder):
-        rev = not (order == QtCore.Qt.AscendingOrder)
+        rev = not order == QtCore.Qt.AscendingOrder
 
         if column == 0:
             key = lambda i: i.getName().lower()
@@ -76,7 +79,7 @@ class SourceTableModel(QAbstractTableModel):
 class SourceManager(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self)
-        self.form = forms.managesources.Ui_Dialog()
+        self.form = ui.forms.managesources.Ui_Dialog()
         self.form.setupUi(self)
         self.parent = parent
 
@@ -115,13 +118,15 @@ class SourceManager(QDialog):
         source = self.form.sourceTable.model().sources[index.row()]
         deletedNums = source.deletePreview()
         if deletedNums[0] > 0:
-            msg = "You have chosen to delete the source '%s'. This will result in "\
-                  "the permanent deletion of %i volume%s and %i occurrence%s, "\
-                  "along with any entries that are left without occurrences."
+            msg = ("You have chosen to delete the source '%s'. This will "
+                   "result in the permanent deletion of %i volume%s and %i "
+                   "occurrence%s, along with any entries that are left "
+                   "without occurrences.")
             title = "Heads up or heads off!"
             if deletedNums[1] > 30:
-                msg += " You are highly advised to back up your database before "\
-                       "continuing. Are you sure you want to delete this source?"
+                msg += (" You are highly advised to back up your database "
+                        "before continuing. Are you sure you want to delete "
+                        "this source?")
                 check = "I have backed up my database."
             else:
                 msg += " Are you sure you want to delete this source?"
@@ -142,7 +147,7 @@ class SourceManager(QDialog):
 class NewSourceDialog(QDialog):
     def __init__(self, parent, editSource=None):
         QDialog.__init__(self)
-        self.form = forms.newsource.Ui_Dialog()
+        self.form = ui.forms.newsource.Ui_Dialog()
         self.form.setupUi(self)
         self.parent = parent
 
@@ -193,7 +198,7 @@ class NewSourceDialog(QDialog):
 
         newName = unicode(sf.nameBox.text()).strip()
         if not self.form.multVolCheckbox.isChecked():
-            newVolval = (1,1)
+            newVolval = (1, 1)
         else:
             newVolval = (sf.valVolStart.value(), sf.valVolStop.value())
         newPageval = (sf.valRefStart.value(), sf.valRefStop.value())
@@ -223,27 +228,25 @@ class NewSourceDialog(QDialog):
                 self.source.setNearbyRange(newNearrange)
                 self.source.setAbbrev(newAbbr)
                 # right now, no setting of stype
-        except (db.sources.DuplicateError, db.sources.InvalidNameError,
-                db.sources.InvalidRangeError, db.sources.DiaryExistsError) as e:
+        except (db.sources.DuplicateError, db.sources.InvalidRangeError,
+                db.sources.InvalidNameError, db.sources.DiaryExistsError) as e:
             ui.utils.errorBox(str(e))
         except db.sources.TrouncesError as e:
             whichThing = e.whichThing
             if whichThing == 'volume':
-                what = 'volumes and occurrences'
                 check = "&Really delete these %i volumes and %i " \
                         "occurrences" % (e.number1, e.number2)
                 title = "Delete invalid volumes and occurrences"
             elif whichThing == 'page':
-                what = 'occurrences'
                 check = "&Really delete these %i occurrences" % (
                         e.number1)
                 title = "Delete invalid occurrences"
 
             errStr = str(e).replace('would', 'will')
-            extra = " If you continue, they will be permanently deleted from " \
-                    "your database along with any entries that are left " \
-                    "without occurrences."
-            cd = ui.utils.ConfirmationDialog(self, errStr + extra, check, title)
+            extra = (" If you continue, they will be permanently deleted from "
+                     "your database along with any entries that are left "
+                     "without occurrences.")
+            cd = ui.utils.ConfirmationDialog(self, errStr+extra, check, title)
             doDelete = cd.exec_()
             if doDelete:
                 return self.accept(overrideTrounce=whichThing)
