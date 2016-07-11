@@ -36,8 +36,10 @@ class ClassificationWindow(QDialog):
         self.entries = None
         self.fillEntries()
         self.form.entryList.setCurrentRow(0)
+        self._considerEnableDisable()
 
     def fillEntries(self):
+        "Fill box of entries to classify from the database."
         entries = db.entries.find('%', (db.consts.entryTypes['unclassified'],))
         entries.sort(key=lambda i: i.getSortKey().lower())
         for i in entries:
@@ -45,6 +47,12 @@ class ClassificationWindow(QDialog):
         self.entries = entries # save for reference when editing
 
     def onSelect(self):
+        """
+        Select a new item (with user intervention or from onSet()). This
+        requires updating the radio buttons and the text indicating how many
+        items are left to classify.
+        """
+        self._considerEnableDisable()
         entry = self.entries[self.form.entryList.currentRow()]
         classif = entry.getClassification()
         button = self.valToButton[classif]
@@ -52,12 +60,16 @@ class ClassificationWindow(QDialog):
         button.setChecked(True)          # busy handling this; then it would
         button.blockSignals(old)         # skip down another item.
 
-        remains = (self.form.entryList.count()
-                   - self.form.entryList.currentRow())
+        curRow = self.form.entryList.currentRow()
+        remains = (self.form.entryList.count() - curRow) if curRow != -1 else 0
         self.form.countLabel.setText("%i entr%s left to classify." % (
             remains, 'y' if remains == 1 else 'ies'))
 
     def onSet(self, wasSelected):
+        """
+        User clicked an option; save the change and move the cursor to the next
+        entry.
+        """
         if not wasSelected: # this is the deselect (not select) operation; we
             return          # only want to run this func once for a reselect
 
@@ -67,3 +79,20 @@ class ClassificationWindow(QDialog):
                 self.entries[row].setClassification(value)
                 break
         self.form.entryList.setCurrentRow(row + 1)
+        self._considerEnableDisable()
+
+    def _considerEnableDisable(self):
+        """
+        If nothing is selected anymore, we should uncheck and disable the radio
+        buttons.
+        """
+        enabled = bool(len(self.form.entryList.selectedItems()))
+        # pylint: disable=consider-iterating-dictionary
+        for i in self.buttonToVal.keys():
+            i.setEnabled(enabled)
+            if not enabled:
+                # http://stackoverflow.com/questions/1731620/
+                # is-there-a-way-to-have-all-radion-buttons-be-unchecked
+                i.setAutoExclusive(False)
+                i.setChecked(False)
+                i.setAutoExclusive(True)
