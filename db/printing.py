@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
-
+# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
 
 import codecs
 import os
@@ -41,7 +40,7 @@ DOC_STARTSTR = """\\documentclass{article}
     \\fancyhf{}
     \\pagestyle{fancy}
     \\renewcommand{\\headrulewidth}{0.5pt}
-    \\fancyhead[LO,LE]{\\scshape Tabularium -- Complete Index}
+    \\fancyhead[LO,LE]{\\scshape Tabularium -- %s}
     \\fancyhead[CO,CE]{\\thepage\\ / \\pageref{LastPage}}
     \\fancyhead[RO,RE]{\\scshape \\today}
     \\renewcommand{\\indexname}{\\vskip -0.55in}
@@ -68,9 +67,13 @@ def printEntriesAsIndex(entries=None, callback=None):
 
     if entries is None:
         entries = db.entries.allEntries()
+        indexTitle = "Complete Index"
+    else:
+        indexTitle = "Selected Index Entries"
 
     formatted = getFormattedEntriesList(entries, callback)
-    document = '\n\n'.join([DOC_STARTSTR, '\n'.join(formatted), INDEX_ENDSTR])
+    document = '\n\n'.join([DOC_STARTSTR % indexTitle,
+                            '\n'.join(formatted), INDEX_ENDSTR])
 
     if callback:
         callback("Compiling PDF...")
