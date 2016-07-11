@@ -10,7 +10,6 @@ import sys
 import tempfile
 
 from db.consts import refTypes
-import db.database as d
 import db.entries
 import db.occurrences
 
@@ -43,7 +42,7 @@ DOC_STARTSTR = """\\documentclass{article}
     \\pagestyle{fancy}
     \\renewcommand{\\headrulewidth}{0.5pt}
     \\fancyhead[LO,LE]{\\scshape Tabularium -- Complete Index}
-    \\fancyhead[CO,CE]{\\thepage\ / \\pageref{LastPage}}
+    \\fancyhead[CO,CE]{\\thepage\\ / \\pageref{LastPage}}
     \\fancyhead[RO,RE]{\\scshape \\today}
     \\renewcommand{\\indexname}{\\vskip -0.55in}
     \\newcommand{\\theentry}[1]{#1}
@@ -52,7 +51,7 @@ DOC_STARTSTR = """\\documentclass{article}
     \\begin{theindex}\n
 """
 
-INDEX_ENDSTR = """\\end{theindex}\end{document}"""
+INDEX_ENDSTR = """\\end{theindex}\\end{document}"""
 
 
 def printEntriesAsIndex(entries=None, callback=None):
@@ -117,7 +116,7 @@ def getFormattedEntriesList(entries, callback=None):
         for occ in occs:
             vol = occ.getVolume()
             sourceAbbrev = '\\textsc{%s}' % mungeLatex(
-                    vol.getSource().getAbbrev().lower())
+                vol.getSource().getAbbrev().lower())
             volNum = vol.getNum()
             ref = mungeLatex(occ.getRef()[0])
             if occ.getRef()[1] == refTypes['num']:
@@ -127,7 +126,7 @@ def getFormattedEntriesList(entries, callback=None):
                                              ref.replace('-', '--')))
             else:
                 occList.append("%s~%s: \\emph{see} %s" % (
-                               sourceAbbrev, volNum, ref))
+                    sourceAbbrev, volNum, ref))
 
         entryStr = ''.join([ENTRY_STARTSTR, mungeLatex(newEname), ENTRY_ENDSTR,
                             ', '.join(occList), '\n'])
@@ -183,6 +182,7 @@ def makeSimplification(callback=None):
         they start along with non-range entries.
         """
         if occ.isRefType('range'):
+            # pylint: disable=unused-variable
             start, end = occ.getRef()[0].split('-')
             key = str(occ).replace(occ.getRef()[0], start)
             return key
@@ -231,7 +231,7 @@ def makeSimplification(callback=None):
         # get the __str__ repr, but without the book part
         ref = ''.join(key.split(book)[1:]).strip()
         latexStr = "\\theoccset{%s}{%s}\n\\theoccurrences{%s}" % (
-                book.lower(), ref, '\n'.join(occStrs))
+            book.lower(), ref, '\n'.join(occStrs))
         latexAccumulator.append(latexStr)
 
     body = '\n\n'.join(latexAccumulator)
@@ -243,10 +243,15 @@ def makeSimplification(callback=None):
 
 ##### COMMON #####
 def mungeLatex(s):
-    # This escapes all special chars listed as catcodes in /The TeXbook/, p.37.
-    # Note that spacing is not guaranteed correct with things like the tilde
-    # and caret. However, those are not very likely to come up; we just don't
-    # want the whole thing to crash if it does. //
+    """
+    This escapes all special chars listed as catcodes in /The TeXbook/, p.37.
+    Note that spacing is not guaranteed correct with things like the tilde
+    and caret. However, those are not very likely to come up; we just don't
+    want the whole thing to crash if it does.
+
+    It also converts straight quotes to curly quotes and _text underlines_ to
+    italics.
+    """
     # We leave out _ because we need to handle italics in a moment.
     s = s.replace('\\', '\\textbackslash ')
     s = s.replace('{', '\\{')
@@ -268,14 +273,6 @@ def mungeLatex(s):
     s = re.sub("_(.*)_(.*)", "\\emph{\\1}\\2", s)
     s = s.replace('_', '\\textunderscore ')
 
-    # reformat 'see' entries with smallcaps and colons
-    redir = 'see'
-    if ''.join(['.', redir]) in s:
-        s = re.sub(".%s (.*)" % redir, ": %s{\\\\scshape\ \\1}" % redir, s)
-        repl = re.findall(": %s.*" % redir, s)
-        repl = repl[0]
-        repl.replace(": %s", "")
-        s = s.replace(repl, repl.lower())
     return s
 
 def compileLatex(document):
@@ -297,8 +294,9 @@ def compileLatex(document):
         r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
         r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
         if r:
-            raise PrintingError("Error executing LaTeX! Please run the application"
-                                " in console for details on the error to debug.")
+            raise PrintingError(
+                "Error executing LaTeX! Please run the application in console "
+                "for details on the error to debug.")
         ofile = os.path.join(tdir, '.'.join([fnamebase, 'pdf']))
         if sys.platform.startswith('linux'):
             subprocess.call(["xdg-open", ofile])
@@ -307,8 +305,9 @@ def compileLatex(document):
         elif sys.platform == "win32":
             os.startfile(ofile)
         else:
-            raise PrintingError("Unable to automatically open the output. Please"
-                                " direct your PDF viewer to %s." % ofile)
+            raise PrintingError(
+                "Unable to automatically open the output. Please direct your "
+                "PDF viewer to %s." % ofile)
     finally:
         #TODO: clean up tmpdir?
         os.chdir(oldcwd)
