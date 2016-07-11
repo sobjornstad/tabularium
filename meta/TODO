@@ -1,5 +1,5 @@
-DEFINITE BUGS:
-- You can enter a range "25-5" and it will happily add the range "25-25".
+BUGS:
+- Check that the view is properly updated when returning from all dialogs
 
 MAJOR THINGS TO ADD:
 - Implement the limit-occurrences feature.
@@ -9,10 +9,12 @@ MAJOR THINGS TO ADD:
 - Tools?
 - Multiple-add
 - Manual
-- Import/export/new/open
+- Import/export
+- Undo
 
 
 SUGGESTIONS:
+* Consider doing away with the "inspect" menu; it may be possible to move everything there somewhere else.
 * A way to look up BACKWARDS: that is, find entries that have a given occurrence. (Basically the simplification printout, only not on paper.)
 * "Standard Abbreviations" feature: a list in the program, and warn if trying to search or add an entry with the full pattern. As with, say, autocorrect or vim abbreviations, this could be used for things that aren't actually abbreviations but more of simply synonyms.
 * Fuzzy match to warn on similar entries/at least spelling errors?

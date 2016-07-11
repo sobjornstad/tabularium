@@ -20,7 +20,7 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Search</string>
+         <string>&amp;Search</string>
         </property>
         <property name="buddy">
          <cstring>searchBox</cstring>
@@ -868,9 +868,6 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>New Database...</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+N</string>
-   </property>
   </action>
   <action name="actionSwitch_Database">
    <property name="text">
@@ -990,15 +987,18 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionMove_to_entry">
    <property name="text">
-    <string>Move to Entry...</string>
+    <string>&amp;Move to Entry...</string>
    </property>
    <property name="statusTip">
     <string>Move this occurrence to a different entry.</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+M</string>
+   </property>
   </action>
   <action name="actionDelete_occ">
    <property name="text">
-    <string>Delete</string>
+    <string>&amp;Delete</string>
    </property>
    <property name="statusTip">
     <string>Delete this occurrence without otherwise modifying the entry.</string>
@@ -1009,7 +1009,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionAdd_occ">
    <property name="text">
-    <string>Add to Entry...</string>
+    <string>&amp;Add to Entry...</string>
    </property>
    <property name="statusTip">
     <string>Create a new occurrence in the currently selected entry.</string>
@@ -1020,15 +1020,18 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionFollow_redirect">
    <property name="text">
-    <string>Follow Redirect</string>
+    <string>&amp;Jump To Redirect</string>
    </property>
    <property name="statusTip">
     <string>Search for the entry that the selected occurrence redirects to.</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+J</string>
+   </property>
   </action>
   <action name="actionEditOcc">
    <property name="text">
-    <string>Edit...</string>
+    <string>&amp;Edit...</string>
    </property>
    <property name="statusTip">
     <string>Change the volume or page number/reference of the selected occurrence.</string>
@@ -1047,13 +1050,13 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionFollow_Nearby_Entry">
    <property name="text">
-    <string>&amp;Follow Nearby Entry</string>
+    <string>&amp;Jump To Nearby Entry</string>
    </property>
    <property name="statusTip">
     <string>Search for the entry currently selected in the nearby window.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+I, F</string>
+    <string>Ctrl+J</string>
    </property>
   </action>
   <action name="actionSource_notes">
@@ -1061,10 +1064,10 @@ If the interface is sluggish, try turning this off.</string>
     <string>&amp;Source Notes</string>
    </property>
    <property name="statusTip">
-    <string>Open the notes browser to the notes for the source used by the selected occurrence.</string>
+    <string>Show the notes for the source used by the selected occurrence.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+I, N</string>
+    <string>Ctrl+Shift+S</string>
    </property>
   </action>
   <action name="actionDiary_notes">
@@ -1072,43 +1075,43 @@ If the interface is sluggish, try turning this off.</string>
     <string>&amp;Diary Notes</string>
    </property>
    <property name="statusTip">
-    <string>Open the notes browser to the notes for the diary volume that was open when this occurrence was added.</string>
+    <string>Show the notes for the diary volume that was open when this occurrence was added.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+I, D</string>
+    <string>Ctrl+D</string>
    </property>
   </action>
   <action name="actionManage_sources">
    <property name="text">
-    <string>Manage Sources</string>
+    <string>Manage &amp;Sources</string>
    </property>
    <property name="statusTip">
     <string>Open the source manager to view, add, edit, and delete sources.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+S, S</string>
+    <string>Ctrl+S</string>
    </property>
   </action>
   <action name="actionManage_volumes">
    <property name="text">
-    <string>Manage Volumes</string>
+    <string>Manage &amp;Volumes</string>
    </property>
    <property name="statusTip">
     <string>Open the volume manager to view, add, edit, and delete volumes of your sources.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+S, V</string>
+    <string>Ctrl+V</string>
    </property>
   </action>
   <action name="actionNotes">
    <property name="text">
-    <string>Notes</string>
+    <string>&amp;Notes</string>
    </property>
    <property name="statusTip">
     <string>Open the notes browser to view and edit notes on your sources.</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+S, N</string>
+    <string>Ctrl+N</string>
    </property>
   </action>
   <action name="actionClassify_Entries">
@@ -1189,12 +1192,12 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionLetter_Distribution_Check">
    <property name="text">
-    <string>Letter Distribution</string>
+    <string>&amp;Letter Distribution</string>
    </property>
   </action>
   <action name="actionTabulate_Relations">
    <property name="text">
-    <string>Tabulate Relations</string>
+    <string>&amp;Tabulate Relations</string>
    </property>
   </action>
   <action name="actionGoBack">
@@ -1276,12 +1279,15 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionManual">
    <property name="text">
-    <string>Manual</string>
+    <string>&amp;Manual</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
    </property>
   </action>
   <action name="actionAbout_Tabularium">
    <property name="text">
-    <string>About Tabularium</string>
+    <string>&amp;About Tabularium</string>
    </property>
   </action>
  </widget>
