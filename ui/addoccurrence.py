@@ -48,7 +48,7 @@ class AddOccWindow(QDialog):
         toParse = self.form.valueBox.text()
         try:
             _, numDupes = db.occurrences.makeOccurrencesFromString(
-                    toParse, self.entry)
+                toParse, self.entry)
         except db.occurrences.InvalidUOFError:
             error = "The occurrence string is invalid – please check your " \
                     "syntax and try again."

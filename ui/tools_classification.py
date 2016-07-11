@@ -24,8 +24,9 @@ class ClassificationWindow(QDialog):
                             sf.quotation: et['quote'],
                             sf.title: et['title'],
                             sf.unclassified: et['unclassified']
-                            }
+                           }
         self.valToButton = {v: k for k, v in self.buttonToVal.items()}
+        # pylint: disable=consider-iterating-dictionary
         for i in self.buttonToVal.keys():
             i.toggled.connect(self.onSet)
 
@@ -51,9 +52,10 @@ class ClassificationWindow(QDialog):
         button.setChecked(True)          # busy handling this; then it would
         button.blockSignals(old)         # skip down another item.
 
-        remains = self.form.entryList.count() - self.form.entryList.currentRow()
-        self.form.countLabel.setText("%i entr%s left to classify." % (remains,
-            'y' if remains == 1 else 'ies'))
+        remains = (self.form.entryList.count()
+                   - self.form.entryList.currentRow())
+        self.form.countLabel.setText("%i entr%s left to classify." % (
+            remains, 'y' if remains == 1 else 'ies'))
 
     def onSet(self, wasSelected):
         if not wasSelected: # this is the deselect (not select) operation; we

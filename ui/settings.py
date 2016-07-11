@@ -17,8 +17,8 @@ the database before we've found the database.
 """
 
 # no idea why pylint thinks this function doesn't exist: it works just fine
-from passlib.hash import pbkdf2_sha256 as pbkdf #pylint: disable=E0611
 import pickle
+from passlib.hash import pbkdf2_sha256 as pbkdf #pylint: disable=E0611
 
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import QObject, QSettings

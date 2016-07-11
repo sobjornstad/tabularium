@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
+# pylint: disable=too-many-lines
 
 """
 Implementation of the main window for Tabularium, where searches are done and
 other functions are started.
 """
 
+import datetime
+import os
+import sqlite3
+import sys
+
+# for some reason pylint thinks these don't exist, but they work fine
+# pylint: disable=no-name-in-module
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, \
         QFileDialog, QLabel
 from PyQt5.QtGui import QCursor
 from PyQt5.QtCore import QObject, Qt
-import datetime
-import os
-import sqlite3
-import sys
 
 import db.analytics
 import db.consts
@@ -83,6 +87,7 @@ class MainWindow(QMainWindow):
         self.qfilter.setupFilter(self)
         self.nearbySplitterState = None
         self.noInspectsDisplayed = False
+        self.currentOccs = None
 
         # connect buttons and signals
         sf = self.form
@@ -108,6 +113,11 @@ class MainWindow(QMainWindow):
         self.form.statusBar.showMessage("Database loaded.", 1000)
 
         # initialize db and set up searching and entries
+        self.search = None
+        self.searchStack = None
+        self.searchForward = None
+        self.savedSelections = None
+        self.savedTexts = None
         self.dbLocation = ui.settings.getDbLocation()
         if not self.dbLocation or not self._initDb(self.dbLocation, False):
             self.onNoDB()
@@ -155,7 +165,6 @@ class MainWindow(QMainWindow):
 
         self.search = ""
         self.searchOptions = {}
-        self.currentOccs = None
         self.searchStack = []
         self.searchForward = []
         sf = self.form
@@ -272,9 +281,9 @@ class MainWindow(QMainWindow):
                   sf.entriesTitlesCheck, sf.entriesUnclassifiedCheck):
             i.toggled.connect(self.fillEntries)
         sf.entriesAllButton.clicked.connect(
-                lambda: self._setAllEntryCheckboxes(True))
+            lambda: self._setAllEntryCheckboxes(True))
         sf.entriesNoneButton.clicked.connect(
-                lambda: self._setAllEntryCheckboxes(False))
+            lambda: self._setAllEntryCheckboxes(False))
 
     def restoreWindowState(self):
         "Restore state saved by saveWindowState."
@@ -330,7 +339,7 @@ class MainWindow(QMainWindow):
         checkWrapper(sf.entriesTitlesCheck, 'entriesTitlesCheck')
         checkWrapper(sf.entriesCommonsCheck, 'entriesCommonsCheck')
         checkWrapper(sf.entriesUnclassifiedCheck,
-                'entriesUnclassifiedCheck')
+                     'entriesUnclassifiedCheck')
         checkWrapper(sf.enteredCheck, 'enteredCheck')
         checkWrapper(sf.modifiedCheck, 'modifiedCheck')
         checkWrapper(sf.sourceCheck, 'sourceCheck')
@@ -356,7 +365,7 @@ class MainWindow(QMainWindow):
         occCount = self.form.occurrencesList.count()
         occString = ", O: %i" % occCount
         self.matchesWidget.setText(
-                entryString + ("" if not occCount else occString))
+            entryString + ("" if not occCount else occString))
 
     def fillEntries(self):
         """
@@ -476,7 +485,7 @@ class MainWindow(QMainWindow):
                  sf.entriesQuotationsCheck: et['quote'],
                  sf.entriesTitlesCheck: et['title'],
                  sf.entriesUnclassifiedCheck: et['unclassified']
-                 }
+                }
         checked = [trans[box] for box in trans.keys() if box.isChecked()]
         return tuple(checked)
 
@@ -582,7 +591,7 @@ class MainWindow(QMainWindow):
         self.form.occurrencesSourceCombo.setEnabled(state)
         if state:
             source = self._getSourceComboSelection()
-            if type(source) != type('all'):
+            if source is not None:
                 self.form.volumeCheck.setEnabled(True)
                 self.onVolumeToggled() # because if already enabled, above will
                                        # not emit the signal again
@@ -601,7 +610,7 @@ class MainWindow(QMainWindow):
         self.form.occurrencesVolumeSpin1.setEnabled(state)
         self.form.occurrencesVolumeSpin2.setEnabled(state)
         source = self._getSourceComboSelection()
-        if type(source) != type('all'):
+        if source is not None:
             # if check fails, then volume will not be displayed anyway
             minv, maxv = source.getVolVal()
             # update volume max/min to match volval
@@ -620,12 +629,12 @@ class MainWindow(QMainWindow):
 
     def _getSourceComboSelection(self):
         """
-        Return the Source currently selected, or 'all' if all sources option
+        Return the Source currently selected, or None if all sources option
         is selected.
         """
         name = self.form.occurrencesSourceCombo.currentText()
         if name == db.consts.noSourceLimitText:
-            return 'all'
+            return None
         else:
             return db.sources.byName(name)
 
@@ -644,8 +653,6 @@ class MainWindow(QMainWindow):
         """
         Restore the selections saved by saveSelections().
         """
-        # TODO: Consider whether there should be an option to go highlight
-        # the just-added entry
         self.fillEntries()
 
         self.form.statusBar.showMessage("Reloading...")
@@ -678,8 +685,9 @@ class MainWindow(QMainWindow):
     def onNewDB(self):
         "Get filename for, create, and open a new database."
         # get filename from user
-        fname = QFileDialog.getSaveFileName(caption="New Tabularium Database",
-                    filter="Tabularium databases (*.tdb);;All files (*)")[0]
+        fname = QFileDialog.getSaveFileName(
+            caption="New Tabularium Database",
+            filter="Tabularium databases (*.tdb);;All files (*)")[0]
         if not fname:
             return False
         fname = ui.utils.forceExtension(fname, 'tdb')
@@ -701,8 +709,9 @@ class MainWindow(QMainWindow):
 
     def onOpenDB(self):
         "Close the current database and open a different one."
-        fname = QFileDialog.getOpenFileName(caption="Open Tabularium Database",
-                    filter="Tabularium databases (*.tdb);;All files (*)")[0]
+        fname = QFileDialog.getOpenFileName(
+            caption="Open Tabularium Database",
+            filter="Tabularium databases (*.tdb);;All files (*)")[0]
         if not fname:
             return False
         if db.database.connection is not None:
@@ -730,6 +739,7 @@ class MainWindow(QMainWindow):
             self.form.statusBar.showMessage(progress)
             QApplication.processEvents()
 
+        # pylint: disable=no-member
         QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
         try:
             self.form.statusBar.showMessage("Printing...")
@@ -815,8 +825,6 @@ class MainWindow(QMainWindow):
         associated with each menu choice. See the ui.addentry.AddEntryWindow
         class for details on how this works.
         """
-        # TODO: Consider doing an _addEntry() internal method and calling that
-        # from the standard one instead of this funky optional-arguments stuff
         self.saveSelections()
         ae = ui.addentry.AddEntryWindow(self)
         if entry:
@@ -860,8 +868,8 @@ class MainWindow(QMainWindow):
         newEntry = db.entries.find(newEntryName)[0]
         if not newEntry:
             ui.utils.informationBox(
-                    "The entry %s does not exist." % newEntryName,
-                    "Cannot merge entry")
+                "The entry %s does not exist." % newEntryName,
+                "Cannot merge entry")
             return
 
         for occ in db.occurrences.fetchForEntry(curEntry):
@@ -876,9 +884,11 @@ class MainWindow(QMainWindow):
         eName = entry.getName()
         occsAffected = len(db.occurrences.fetchForEntry(entry))
         # at some point, replace this with undo
-        r = ui.utils.questionBox("Do you really want to delete the entry '%s' "
-                "and its %i occurrence%s?" % (eName, occsAffected,
-                "" if occsAffected == 1 else "s"), "Delete entry?")
+        r = ui.utils.questionBox(
+            "Do you really want to delete the entry '%s' "
+            "and its %i occurrence%s?" % (eName, occsAffected,
+                                          "" if occsAffected == 1 else "s"),
+            "Delete entry?")
         if r == QMessageBox.Yes:
             entry.delete()
         self.updateAndRestoreSelections()
@@ -911,11 +921,11 @@ class MainWindow(QMainWindow):
         self.saveSelections()
         occ = self._fetchCurrentOccurrence()
         qString = "Do you really want to delete the occurrence '%s'?" % (
-                str(occ))
+            str(occ))
         if len(occ.getOccsOfEntry()) == 1:
             entry = occ.getEntry()
             qString += " (The entry '%s' will be deleted too.)" % (
-                    entry.getName())
+                entry.getName())
         r = ui.utils.questionBox(qString, "Delete entry?")
         if r == QMessageBox.Yes:
             occ.delete()
@@ -937,8 +947,6 @@ class MainWindow(QMainWindow):
         "Search for an entry listed in the nearby window."
         entryName = self.form.nearbyList.currentItem().text()
         self._changeSearch(entryName)
-        #TODO: Ideally we would autoselect the occurrence that was nearby,
-        #      but that's a LOT more work, so not right away.
 
     def onSourceNotes(self):
         "Open the notes for the source of the currently selected occurrence."
@@ -979,8 +987,8 @@ class MainWindow(QMainWindow):
     ## Tools menu
     def onClassify(self):
         "Load the entry classification tool."
-        self.form.statusBar.showMessage("Loading entry classification tool, "
-                "this may take a moment...")
+        self.form.statusBar.showMessage(
+            "Loading entry classification tool, this may take a moment...")
         QApplication.processEvents()
         cw = ui.tools_classification.ClassificationWindow(self)
         self.form.statusBar.clearMessage()
@@ -1000,15 +1008,12 @@ class MainWindow(QMainWindow):
 
 
     ### Menu implementation ###
-    #TODO: When returning from a menu like "add entry," make sure the view is
-    # updated. This is harder than just running _resetForEntry(), though, as
-    # we don't want to wipe out the user's selection.
     def _setupMenus(self):
         "Connect all menu choices to their respective methods."
         sf = self.form
         sf.actionQuit.triggered.connect(self.quit)
         sf.actionFollow_Nearby_Entry.triggered.connect(
-                self.onInspectFollowNearby)
+            self.onInspectFollowNearby)
         sf.actionAdd.triggered.connect(self.onAddEntry)
         sf.actionNew_based_on.triggered.connect(self.onAddEntryBasedOn)
         sf.actionAdd_Redirect_To.triggered.connect(self.onAddRedirect)
@@ -1028,7 +1033,7 @@ class MainWindow(QMainWindow):
         sf.actionClassify_Entries.triggered.connect(self.onClassify)
         sf.actionEditOcc.triggered.connect(self.onEditOccurrence)
         sf.actionLetter_Distribution_Check.triggered.connect(
-                self.onLetterDistro)
+            self.onLetterDistro)
         sf.actionTabulate_Relations.triggered.connect(self.onTabulateRelations)
         sf.actionFollow_redirect.triggered.connect(self.onFollowRedirect)
         sf.actionGoBack.triggered.connect(self.onGoBack)
@@ -1036,12 +1041,12 @@ class MainWindow(QMainWindow):
         sf.actionMerge_into.triggered.connect(self.onMergeEntry)
         sf.actionGoSearch.triggered.connect(self.onGoSearch)
         sf.actionGoEntries.triggered.connect(
-                lambda: selectFirstAndFocus(sf.entriesList))
+            lambda: selectFirstAndFocus(sf.entriesList))
         sf.actionGoOccurrences.triggered.connect(
-                lambda: selectFirstAndFocus(sf.occurrencesList))
+            lambda: selectFirstAndFocus(sf.occurrencesList))
         sf.actionGoInspect.triggered.connect(sf.inspectBox.setFocus)
         sf.actionGoNearby.triggered.connect(
-                lambda: selectFirstAndFocus(sf.nearbyList))
+            lambda: selectFirstAndFocus(sf.nearbyList))
         sf.actionNew_DB.triggered.connect(self.onNewDB)
         sf.actionSwitch_Database.triggered.connect(self.onOpenDB)
 
@@ -1076,7 +1081,8 @@ class MainWindow(QMainWindow):
         """
         somethingOnStack = bool(len([i for i in self.searchStack if len(i)]))
         searchIsEmpty = self.form.searchBox.text() == ""
-        self.form.actionGoBack.setEnabled(somethingOnStack or not searchIsEmpty)
+        self.form.actionGoBack.setEnabled(
+            somethingOnStack or not searchIsEmpty)
         self.form.actionGoForward.setEnabled(len(self.searchForward))
 
     def checkEntryMenu(self):
@@ -1218,11 +1224,12 @@ class MainWindow(QMainWindow):
             item = self.form.entriesList.findItems(searchFor,
                                                    Qt.MatchExactly)[0]
         except IndexError:
-            ui.utils.warningBox("The target of this redirect ('%s') is "
-                    "not visible in the current view. Most likely the current "
-                    "limits exclude the target, and adjusting the limits "
-                    "will show the item. Otherwise, the redirect may be "
-                    "invalid." % searchFor, "Redirect not found")
+            ui.utils.warningBox(
+                "The target of this redirect ('%s') is "
+                "not visible in the current view. Most likely the current "
+                "limits exclude the target, and adjusting the limits "
+                "will show the item. Otherwise, the redirect may be "
+                "invalid." % searchFor, "Redirect not found")
             return
         self.form.entriesList.setCurrentItem(item)
         self.form.entriesList.setFocus()

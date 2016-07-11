@@ -159,6 +159,7 @@ class ConfirmationDialog(QDialog):
         sf.acceptButton.setEnabled(sf.confirmationCheck.isChecked())
 
 
+# pylint: disable=too-few-public-methods
 class ReportDialog(QDialog):
     """
     Report dialog with a read-only QTextEdit and an OK button, to display

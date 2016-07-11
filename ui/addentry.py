@@ -67,8 +67,9 @@ class AddEntryWindow(QDialog):
         self.form.unclassifiedButton.setChecked(True)
 
         sf = self.form
-        self.allRadios = (sf.ordinaryButton, sf.personButton, sf.placeButton,
-                sf.quotationButton, sf.titleButton, sf.unclassifiedButton)
+        self.allRadios = (sf.ordinaryButton, sf.personButton,
+                          sf.placeButton, sf.quotationButton,
+                          sf.titleButton, sf.unclassifiedButton)
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
         self.form.copyButton.clicked.connect(self.onCopy)

@@ -5,9 +5,8 @@
 Implementation of OpenDatabaseWindow (aka "Welcome to Tabularium!"), q.v.
 """
 
-from PyQt5.QtWidgets import QDialog
 import os
-
+from PyQt5.QtWidgets import QDialog
 import ui.forms.opendatabase
 
 class OpenDatabaseWindow(QDialog):
@@ -34,7 +33,7 @@ class OpenDatabaseWindow(QDialog):
         self.form.okButton.clicked.connect(self.accept)
         if lastUsed and os.path.exists(lastUsed):
             self.form.openLastRadio.setText("Open last-used database: %s" %
-                    os.path.split(lastUsed)[-1])
+                                            os.path.split(lastUsed)[-1])
             self.form.openLastRadio.setChecked(True)
         else:
             if lastUsed:

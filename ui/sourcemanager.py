@@ -16,16 +16,17 @@ import db.volumes
 # pylint: disable=too-many-public-methods
 # (not sure why that counts superclass methods in the first place)
 class SourceTableModel(QAbstractTableModel):
-    def __init__(self, parent, *args):
+    def __init__(self, parent):
         QAbstractTableModel.__init__(self)
         self.parent = parent
         self.headerdata = ["Name", "Abbrev", "Type", "Volumes"]
         self.sources = None
         self.doUpdate()
 
+    # pylint: disable=unused-argument
     def rowCount(self, parent):
         return len(self.sources)
-    def columnCount(self, parent):
+    def columnCount(self, parent): # pylint: disable=no-self-use
         return 4
 
     def doUpdate(self):
@@ -181,9 +182,8 @@ class NewSourceDialog(QDialog):
         self.form.addButton.setText("&Save")
         self.form.nameBox.setText(source.getName())
         self.form.abbrevBox.setText(source.getAbbrev())
-        self.form.typeCombo.setCurrentIndex(
-                db.consts.sourceTypesKeys.index(
-                db.consts.sourceTypesFriendlyReversed[source.getStype()]))
+        self.form.typeCombo.setCurrentIndex(db.consts.sourceTypesKeys.index(
+            db.consts.sourceTypesFriendlyReversed[source.getStype()]))
         self.form.typeCombo.setEnabled(False)
         self.form.multVolCheckbox.setChecked(not source.isSingleVol())
         self.form.valVolStart.setValue(source.getVolVal()[0])
@@ -206,10 +206,10 @@ class NewSourceDialog(QDialog):
         newAbbr = sf.abbrevBox.text().strip()
         newStype = db.consts.sourceTypesFriendly[sf.typeCombo.currentText()]
 
-        if newName == '':
+        if not newName:
             ui.utils.errorBox("Please enter a name.", "No source name given")
             return
-        elif newAbbr == '':
+        elif not newAbbr:
             ui.utils.errorBox("Please enter an abbreviation.",
                               "No abbreviation given")
             return
@@ -220,10 +220,10 @@ class NewSourceDialog(QDialog):
                                           newNearrange, newAbbr, newStype)
             else:
                 self.source.setName(newName)
-                self.source.setValidVol(newVolval,
-                        True if overrideTrounce == 'volume' else False)
-                self.source.setValidPage(newPageval,
-                        True if overrideTrounce == 'page' else False)
+                self.source.setValidVol(
+                    newVolval, True if overrideTrounce == 'volume' else False)
+                self.source.setValidPage(
+                    newPageval, True if overrideTrounce == 'page' else False)
                 self.source.setNearbyRange(newNearrange)
                 self.source.setAbbrev(newAbbr)
                 # right now, no setting of stype
@@ -231,23 +231,21 @@ class NewSourceDialog(QDialog):
                 db.sources.InvalidNameError, db.sources.DiaryExistsError) as e:
             ui.utils.errorBox(str(e))
         except db.sources.TrouncesError as e:
-            whichThing = e.whichThing
-            if whichThing == 'volume':
+            if e.whichThing == 'volume':
                 check = "&Really delete these %i volumes and %i " \
                         "occurrences" % (e.number1, e.number2)
                 title = "Delete invalid volumes and occurrences"
-            elif whichThing == 'page':
-                check = "&Really delete these %i occurrences" % (
-                        e.number1)
+            elif e.whichThing == 'page':
+                check = "&Really delete these %i occurrences" % (e.number1)
                 title = "Delete invalid occurrences"
 
-            errStr = str(e).replace('would', 'will')
-            extra = (" If you continue, they will be permanently deleted from "
-                     "your database along with any entries that are left "
-                     "without occurrences.")
-            cd = ui.utils.ConfirmationDialog(self, errStr+extra, check, title)
+            errStr = (str(e).replace('would', 'will') +
+                      " If you continue, they will be permanently deleted from"
+                      " your database along with any entries that are left"
+                      " without occurrences.")
+            cd = ui.utils.ConfirmationDialog(self, errStr, check, title)
             doDelete = cd.exec_()
             if doDelete:
-                return self.accept(overrideTrounce=whichThing)
+                return self.accept(overrideTrounce=e.whichThing)
         else:
             super(NewSourceDialog, self).accept()

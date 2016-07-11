@@ -70,12 +70,12 @@ def referenceOk(uof):
         # since spinbox is limited to the valid values
         noMultipleOccurrences()
     except db.occurrences.InvalidUOFError as e:
-        ui.utils.warningBox("That is not a valid way to specify a "
-                "reference. This box should contain the final part of an "
-                "occurrence in UOF (after the source and volume): either "
-                "a page number, a range of page numbers, or a redirect "
-                "('see WhateverOtherEntry'). See the UOF section of the "
-                "manual for more information.")
+        ui.utils.warningBox(
+            "That is not a valid way to specify a reference. This box "
+            "should contain the final part of an occurrence in UOF (after "
+            "the source and volume): either a page number, a range of page "
+            "numbers, or a redirect ('see WhateverOtherEntry'). See the UOF "
+            "section of the manual for more information.")
         return False
 
     if len(prospectiveOccs) > 1:
@@ -85,6 +85,7 @@ def referenceOk(uof):
     return True
 
 def noMultipleOccurrences():
-    ui.utils.warningBox("Invalid reference: you cannot replace one "
-            "occurrence with several. The reference box should not "
-            "contain braces or pipes.", "Invalid reference")
+    ui.utils.warningBox(
+        "Invalid reference: you cannot replace one occurrence with several. "
+        "The reference box should not contain braces or pipes.",
+        "Invalid reference")

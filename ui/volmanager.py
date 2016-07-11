@@ -17,7 +17,7 @@ import db.sources
 import db.volumes
 
 class VolumeTableModel(QAbstractTableModel):
-    def __init__(self, parent, *args):
+    def __init__(self, parent):
         QAbstractTableModel.__init__(self)
         self.parent = parent
         self.headerdata = ["Number", "Opened", "Closed", "Notes"]
@@ -28,6 +28,7 @@ class VolumeTableModel(QAbstractTableModel):
         self.curSortColumn = 0
         self.curSortIsReversed = False
 
+    # pylint: disable=unused-argument
     def rowCount(self, parent):
         return len(self.vols) if self.vols is not None else 0
     def columnCount(self, parent):
@@ -163,7 +164,7 @@ class VolumeManager(QDialog):
     def _currentSource(self):
         if self.form.sourceList.currentItem():
             return db.sources.byName(
-                    self.form.sourceList.currentItem().text())
+                self.form.sourceList.currentItem().text())
         else:
             return None
 
@@ -248,8 +249,8 @@ class NewVolumeDialog(QDialog):
                 self.volume.setDopened(dOpened)
                 self.volume.setDclosed(dClosed)
             else:
-                db.volumes.Volume.makeNew(
-                        self.source, num, "", dOpened, dClosed)
+                db.volumes.Volume.makeNew(self.source, num, "",
+                                          dOpened, dClosed)
         except:
             raise
         else:

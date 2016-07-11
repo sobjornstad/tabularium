@@ -45,7 +45,7 @@ class TreeWidgetItem(QTreeWidgetItem):
         regex = r'(\d*\.\d+|\d+)'
         parts = re.split(regex, key)
         return tuple((e if i % 2 == 0 else float(e))
-                      for i, e in enumerate(parts))
+                     for i, e in enumerate(parts))
 
 
 class NotesBrowser(QDialog):
@@ -68,7 +68,7 @@ class NotesBrowser(QDialog):
         self.form.parseButton.clicked.connect(self.onTreeSelectionChanged)
         self.form.clearButton.clicked.connect(self.onClear)
         self.form.tree.itemSelectionChanged.connect(
-                self.onTreeSelectionChanged)
+            self.onTreeSelectionChanged)
         self.editorTextChanged = False
         self.form.editor.textChanged.connect(self.onTextChanged)
 
@@ -103,8 +103,9 @@ class NotesBrowser(QDialog):
 
     def onClear(self):
         "After confirmation, strip all HTML from the notes text."
-        r = ui.utils.questionBox("Are you sure you want to clear all "
-                "formatting?", "Clear formatting?")
+        r = ui.utils.questionBox(
+            "Are you sure you want to clear all formatting?",
+            "Clear formatting?")
         if r == QMessageBox.Yes:
             self.form.editor.setHtml(self.form.editor.toPlainText())
             self.saveIfModified()
@@ -176,7 +177,7 @@ class NotesBrowser(QDialog):
         st = self._selectionType()
         if st == 'nothing' or st == 'sourceWithVols':
             html = "Please select a %svolume to view notes." % (
-                    "source or " if st == 'nothing' else "")
+                "source or " if st == 'nothing' else "")
             self.form.editor.setHtml(html)
             self.form.editor.setReadOnly(True)
         elif st == 'sourceWithoutVols' or st == 'volume':
