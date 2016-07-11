@@ -11,6 +11,7 @@ import datetime
 import os
 import sqlite3
 import sys
+import traceback
 
 # for some reason pylint thinks these don't exist, but they work fine
 # pylint: disable=no-name-in-module
@@ -1319,15 +1320,34 @@ def fillListWidgetWithEntries(widget, entries):
     for i in entries:
         widget.addItem(i.getName())
 
+def exceptionHook(exctype, value, tb):
+    """
+    Global error handler: display information about unhandled exceptions,
+    rather than printing it to stderr where it disappears if you're not
+    running from the terminal.
+    """
+    tbText = ("An error occurred, and Tabularium doesn't know "
+              "how to deal with it properly. This is likely the result "
+              "of a bug in the program – sorry about that.\n\n"
+              "Things you can try:\n"
+              "* Restart Tabularium and try again.\n\n"
+              "If problems continue, please contact support and include "
+              "the following technical details:\n\n")
+    tbText += ''.join(traceback.format_exception(exctype, value, tb))
+    ui.utils.reportBox(None, tbText, "Oops!")
+    return
+
 def start():
     """
     Initialize the application and main window and run. This function should be
     called from the 'tabularium' executable to start the program.
     """
+    sys.excepthook = exceptionHook
     app = QApplication(sys.argv)
     qfilter = MwEventFilter()
     app.installEventFilter(qfilter)
     mw = MainWindow(qfilter)
     app.focusChanged.connect(mw.searchFocusLost)
+
     mw.show()
     app.exec_()
