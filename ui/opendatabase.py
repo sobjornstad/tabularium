@@ -32,7 +32,7 @@ class OpenDatabaseWindow(QDialog):
         self.form.quitButton.clicked.connect(self.reject)
         self.form.okButton.clicked.connect(self.accept)
         if lastUsed and os.path.exists(lastUsed):
-            self.form.openLastRadio.setText("Open last-used database: %s" %
+            self.form.openLastRadio.setText("Open &last-used database: %s" %
                                             os.path.split(lastUsed)[-1])
             self.form.openLastRadio.setChecked(True)
         else:

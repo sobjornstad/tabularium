@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>390</width>
-    <height>160</height>
+    <width>300</width>
+    <height>168</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,8 @@
    <item>
     <widget class="QLabel" name="explanatoryText">
      <property name="text">
-      <string>There is no database open. What would you like to do?</string>
+      <string>There is no Tabularium database open.
+What would you like to do?</string>
      </property>
     </widget>
    </item>
@@ -29,21 +30,21 @@
      <item row="0" column="0">
       <widget class="QRadioButton" name="createNewRadio">
        <property name="text">
-        <string>Create new Tabularium database</string>
+        <string>Create &amp;new database</string>
        </property>
       </widget>
      </item>
      <item row="1" column="0">
       <widget class="QRadioButton" name="openExistingRadio">
        <property name="text">
-        <string>Open existing Tabularium database</string>
+        <string>Open &amp;existing database</string>
        </property>
       </widget>
      </item>
      <item row="2" column="0">
       <widget class="QRadioButton" name="openLastRadio">
        <property name="text">
-        <string>Open last-used database: </string>
+        <string>Open &amp;last-used database: </string>
        </property>
       </widget>
      </item>
