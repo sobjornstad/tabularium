@@ -4,3 +4,7 @@
 *.html
 ui/forms/
 nogit/
+meta/coverage/
+.coverage
+*.tdb
+*.bak

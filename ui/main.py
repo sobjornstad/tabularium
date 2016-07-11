@@ -271,19 +271,25 @@ class MainWindow(QMainWindow):
         sf.sourceCheck.toggled.connect(self.onSourceToggled)
         sf.occurrencesSourceCombo.activated.connect(self.onSourceToggled)
         sf.volumeCheck.toggled.connect(self.onVolumeToggled)
-        self.onEnteredToggled()
-        self.onModifiedToggled()
-        self.onSourceToggled()
-        self.onVolumeToggled()
+        for i in (sf.enteredCheck, sf.modifiedCheck,
+                  sf.sourceCheck, sf.volumeCheck):
+            i.setChecked(False)
+        self._occurrenceFilterHandlers()
         # for entries
         for i in (sf.entriesCommonsCheck, sf.entriesNamesCheck,
                   sf.entriesPlacesCheck, sf.entriesQuotationsCheck,
                   sf.entriesTitlesCheck, sf.entriesUnclassifiedCheck):
             i.toggled.connect(self.fillEntries)
+            i.setChecked(True)
         sf.entriesAllButton.clicked.connect(
             lambda: self._setAllEntryCheckboxes(True))
         sf.entriesNoneButton.clicked.connect(
             lambda: self._setAllEntryCheckboxes(False))
+        # for display
+        for i in (sf.showInspectCheck, sf.showSourceNameCheck,
+                  sf.showAddedCheck, sf.showEnteredCheck,
+                  sf.showDiaryCheck, sf.showNearbyCheck):
+            i.setChecked(True)
 
     def restoreWindowState(self):
         "Restore state saved by saveWindowState."
@@ -327,12 +333,14 @@ class MainWindow(QMainWindow):
         # checkboxes
         checkWrapper(sf.incrementalCheckbox, 'incrementalCheck')
         checkWrapper(sf.regexCheckbox, 'regexCheck')
+        # inspection options
         checkWrapper(sf.showInspectCheck, 'showInspectCheck')
         checkWrapper(sf.showSourceNameCheck, 'showSourceNameCheck')
         checkWrapper(sf.showAddedCheck, 'showAddedCheck')
         checkWrapper(sf.showEnteredCheck, 'showEnteredCheck')
         checkWrapper(sf.showDiaryCheck, 'showDiaryCheck')
         checkWrapper(sf.showNearbyCheck, 'showNearbyCheck')
+        # entry types
         checkWrapper(sf.entriesNamesCheck, 'entriesNamesCheck')
         checkWrapper(sf.entriesPlacesCheck, 'entriesPlacesCheck')
         checkWrapper(sf.entriesQuotationsCheck, 'entriesQuotationsCheck')
@@ -340,10 +348,12 @@ class MainWindow(QMainWindow):
         checkWrapper(sf.entriesCommonsCheck, 'entriesCommonsCheck')
         checkWrapper(sf.entriesUnclassifiedCheck,
                      'entriesUnclassifiedCheck')
+        # occurrence filters
         checkWrapper(sf.enteredCheck, 'enteredCheck')
         checkWrapper(sf.modifiedCheck, 'modifiedCheck')
         checkWrapper(sf.sourceCheck, 'sourceCheck')
         checkWrapper(sf.volumeCheck, 'volumeCheck')
+        self._occurrenceFilterHandlers()
         def setupSourceCombo(value):
             i = sf.occurrencesSourceCombo.findText(value)
             sf.occurrencesSourceCombo.setCurrentIndex(i)
@@ -1257,6 +1267,17 @@ class MainWindow(QMainWindow):
             i.setChecked(state)
             i.blockSignals(oldBlockSignals)
         self.fillEntries()
+
+    def _occurrenceFilterHandlers(self):
+        """
+        To be run after programmatically setting the state of some occurrence
+        filters, to make sure that all the spin/calendar/combo boxes are in the
+        correct state for the check boxes.
+        """
+        self.onEnteredToggled()
+        self.onModifiedToggled()
+        self.onSourceToggled()
+        self.onVolumeToggled()
 
 
     ### Reset functions: since more or less needs to be reset for each, do a
