@@ -217,46 +217,42 @@ class Occurrence(object):
     def getNearby(self, nearRange=1):
         """
         Find all occurrences that are in the same volume and within /nearRange/
-        pages/indices of it, and return their entries. Eventually /nearRange/
-        should be part of the source options; for now this will ordinarily use
-        the default value of 1.
-
-        If the current occurrence is a redirect and thus has no logical result
-        for this operation, or if the range or other data is otherwise invalid
-        for this occurrence, or in the very unusual case that there are simply
-        no results, return None. #(would we rather several return types?)
+        pages/indices of it, excepting self, and return their entries.
+        Eventually /nearRange/ should be part of the source options; for now
+        this will ordinarily use the default value of 1.
 
         Note that nearby is capable of finding things that are nearby ranges,
         but is not currently always capable of finding ranges themselves in
         nearby queries. (SQL BETWEEN does successfully find the entry when one
         of the top or bottom range numbers is actually in the string.)
 
-        Returns a list of Entry objects.
+        Return:
+            A list of Entry objects : on success.
+            An empty list : If the current occurrence is only nearby to itself.
+            None : if the current occurrence is a redirect and thus has no
+                logical result for this operation
         """
 
-        if not (self._type == 1 or self._type == 0):
+        if self._type not in (refTypes['num'], refTypes['range']):
             return None
 
+        # Notice that the ranges can go outside volume validation, but this
+        # doesn't do any harm, as the numbers aren't used beyond this SELECT.
         page = self._ref
-        if self._type == 1:
-            retval = parseRange(page)
-            if retval is None:
-                return None
-            else:
-                bottom, top = retval
+        if self._type == refTypes['range']:
+            bottom, top = parseRange(page)
             pageStart = bottom - nearRange
             pageEnd = top + nearRange
         else:
-            try:
-                pageStart = int(page) - 1
-                pageEnd = int(page) + 1
-            except ValueError:
-                return None
+            pageStart = int(page) - 1
+            pageEnd = int(page) + 1
 
         q = '''SELECT oid FROM occurrences
                WHERE vid = ? AND (type = 0 OR type = 1)
-                   AND CAST(ref as integer) BETWEEN ? AND ?'''
-        d.cursor.execute(q, (self._volume.getVid(), pageStart, pageEnd))
+                   AND CAST(ref as integer) BETWEEN ? AND ?
+                   AND oid != ?'''
+        d.cursor.execute(q, (self._volume.getVid(), pageStart,
+                             pageEnd, self._oid))
         occs = [Occurrence(i[0]) for i in d.cursor.fetchall()]
 
         # fetch list of entries nearby
@@ -276,7 +272,6 @@ def fetchForEntry(entry):
     """
     Return a list of all Occurrences for a given Entry.
     """
-
     eid = entry.getEid()
     d.cursor.execute('SELECT oid FROM occurrences WHERE eid=?', (eid,))
     return [Occurrence(i[0]) for i in d.cursor.fetchall()]
@@ -284,17 +279,10 @@ def fetchForEntry(entry):
 def parseRange(val):
     """
     Return a tuple of bottom, top integers for a range (a string consisting of
-    two ints separated by a hyphen). Return None if the value was not a range
-    in this format.
+    two ints separated by a hyphen). Caller is responsible for making sure the
+    string is a range.
     """
-
-    try:
-        bottom, top = val.split('-')
-        bottom, top = int(bottom), int(top)
-    except ValueError:
-        return None
-
-    return (bottom, top)
+    return tuple(int(i) for i in val.split('-'))
 
 def makeOccurrencesFromString(s, entry):
     """
