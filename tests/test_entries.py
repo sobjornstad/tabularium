@@ -108,7 +108,6 @@ class DbTests(utils.DbTestCase):
             d.cursor.fetchall()[0]
         assert db.occurrences.Occurrence(o2.getOid())
 
-
     def testAdvancedFindFeatures(self):
         # globbing
         e1 = db.entries.Entry.makeNew("Melgreth, Maudia (_Maudlin_)",
