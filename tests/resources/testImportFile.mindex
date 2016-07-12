@@ -1,0 +1,13 @@
+# This is a test file containing Mindex things.
+# Note that line 6 uses an entry that’s already in the db, but new occs;
+# line 12 has duplicate entries and occurrences;
+# and line 11 is outright invalid.
+
+Alfonzo	P 2.4
+Greta	P 1.{7, 10}
+Knuth, Donald	P 2.16-8
+Margareta	P 1.see Greta
+Maud	P 1.6 | P 2.5
+This is an invalid line
+Xavier	P 1.40
+_The Art of Computer Programming_	B: see Knuth, Donald	                            Art of Computer Programming
