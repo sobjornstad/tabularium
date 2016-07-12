@@ -9,12 +9,6 @@ import db.occurrences
 from db.utils import dateSerializer, dateDeserializer
 from db.consts import entryTypes
 
-class DuplicateError(Exception):
-    def __init__(self):
-        pass
-    def __str__(self):
-        return "An entry with that name already exists."
-
 
 class Entry(object):
     "Represents a single entry in the database."

@@ -122,3 +122,24 @@ class DbTests(utils.DbTestCase):
         assert len(db.entries.find("%t%", (entryTypes['person'],
                 entryTypes['quote'], entryTypes['title']))) == 3
         assert len(db.entries.find("%t%", (entryTypes['person'],))) == 1
+
+    def testDupeEntries(self):
+        e1 = db.entries.Entry.makeNew("barf")
+        assert db.entries.Entry.makeNew("barf") is None
+
+    def testPercentageWrap(self):
+        # this is a tautological test, but it took longer to write this comment
+        # than the test so we might as well
+        assert db.entries.percentageWrap("foo") == "%foo%"
+
+    def testSortKeyTransform(self):
+        t = db.entries.sortKeyTransform
+        assert t('"Soren"') == 'Soren'
+        assert t("_Gödel, Escher, Bach_") == "Gödel, Escher, Bach"
+        assert t("The Holy Bible") == "Holy Bible"
+        assert t("'45") == "45"
+        assert t("#sometimeswe") == "sometimeswe"
+        assert t("/quit") == "quit"
+        # we don't escape this hash because it's in the middle
+        assert t("_The End of the #Tests_") == "End of the #Tests"
+
