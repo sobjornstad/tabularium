@@ -808,6 +808,8 @@ If the interface is sluggish, try turning this off.</string>
     <addaction name="actionMass_Deletion_Tool"/>
     <addaction name="actionProper_Name_Conflict_Tool"/>
     <addaction name="actionSort_Check_Tool"/>
+    <addaction name="separator"/>
+    <addaction name="actionLetter_Distribution_Check"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -815,13 +817,6 @@ If the interface is sluggish, try turning this off.</string>
     </property>
     <addaction name="actionManual"/>
     <addaction name="actionAbout_Tabularium"/>
-   </widget>
-   <widget class="QMenu" name="menuAnalytics">
-    <property name="title">
-     <string>Anal&amp;ytics</string>
-    </property>
-    <addaction name="actionLetter_Distribution_Check"/>
-    <addaction name="actionTabulate_Relations"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -844,7 +839,6 @@ If the interface is sluggish, try turning this off.</string>
    <addaction name="menuInspect"/>
    <addaction name="menuSources"/>
    <addaction name="menuTools"/>
-   <addaction name="menuAnalytics"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -868,10 +862,16 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>New Database...</string>
    </property>
+   <property name="statusTip">
+    <string>Create a completely new Tabularium database.</string>
+   </property>
   </action>
   <action name="actionSwitch_Database">
    <property name="text">
     <string>Open Database...</string>
+   </property>
+   <property name="statusTip">
+    <string>Close this Tabularium database and open a different one.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -879,7 +879,13 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionImport">
    <property name="text">
-    <string>Import...</string>
+    <string>&amp;Import Mindex File...</string>
+   </property>
+   <property name="statusTip">
+    <string>Add entries and occurrences from a Mindex file.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I</string>
    </property>
   </action>
   <action name="actionExport">
@@ -1192,7 +1198,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionLetter_Distribution_Check">
    <property name="text">
-    <string>&amp;Letter Distribution</string>
+    <string>Show &amp;Letter Distribution</string>
    </property>
   </action>
   <action name="actionTabulate_Relations">

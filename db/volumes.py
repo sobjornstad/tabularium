@@ -184,7 +184,8 @@ def findNextDopened(source):
     try:
         return (dateDeserializer(d.cursor.fetchall()[0][0]) +
                 datetime.timedelta(days=1))
-    except IndexError:
+    except (IndexError, TypeError):
+        # unsupported operand types: NoneType and timedelta
         return datetime.date.today()
 
 def findNextOpenVol(source):

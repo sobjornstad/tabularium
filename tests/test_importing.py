@@ -26,11 +26,13 @@ class ImportTests(utils.DbTestCase):
         e2 = Entry.makeNew("Xavier")                # Duplicate entry
         o2 = Occurrence.makeNew(e2, v2_1, "40", 0)  # *and* occurrence.
 
-        errors = db.importing.importMindex(self.MINDEX_FILE)
-        assert len(errors) == 2, len(errors)
-        assert len(errors[0]) == 2
+        numOK, errors = db.importing.importMindex(self.MINDEX_FILE)
+        assert numOK == 7
+        assert len(errors) == 1, len(errors)
+        assert len(errors[0]) == 3
         assert 'two tab-separated columns' in errors[0][0]
         assert errors[0][1] == 'This is an invalid line'
+        assert errors[0][2] == 11
 
         assert len(db.entries.allEntries()) == 7
         assert len(db.occurrences.allOccurrences()) == 10

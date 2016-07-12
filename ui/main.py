@@ -25,6 +25,7 @@ import db.analytics
 import db.consts
 import db.database
 import db.entries
+import db.importing
 import db.occurrences
 import db.printing
 import db.sources
@@ -731,6 +732,32 @@ class MainWindow(QMainWindow):
         if self._initDb(fname):
             return True
 
+    def onImportMindex(self):
+        fname = QFileDialog.getOpenFileName(
+            caption="Import Mindex File",
+            filter="Mindex files (*.mindex);;All files (*)")[0]
+        if not fname:
+            return
+        numEntries, errors = db.importing.importMindex(fname)
+        successMsg = (
+            "%i entr%s added or merged with existing entries.<br>"
+            % (numEntries, "y was" if numEntries == 1 else "ies were"))
+
+        if len(errors) == 0:
+            ui.utils.informationBox(successMsg, "Import Mindex File")
+        else:
+            msg = [successMsg,
+                   "The following %i entr%s could not be imported:<br>"
+                   % (len(errors), "y" if len(errors) == 1 else "ies")]
+            for err, line, linenum in errors:
+                msg.append("""<div><b>Line %s:</b></div>
+                              <div style="margin-left: 24px;">%s</div>
+                              <div><b>was not imported because:</b></div>
+                              <div style="margin-left: 24px;">%s<br></div>
+                           """ % (linenum, line.replace('\t', ' → '), err))
+            ui.utils.reportBox(self, ''.join(msg), "Import Mindex File")
+
+
     def onPrintAll(self):
         self._printWrapper(db.printing.printEntriesAsIndex)
 
@@ -1007,12 +1034,6 @@ class MainWindow(QMainWindow):
         self.onSearch()
         #self.updateAndRestoreSelections()
 
-
-    ## Analytics menu
-    def onTabulateRelations(self): # for now, pylint: disable=no-self-use
-        # analytics.py/tabulateRelations
-        ui.utils.informationBox("This feature is not currently implemented.")
-
     def onLetterDistro(self):
         ui.utils.reportBox(self, db.analytics.letterDistribution(),
                            "Letter distribution statistics")
@@ -1045,7 +1066,6 @@ class MainWindow(QMainWindow):
         sf.actionEditOcc.triggered.connect(self.onEditOccurrence)
         sf.actionLetter_Distribution_Check.triggered.connect(
             self.onLetterDistro)
-        sf.actionTabulate_Relations.triggered.connect(self.onTabulateRelations)
         sf.actionFollow_redirect.triggered.connect(self.onFollowRedirect)
         sf.actionGoBack.triggered.connect(self.onGoBack)
         sf.actionGoForward.triggered.connect(self.onGoForward)
@@ -1060,6 +1080,7 @@ class MainWindow(QMainWindow):
             lambda: selectFirstAndFocus(sf.nearbyList))
         sf.actionNew_DB.triggered.connect(self.onNewDB)
         sf.actionSwitch_Database.triggered.connect(self.onOpenDB)
+        sf.actionImport.triggered.connect(self.onImportMindex)
 
     def checkAllMenus(self):
         """
