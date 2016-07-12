@@ -21,6 +21,7 @@ def connect(fname, autosaveInterval=60):
     lastSavedTime = time.time()
     saveInterval = autosaveInterval
     regexSetup()
+
 def openDbConnect(conn):
     """
     This function pulls an open connection into the database module's namespace
@@ -33,7 +34,6 @@ def openDbConnect(conn):
         >>> db.database.openDbConnect(conn)
         >>> db.database.connection.commit()
     """
-
     global connection, cursor, lastSavedTime
     connection = conn
     cursor = connection.cursor()
@@ -64,12 +64,12 @@ def checkAutosave(thresholdSeconds=None):
         return True
     else:
         return False
+
 def forceSave():
     """Force a commit and update last save time."""
     global lastSavedTime
     connection.commit()
     lastSavedTime = time.time()
-
 
 
 #### to be called without a database open ####
