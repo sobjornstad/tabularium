@@ -52,7 +52,7 @@ class DbTests(utils.DbTestCase):
         assert e3 is None
         e3 = db.entries.Entry.makeNew(e3Name)
 
-        # test single entry
+        # test find multiple on single entry
         e1eid = e1.getEid()
         obj = db.entries.find(e1Name)
         assert obj[0].getEid() == e1eid
@@ -66,18 +66,18 @@ class DbTests(utils.DbTestCase):
         assert len(db.entries.find("Maudlin")) != 3 # but not here, ofc
 
         # test findOne on multiple entries
-        with self.assertRaises(db.entries.MultipleResultsUnexpectedError):
+        with self.assertRaises(db.entries.MultipleResultsUnexpectedError) \
+                as context:
             db.entries.findOne("%Maudlin%")
+        assert 'should not have returned multiple' in str(context.exception)
 
         # try changing
         newName = "Kathariana"
         e3.setName(newName)
-        obj = db.entries.find(e2Name)
-        assert len(obj) == 1
-        assert obj[0].getName() == e2Name
-        obj = db.entries.find(newName)
-        assert len(obj) == 1
-        assert obj[0].getName() == newName
+        obj = db.entries.findOne(e2Name)
+        assert obj.getName() == e2Name
+        obj = db.entries.findOne(newName)
+        assert obj.getName() == newName
 
         # test fetching by id
         assert db.entries.Entry(e1eid).getEid() == e1.getEid()

@@ -10,7 +10,10 @@ from db.utils import dateSerializer, dateDeserializer
 from db.consts import entryTypes
 
 class MultipleResultsUnexpectedError(Exception):
-    pass
+    def __str__(self):
+        return ("A find that should not have returned multiple results "
+                "returned multiple results. This is probably due to the "
+                "database being in an inconsistent state.")
 
 class Entry(object):
     "Represents a single entry in the database."

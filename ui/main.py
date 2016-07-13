@@ -904,9 +904,8 @@ class MainWindow(QMainWindow):
             return
 
         newEntryName = dialog.getTo()
-        try:
-            newEntry = db.entries.find(newEntryName)[0]
-        except IndexError:
+        newEntry = db.entries.findOne(newEntryName)
+        if not newEntry:
             ui.utils.warningBox(
                 "The entry %s does not exist." % newEntryName,
                 "Cannot merge entry")
@@ -1268,18 +1267,14 @@ class MainWindow(QMainWindow):
     def _fetchCurrentEntry(self):
         """
         Get an Entry object for the currently selected entry. Return None if
-        nothing is selected.
+        nothing is selected or the entry was just deleted.
         """
         try:
             search = self.form.entriesList.currentItem().text()
         except AttributeError:
             return None
         else:
-            try:
-                return db.entries.find(search)[0]
-            except IndexError:
-                # entry was just deleted
-                return None
+            return db.entries.findOne(search)
 
     def _fetchCurrentOccurrence(self):
         """

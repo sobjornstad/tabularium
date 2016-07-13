@@ -5,16 +5,18 @@ BUGS:
 
 MAJOR THINGS TO ADD:
 - Implement the limit-occurrences feature.
-- Allow moving an occurrence to another entry.
 - Tools?
 - Multiple-add
 - Manual
 - Export
 - Undo
 - Consistify text
+- About window
 
 
 SUGGESTIONS:
+* Autocomplete in entry boxes
+* "What links here?" -- backwards redirect
 * Consider doing away with the "inspect" menu; it may be possible to move everything there somewhere else.
 * A way to look up BACKWARDS: that is, find entries that have a given occurrence. (Basically the simplification printout, only not on paper.)
 * "Standard Abbreviations" feature: a list in the program, and warn if trying to search or add an entry with the full pattern. As with, say, autocorrect or vim abbreviations, this could be used for things that aren't actually abbreviations but more of simply synonyms.

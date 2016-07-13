@@ -52,6 +52,5 @@ class FileDbTest(unittest.TestCase):
         database.close()
 
         database.connect(f.name)
-        ret = db.entries.find("Margareta")
-        assert len(ret) == 1
-        assert ret[0] == e1
+        ret = db.entries.findOne("Margareta")
+        assert ret == e1
