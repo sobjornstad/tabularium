@@ -941,7 +941,7 @@ class MainWindow(QMainWindow):
             "and its %i occurrence%s?" % (eName, occsAffected,
                                           "" if occsAffected == 1 else "s"),
             "Delete entry?")
-        if r == QMessageBox.Yes:
+        if r:
             entry.delete()
         self.updateAndRestoreSelections()
 
@@ -1024,7 +1024,7 @@ class MainWindow(QMainWindow):
             qString += " (The entry '%s' will be deleted too.)" % (
                 entry.getName())
         r = ui.utils.questionBox(qString, "Delete entry?")
-        if r == QMessageBox.Yes:
+        if r:
             occ.delete()
             db.entries.deleteOrphaned()
             self.updateAndRestoreSelections()

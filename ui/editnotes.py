@@ -11,7 +11,7 @@ dialog.
 
 import re
 
-from PyQt5.QtWidgets import QDialog, QMessageBox, QTreeWidgetItem
+from PyQt5.QtWidgets import QDialog, QTreeWidgetItem
 from PyQt5.QtCore import Qt
 import ui.forms.editnotes
 
@@ -106,7 +106,7 @@ class NotesBrowser(QDialog):
         r = ui.utils.questionBox(
             "Are you sure you want to clear all formatting?",
             "Clear formatting?")
-        if r == QMessageBox.Yes:
+        if r:
             self.form.editor.setHtml(self.form.editor.toPlainText())
             self.saveIfModified()
 

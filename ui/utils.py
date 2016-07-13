@@ -47,9 +47,7 @@ def questionBox(text, title=None):
     """
     Message box with the question icon and Yes and No buttons.
 
-    Returns QMessageBox.Yes if yes was pushed, QMessageBox.No if no was pushed.
-    QMessageBox is PyQt4.QtGui.QMessageBox if you need to import it to use
-    those constants.
+    Returns True if yes was pushed, False if no was pushed.
     """
     msgBox = QMessageBox()
     msgBox.setText(text)
@@ -57,7 +55,7 @@ def questionBox(text, title=None):
     msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     msgBox.setDefaultButton(QMessageBox.No)
     msgBox.setWindowTitle(title if title else "Tabularium")
-    return msgBox.exec_()
+    return msgBox.exec_() == QMessageBox.Yes
 
 def moo():
     "A very advanced debug tool."
