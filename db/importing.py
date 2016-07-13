@@ -42,45 +42,47 @@ def importMindex(filename):
                 [0] an error message;
                 [1] the full text of the offending line;
                 [2] the line number.
-
-        Warnings for duplicate occurrences (but not duplicate entries) are also
-        included.
     """
-    errors = []
-    entriesTouched = 0
     with open(filename, 'rt') as f:
         lines = f.readlines()
+    errors = []
+    entriesTouched = 0
+    # Note that stripping lines here means we don't have to worry about
+    # trailing tabs later, as Mindex did.
     for linenum, line in enumerate((i.strip() for i in lines), 1):
         # skip past comments and blank lines
-        if line.startswith('#') or not len(line):
+        if line.startswith('#') or not line:
             continue
 
         # parse line
         splits = line.split('\t')
-        #print(splits)
-        if len(splits) < 2 or len(splits) > 3:
+        if len(splits) < 2:
             msg = ("At least two tab-separated columns, entries and "
                    "occurrences, are required.")
             errors.append((msg, line, linenum))
             continue
-        elif len(splits) == 3 and splits[2].strip():
+        elif len(splits) > 3:
+            msg = ("A maximum of three tab-separated columns, entries, "
+                   "occurrences, and sort keys, are allowed.")
+            errors.append((msg, line, linenum))
+            continue
+        elif len(splits) == 3:
             entryText, uof, sortKey = (i.strip() for i in splits)
         else:
             entryText, uof = (i.strip() for i in splits)
             sortKey = entryText.strip()
 
         # create, or find, entry
-        existingEntries = db.entries.find(entryText.strip())
-        if not existingEntries:
+        existingEntry = db.entries.findOne(entryText.strip())
+        if not existingEntry:
             entry = Entry.makeNew(entryText, sortKey,
                                   entryTypes['unclassified'])
         else:
-            entry = existingEntries[0]
+            entry = existingEntry
 
         # create occurrence
         try:
-            occs, numDupes = db.occurrences.makeOccurrencesFromString(uof,
-                                                                      entry)
+            db.occurrences.makeOccurrencesFromString(uof, entry)
         except db.occurrences.InvalidUOFError as e:
             msg = ("The occurrence (second) column does not contain valid "
                    "UOF. Please see the UOF section of the manual if you "
