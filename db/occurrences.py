@@ -424,7 +424,6 @@ def parseUnifiedFormat(s):
     CB{15.26--7,2    . 18, 4.see    Other Entry} |The 2nd Book of    : 45
     ----------
     """
-    #TODO: Ensure that source names cannot contain pipes or braces
 
     # Step 1: Recurse for each pipe-separated section, if any.
     # This step is effectively skipped in the second-level calls.

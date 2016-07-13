@@ -271,7 +271,6 @@ class MainWindow(QMainWindow):
         sf.enteredCheck.toggled.connect(self.onEnteredToggled)
         sf.modifiedCheck.toggled.connect(self.onModifiedToggled)
         sf.sourceCheck.toggled.connect(self.onSourceToggled)
-        sf.occurrencesSourceCombo.activated.connect(self.onSourceToggled)
         sf.volumeCheck.toggled.connect(self.onVolumeToggled)
         for i in (sf.enteredCheck, sf.modifiedCheck,
                   sf.sourceCheck, sf.volumeCheck):
@@ -634,10 +633,16 @@ class MainWindow(QMainWindow):
             self.form.occurrencesVolumeSpin2.setValue(maxv)
 
     def updateSourceCombo(self):
+        oldSelection = self.form.occurrencesSourceCombo.currentText()
         self.form.occurrencesSourceCombo.clear()
         self.form.occurrencesSourceCombo.addItem(db.consts.noSourceLimitText)
         for i in db.sources.allSources():
             self.form.occurrencesSourceCombo.addItem(i.getName())
+        # restore old selection if possible
+        index = self.form.occurrencesSourceCombo.findText(oldSelection)
+        if index != -1:
+            self.form.occurrencesSourceCombo.setCurrentIndex(index)
+
 
     def _getSourceComboSelection(self):
         """
@@ -1062,6 +1067,7 @@ class MainWindow(QMainWindow):
     def onManageSources(self):
         ms = ui.sourcemanager.SourceManager(self)
         ms.exec_()
+        self.updateSourceCombo()
 
     def onManageVolumes(self):
         mv = ui.volmanager.VolumeManager(self)
