@@ -42,7 +42,7 @@ class MoveOccurrenceDialog(MergeEntryDialog):
     situation, so the same dialog slightly modified is used.
     """
     def __init__(self, parent):
-        super(MoveOccurrenceDialog, self).__init__(self, parent)
+        super(MoveOccurrenceDialog, self).__init__(parent)
         self.form.fromLabel.setText("M&ove")
         self.form.toLabel.setText("&To")
         self.form.mergeButton.setText("&Move")

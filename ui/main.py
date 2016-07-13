@@ -896,7 +896,7 @@ class MainWindow(QMainWindow):
 
     def onMergeEntry(self):
         "Merge the selected entry with one typed in by the user."
-        self.saveSelections() # FIXME: just added, not tested
+        self.saveSelections()
         curEntry = self._fetchCurrentEntry()
         dialog = ui.mergeentry.MergeEntryDialog(self)
         dialog.setFrom(curEntry)
@@ -913,20 +913,11 @@ class MainWindow(QMainWindow):
             return
 
         occs = db.occurrences.fetchForEntry(curEntry)
-        for occ in occs:
-            try:
-                occ.setEntry(newEntry)
-            except db.occurrences.DuplicateError:
-                # a comparable one is there already
-                occ.delete()
         if dialog.getLeaveRedirect():
-            # TODO: If we can have volumeless redirects that would be better
-            # than using the last occurrence there now...
-            db.occurrences.Occurrence.makeNew(
-                curEntry, occs[0].getVolume(), newEntry.getName(),
-                db.consts.refTypes['redir'])
+            self._mergeOccurrences(occs, curEntry, newEntry, True, occs[0])
         else:
-            curEntry.delete()
+            self._mergeOccurrences(occs, curEntry, newEntry)
+        curEntry.delete()
         self.updateAndRestoreSelections()
 
     def onDeleteEntry(self):
@@ -966,7 +957,10 @@ class MainWindow(QMainWindow):
             self.updateAndRestoreSelections()
 
     def onMoveToEntry(self):
-        #FIXME: this function has not yet been tested
+        """
+        Move an occurrence to a different entry, optionally converting it to
+        a redirect to that entry.
+        """
         self.saveSelections()
         assert self.form.occurrencesList.count() > 0
         if self.form.occurrencesList.count() == 1:
@@ -975,16 +969,10 @@ class MainWindow(QMainWindow):
                 "entry, the entry will be moved or converted to a "
                 "redirect. Continue?", "Move Occurrence to Entry")
             return self.onMergeEntry() if r else None
-        # cannibalize the merge entry dialog, as it's almost the same thing
+
         curEntry = self._fetchCurrentEntry()
-        dialog = ui.mergeentry.MergeEntryDialog(self)
+        dialog = ui.mergeentry.MoveOccurrenceDialog(self)
         dialog.setFrom(curEntry)
-        dialog.form.fromLabel.setText("M&ove")
-        dialog.form.toLabel.setText("&To")
-        dialog.form.mergeButton.setText("&Move")
-        dialog.setWindowTitle("Move Occurrence to Entry")
-        dialog.form.leaveRedirectCheck.setToolTip(
-            "Add a redirect pointing to the To entry to the From entry.")
         if not dialog.exec_():
             return
 
@@ -996,19 +984,19 @@ class MainWindow(QMainWindow):
                 "You can't move an occurrence to an entry that doesn't exist "
                 "yet.", "Error moving occurrence")
             return
+
         occ = self._fetchCurrentOccurrence()
-        try:
-            occ.setEntry(newEntry)
-        except db.occurrences.DuplicateError:
-            # this occurrence is already over there, silently get rid of it
-            occ.delete()
+        if occ.getRef() == (newEntry.getName(), db.consts.refTypes['redir']):
+            # this is a redirect *to* the entry we're moving to
+            r = ui.utils.warningBox(
+                "This occurrence redirects to the entry you're "
+                "moving it to!", "Self-reference")
+            return
         if dialog.getLeaveRedirect():
-            db.occurrences.Occurrence.makeNew(
-                curEntry, occ.getVolume(), newEntry.getName(),
-                db.consts.refTypes['redir'])
+            self._mergeOccurrences((occ,), curEntry, newEntry, True, occ)
+        else:
+            self._mergeOccurrences((occ,), curEntry, newEntry)
         self.updateAndRestoreSelections()
-
-
 
     def onDeleteOccurrence(self):
         """
@@ -1277,7 +1265,6 @@ class MainWindow(QMainWindow):
 
 
     ### UTILITIES ###
-    ### Database access functions
     def _fetchCurrentEntry(self):
         """
         Get an Entry object for the currently selected entry. Return None if
@@ -1361,9 +1348,8 @@ class MainWindow(QMainWindow):
         self.onSourceToggled()
         self.onVolumeToggled()
 
-
-    ### Reset functions: since more or less needs to be reset for each, do a
-    ### sort of cascade.
+    # Reset functions: since more or less needs to be reset for each, do a
+    # sort of cascade.
     def _resetForEntry(self):
         self.form.entriesList.clear()
         self._resetForOccurrence()
@@ -1385,6 +1371,34 @@ class MainWindow(QMainWindow):
         search = self.form.searchBox.text()
         if len(self.searchStack) == 0 or search != self.searchStack[-1]:
             self.searchStack.append(search)
+
+    def _mergeOccurrences(self, occs, curEntry, newEntry,
+                          leaveRedirect=False, redirectFromOcc=None):
+        """
+        Move an iterable of occurrences from curEntry to newEntry.
+        If leaveRedirect, leave a redirect from curEntry to newEntry, placed
+        in the volume of the occurrence redirectFromOcc.
+        """
+        for occ in occs:
+            if occ.getRef() == (newEntry.getName(),
+                                db.consts.refTypes['redir']):
+                # this is a redirect to the entry we're moving it to; ignore it
+                occ.delete()
+                continue
+            try:
+                occ.setEntry(newEntry)
+            except db.occurrences.DuplicateError:
+                # a comparable one is there already
+                occ.delete()
+
+        if leaveRedirect:
+            assert redirectFromOcc is not None, \
+                "leaveRedirect requires redirectFromOcc to be specified"
+            # TODO: If we can have volumeless redirects that would be better
+            # than using the last occurrence there now...
+            db.occurrences.Occurrence.makeNew(
+                curEntry, redirectFromOcc.getVolume(), newEntry.getName(),
+                db.consts.refTypes['redir'])
 
 
 def selectFirstAndFocus(listWidget):
