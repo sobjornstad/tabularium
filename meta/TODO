@@ -1,16 +1,16 @@
 BUGS:
 - Check that the view is properly updated when returning from all dialogs
+- You can't select a source in occurrence limits
 
 MAJOR THINGS TO ADD:
 - Implement the limit-occurrences feature.
 - Allow moving an occurrence to another entry.
-- Option to leave a redirect behind when merging.
-- Fix up keyboard shortcuts.
 - Tools?
 - Multiple-add
 - Manual
 - Export
 - Undo
+- Consistify text
 
 
 SUGGESTIONS:
@@ -20,6 +20,5 @@ SUGGESTIONS:
 * Fuzzy match to warn on similar entries/at least spelling errors?
 * Flymake-style validation of UOF, and maybe checking of above for entries
 * Reconsider UOF, both the format and the parsing thereof. It has not turned out all that well, unfortunately. Braces kind of suck to type and are often not actually necessary for clarity, despite covering tons of corner cases things that look obvious to a person still aren't handled properly...etc. Oh, and the parser is like 400 lines of spaghetti code.
-* Somehow search for things added today, or the 200 most recently added entries in order, or something of that nature.
 * Email indexing
 * Limit to *nK* matches -- option next to inc/regex for speed?

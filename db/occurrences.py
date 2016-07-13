@@ -78,11 +78,7 @@ class Occurrence(object):
         vid = volume.getVid()
 
         # check for dupes
-        q = '''SELECT oid FROM occurrences
-               WHERE eid=? AND vid=? AND ref=? AND type=?'''
-        d.cursor.execute(q, (eid, vid, ref, type))
-        if d.cursor.fetchall():
-            raise DuplicateError
+        raiseDupeIfExists(eid, vid, ref, type)
 
         # create
         q = '''INSERT INTO occurrences
@@ -184,6 +180,9 @@ class Occurrence(object):
             self._type = type
             self.dump()
     def setEntry(self, entry):
+        "NOTE: Can raise DuplicateError, caller must handle this."
+        raiseDupeIfExists(entry.getEid(), self._volume.getVid(),
+                          self._ref, self._type)
         self._entry = entry
         self.dump()
     def setVolume(self, volume):
@@ -283,6 +282,17 @@ def parseRange(val):
     string is a range.
     """
     return tuple(int(i) for i in val.split('-'))
+
+def raiseDupeIfExists(eid, vid, ref, type):
+    """
+    Raise DuplicateError if an occurrence with the given eid, vid, ref, and
+    type exists. Used when creating or changing the entry of an occurrence.
+    """
+    q = '''SELECT oid FROM occurrences
+           WHERE eid=? AND vid=? AND ref=? AND type=?'''
+    d.cursor.execute(q, (eid, vid, ref, type))
+    if d.cursor.fetchall():
+        raise DuplicateError
 
 def makeOccurrencesFromString(s, entry):
     """

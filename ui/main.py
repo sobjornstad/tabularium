@@ -903,16 +903,29 @@ class MainWindow(QMainWindow):
             return
 
         newEntryName = dialog.getTo()
-        newEntry = db.entries.find(newEntryName)[0]
-        if not newEntry:
-            ui.utils.informationBox(
+        try:
+            newEntry = db.entries.find(newEntryName)[0]
+        except IndexError:
+            ui.utils.warningBox(
                 "The entry %s does not exist." % newEntryName,
                 "Cannot merge entry")
             return
 
-        for occ in db.occurrences.fetchForEntry(curEntry):
-            occ.setEntry(newEntry)
-        curEntry.delete()
+        occs = db.occurrences.fetchForEntry(curEntry)
+        for occ in occs:
+            try:
+                occ.setEntry(newEntry)
+            except db.occurrences.DuplicateError:
+                # a comparable one is there already
+                occ.delete()
+        if dialog.getLeaveRedirect():
+            # TODO: If we can have volumeless redirects that would be better
+            # than using the last occurrence there now...
+            db.occurrences.Occurrence.makeNew(
+                curEntry, occs[0].getVolume(), newEntry.getName(),
+                db.consts.refTypes['redir'])
+        else:
+            curEntry.delete()
         self.updateAndRestoreSelections()
 
     def onDeleteEntry(self):

@@ -1297,6 +1297,42 @@ If the interface is sluggish, try turning this off.</string>
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>searchBox</tabstop>
+  <tabstop>searchGoButton</tabstop>
+  <tabstop>searchAddButton</tabstop>
+  <tabstop>incrementalCheckbox</tabstop>
+  <tabstop>regexCheckbox</tabstop>
+  <tabstop>entriesList</tabstop>
+  <tabstop>occurrencesList</tabstop>
+  <tabstop>inspectBox</tabstop>
+  <tabstop>nearbyList</tabstop>
+  <tabstop>entriesAllButton</tabstop>
+  <tabstop>entriesNamesCheck</tabstop>
+  <tabstop>entriesPlacesCheck</tabstop>
+  <tabstop>entriesQuotationsCheck</tabstop>
+  <tabstop>entriesTitlesCheck</tabstop>
+  <tabstop>entriesCommonsCheck</tabstop>
+  <tabstop>entriesUnclassifiedCheck</tabstop>
+  <tabstop>entriesNoneButton</tabstop>
+  <tabstop>enteredCheck</tabstop>
+  <tabstop>occurrencesAddedDateSpin1</tabstop>
+  <tabstop>occurrencesAddedDateSpin2</tabstop>
+  <tabstop>modifiedCheck</tabstop>
+  <tabstop>occurrencesEditedDateSpin1</tabstop>
+  <tabstop>occurrencesEditedDateSpin2</tabstop>
+  <tabstop>sourceCheck</tabstop>
+  <tabstop>occurrencesSourceCombo</tabstop>
+  <tabstop>volumeCheck</tabstop>
+  <tabstop>occurrencesVolumeSpin1</tabstop>
+  <tabstop>occurrencesVolumeSpin2</tabstop>
+  <tabstop>showInspectCheck</tabstop>
+  <tabstop>showSourceNameCheck</tabstop>
+  <tabstop>showAddedCheck</tabstop>
+  <tabstop>showEnteredCheck</tabstop>
+  <tabstop>showDiaryCheck</tabstop>
+  <tabstop>showNearbyCheck</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

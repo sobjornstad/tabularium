@@ -32,3 +32,6 @@ class MergeEntryDialog(QDialog):
 
     def getTo(self):
         return self.form.toBox.text()
+
+    def getLeaveRedirect(self):
+        return self.form.leaveRedirectCheck.isChecked()
