@@ -9,6 +9,8 @@ import db.occurrences
 from db.utils import dateSerializer, dateDeserializer
 from db.consts import entryTypes
 
+class MultipleResultsUnexpectedError(Exception):
+    pass
 
 class Entry(object):
     "Represents a single entry in the database."
@@ -161,6 +163,26 @@ def find(search, classification=tuple(entryTypes.values()), regex=False):
     d.cursor.execute(query, (search,) + classification)
     results = d.cursor.fetchall()
     return [Entry(r[0]) for r in results]
+
+def findOne(search, classification=tuple(entryTypes.values()), regex=False):
+    """
+    Interface to find() for when only one result should be possible.
+
+    If there is one result, return the result as an Entry object. If there are
+    no results, return None.
+
+    If there is more than one result, MultipleResultsUnexpectedError is
+    raised. Handling this error is typically not required, as it indicates
+    we've somehow let the database get in an inconsistent state where there
+    are duplicates and shouldn't be, and we'd like to know about that.
+    """
+    results = find(search, classification, regex)
+    if len(results) == 1:
+        return results[0]
+    elif not results:
+        return None
+    else:
+        raise MultipleResultsUnexpectedError()
 
 def allEntries():
     """

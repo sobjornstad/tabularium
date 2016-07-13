@@ -57,9 +57,17 @@ class DbTests(utils.DbTestCase):
         obj = db.entries.find(e1Name)
         assert obj[0].getEid() == e1eid
 
+        # test findOne on single entry
+        obj = db.entries.findOne(e1Name)
+        assert obj.getEid() == e1eid
+
         # test globbing: should find all, since all have this word
         assert len(db.entries.find("%Maudlin%")) == 3
         assert len(db.entries.find("Maudlin")) != 3 # but not here, ofc
+
+        # test findOne on multiple entries
+        with self.assertRaises(db.entries.MultipleResultsUnexpectedError):
+            db.entries.findOne("%Maudlin%")
 
         # try changing
         newName = "Kathariana"

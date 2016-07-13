@@ -896,6 +896,7 @@ class MainWindow(QMainWindow):
 
     def onMergeEntry(self):
         "Merge the selected entry with one typed in by the user."
+        self.saveSelections() # FIXME: just added, not tested
         curEntry = self._fetchCurrentEntry()
         dialog = ui.mergeentry.MergeEntryDialog(self)
         dialog.setFrom(curEntry)
@@ -963,6 +964,51 @@ class MainWindow(QMainWindow):
         dialog = ui.editoccurrence.EditOccurrenceWindow(self, entry, occ)
         if dialog.exec_():
             self.updateAndRestoreSelections()
+
+    def onMoveToEntry(self):
+        #FIXME: this function has not yet been tested
+        self.saveSelections()
+        assert self.form.occurrencesList.count() > 0
+        if self.form.occurrencesList.count() == 1:
+            r = ui.utils.questionBox(
+                "Since there is only one occurrence in this "
+                "entry, the entry will be moved or converted to a "
+                "redirect. Continue?", "Move Occurrence to Entry")
+            return self.onMergeEntry() if r else None
+        # cannibalize the merge entry dialog, as it's almost the same thing
+        curEntry = self._fetchCurrentEntry()
+        dialog = ui.mergeentry.MergeEntryDialog(self)
+        dialog.setFrom(curEntry)
+        dialog.form.fromLabel.setText("M&ove")
+        dialog.form.toLabel.setText("&To")
+        dialog.form.mergeButton.setText("&Move")
+        dialog.setWindowTitle("Move Occurrence to Entry")
+        dialog.form.leaveRedirectCheck.setToolTip(
+            "Add a redirect pointing to the To entry to the From entry.")
+        if not dialog.exec_():
+            return
+
+        newEntryText = dialog.getTo()
+        newEntry = db.entries.findOne(newEntryText)
+        if not newEntry:
+            # TODO: ask user if she wants to create a new entry for it
+            ui.utils.warningBox(
+                "You can't move an occurrence to an entry that doesn't exist "
+                "yet.", "Error moving occurrence")
+            return
+        occ = self._fetchCurrentOccurrence()
+        try:
+            occ.setEntry(newEntry)
+        except db.occurrences.DuplicateError:
+            # this occurrence is already over there, silently get rid of it
+            occ.delete()
+        if dialog.getLeaveRedirect():
+            db.occurrences.Occurrence.makeNew(
+                curEntry, occ.getVolume(), newEntry.getName(),
+                db.consts.refTypes['redir'])
+        self.updateAndRestoreSelections()
+
+
 
     def onDeleteOccurrence(self):
         """
@@ -1094,6 +1140,7 @@ class MainWindow(QMainWindow):
         sf.actionNew_DB.triggered.connect(self.onNewDB)
         sf.actionSwitch_Database.triggered.connect(self.onOpenDB)
         sf.actionImport.triggered.connect(self.onImportMindex)
+        sf.actionMove_to_entry.triggered.connect(self.onMoveToEntry)
 
     def checkAllMenus(self):
         """

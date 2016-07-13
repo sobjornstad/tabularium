@@ -35,3 +35,17 @@ class MergeEntryDialog(QDialog):
 
     def getLeaveRedirect(self):
         return self.form.leaveRedirectCheck.isChecked()
+
+class MoveOccurrenceDialog(MergeEntryDialog):
+    """
+    Dialog allowing occurrences to be moved between entries. A very similar
+    situation, so the same dialog slightly modified is used.
+    """
+    def __init__(self, parent):
+        super(MoveOccurrenceDialog, self).__init__(self, parent)
+        self.form.fromLabel.setText("M&ove")
+        self.form.toLabel.setText("&To")
+        self.form.mergeButton.setText("&Move")
+        self.setWindowTitle("Move Occurrence to Entry")
+        self.form.leaveRedirectCheck.setToolTip(
+            "Add a redirect pointing to the To entry to the From entry.")

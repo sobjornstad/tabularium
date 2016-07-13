@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
+# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
 
 import datetime
 import re

@@ -1,6 +1,7 @@
 BUGS:
 - Check that the view is properly updated when returning from all dialogs
 - You can't select a source in occurrence limits
+- Percent signs in entries are handled incorrectly due to searching
 
 MAJOR THINGS TO ADD:
 - Implement the limit-occurrences feature.
