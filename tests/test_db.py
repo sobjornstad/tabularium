@@ -44,13 +44,12 @@ class FileDbTest(unittest.TestCase):
     much faster the memory db is.
     """
     def test_fileDb(self):
-        # automatically erased when it goes out of scope
-        f = tempfile.NamedTemporaryFile()
-        database.makeDatabase(f.name).close()
-        database.connect(f.name)
-        e1 = db.entries.Entry.makeNew("Margareta")
-        database.close()
+        with tempfile.NamedTemporaryFile() as f:
+            database.makeDatabase(f.name).close()
+            database.connect(f.name)
+            e1 = db.entries.Entry.makeNew("Margareta")
+            database.close()
 
-        database.connect(f.name)
-        ret = db.entries.findOne("Margareta")
-        assert ret == e1
+            database.connect(f.name)
+            ret = db.entries.findOne("Margareta")
+            assert ret == e1

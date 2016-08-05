@@ -153,6 +153,9 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
             db.consts.entryTypes) - a tuple of allowable values for the entry's
             classification
         regex (optional, default False) - use regex match (see arg /search/)
+        enteredDate, modifiedDate, source, volume - occurrence limits: entries
+            that do not have any occurrences matching these limits will not be
+            returned.
 
     Return:
         A list of entry objects matching the criteria, or an empty list if
@@ -163,11 +166,18 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
             this error will propagate.
     """
 
-    query = """SELECT DISTINCT entries.eid FROM occurrences
-               INNER JOIN entries ON entries.eid = occurrences.eid
-               WHERE name %s ?
-                     AND classification IN (%s)
-                     %s"""
+    if enteredDate == modifiedDate == source == volume == None:
+        # The last %s is just a fake so that the below code works without
+        # modification: nothing will ever be substituted there.
+        query = """SELECT eid FROM entries
+                   WHERE name %s ?
+                         AND classification IN (%s)%s"""
+    else:
+        query = """SELECT DISTINCT entries.eid FROM occurrences
+                   INNER JOIN entries ON entries.eid = occurrences.eid
+                   WHERE name %s ?
+                         AND classification IN (%s)
+                         %s"""
     classifPlaceholders = ','.join('?' * len(classification))
     occQuery, occQueryParams = db.occurrences.occurrenceFilterString(
         enteredDate, modifiedDate, source, volume)
