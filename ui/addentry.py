@@ -169,6 +169,17 @@ class AddEntryWindow(QDialog):
 
         if self.isEditing:
             entryToEdit = db.entries.findOne(self.beforeEditingName)
+            #TODO: offer option to merge
+            if (newName != self.beforeEditingName
+                    and db.entries.nameExists(newName)):
+                # need both checks because new and old names may differ only in
+                # case, but it's fine to not change the name at all
+                utils.errorBox(
+                    "That entry already exists, or it differs from an "
+                    "existing entry only in its capitalization. Please choose "
+                    "a different name, or use the Merge feature.",
+                    "Entry exists")
+                return
             entryToEdit.setName(newName)
             entryToEdit.setSortKey(newSk)
             entryToEdit.setClassification(classif)
