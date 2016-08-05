@@ -60,9 +60,9 @@ class Entry(object):
         return not self.__eq__(other)
 
     def __str__(self):
-        return "<" + self._name + ">"
+        return self._name
     def __repr__(self):
-        return self.__str__()
+        return "<" + self._name + ">"
 
     def getName(self):
         return self._name
