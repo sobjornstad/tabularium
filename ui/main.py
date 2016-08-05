@@ -968,23 +968,9 @@ class MainWindow(QMainWindow):
         curEntry = self._fetchCurrentEntry()
         dialog = ui.mergeentry.MergeEntryDialog(self)
         dialog.setFrom(curEntry)
+        dialog.setTitle("Merge '%s' into..." % curEntry.getName())
         if not dialog.exec_():
             return
-
-        newEntryName = dialog.getTo()
-        newEntry = db.entries.findOne(newEntryName)
-        if not newEntry:
-            ui.utils.warningBox(
-                "The entry %s does not exist." % newEntryName,
-                "Cannot merge entry")
-            return
-
-        occs = db.occurrences.fetchForEntry(curEntry)
-        if dialog.getLeaveRedirect():
-            self._mergeOccurrences(occs, curEntry, newEntry, True, occs[0])
-        else:
-            self._mergeOccurrences(occs, curEntry, newEntry)
-        curEntry.delete()
         self.updateAndRestoreSelections()
 
     def onDeleteEntry(self):
@@ -1038,31 +1024,13 @@ class MainWindow(QMainWindow):
             return self.onMergeEntry() if r else None
 
         curEntry = self._fetchCurrentEntry()
+        curOcc = self._fetchCurrentOccurrence()
         dialog = ui.mergeentry.MoveOccurrenceDialog(self)
         dialog.setFrom(curEntry)
+        dialog.setMoveSingleOccurrence(curOcc)
+        dialog.setTitle("Move occurrence '%s' to..." % str(curOcc))
         if not dialog.exec_():
             return
-
-        newEntryText = dialog.getTo()
-        newEntry = db.entries.findOne(newEntryText)
-        if not newEntry:
-            # TODO: ask user if she wants to create a new entry for it
-            ui.utils.warningBox(
-                "You can't move an occurrence to an entry that doesn't exist "
-                "yet.", "Error moving occurrence")
-            return
-
-        occ = self._fetchCurrentOccurrence()
-        if occ.getRef() == (newEntry.getName(), db.consts.refTypes['redir']):
-            # this is a redirect *to* the entry we're moving to
-            r = ui.utils.warningBox(
-                "This occurrence redirects to the entry you're "
-                "moving it to!", "Self-reference")
-            return
-        if dialog.getLeaveRedirect():
-            self._mergeOccurrences((occ,), curEntry, newEntry, True, occ)
-        else:
-            self._mergeOccurrences((occ,), curEntry, newEntry)
         self.updateAndRestoreSelections()
 
     def onDeleteOccurrence(self):
@@ -1439,35 +1407,6 @@ class MainWindow(QMainWindow):
         search = self.form.searchBox.text()
         if len(self.searchStack) == 0 or search != self.searchStack[-1]:
             self.searchStack.append(search)
-
-    def _mergeOccurrences(self, occs, curEntry, newEntry,
-                          leaveRedirect=False, redirectFromOcc=None):
-        """
-        Move an iterable of occurrences from curEntry to newEntry.
-        If leaveRedirect, leave a redirect from curEntry to newEntry, placed
-        in the volume of the occurrence redirectFromOcc.
-        """
-        for occ in occs:
-            if occ.getRef() == (newEntry.getName(),
-                                db.consts.refTypes['redir']):
-                # this is a redirect to the entry we're moving it to; ignore it
-                occ.delete()
-                continue
-            try:
-                occ.setEntry(newEntry)
-            except db.occurrences.DuplicateError:
-                # a comparable one is there already
-                occ.delete()
-
-        if leaveRedirect:
-            assert redirectFromOcc is not None, \
-                "leaveRedirect requires redirectFromOcc to be specified"
-            # TODO: If we can have volumeless redirects that would be better
-            # than using the last occurrence there now...
-            db.occurrences.Occurrence.makeNew(
-                curEntry, redirectFromOcc.getVolume(), newEntry.getName(),
-                db.consts.refTypes['redir'])
-
 
 def selectFirstAndFocus(listWidget):
     """
