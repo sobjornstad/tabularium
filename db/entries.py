@@ -58,6 +58,9 @@ class Entry(object):
                 self._clf == other._clf and self._sk == other._sk)
     def __ne__(self, other):
         return not self.__eq__(other)
+    def __lt__(self, other):
+        "Sort by sort key."
+        return self._sk.lower() < other._sk.lower()
 
     def __str__(self):
         return self._name
