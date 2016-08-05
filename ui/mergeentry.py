@@ -70,7 +70,8 @@ class MergeEntryDialog(QDialog):
                 "You can't merge into the entry '%s', because it does not "
                 "exist." % newEntryName, "Cannot merge entry")
             return
-        if newEntryName == self.curEntry.getName():
+        # compare lowercase because the find functions are case-insensitive
+        if newEntryName.lower() == self.curEntry.getName().lower():
             ui.utils.errorBox("You can't merge an entry into itself!",
                               "Cannot merge entry")
             return
