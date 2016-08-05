@@ -801,6 +801,7 @@ class MainWindow(QMainWindow):
             return True
 
     def onImportMindex(self):
+        self.saveSelections()
         fname = QFileDialog.getOpenFileName(
             caption="Import Mindex File",
             filter="Mindex files (*.mindex);;All files (*)")[0]
@@ -824,6 +825,7 @@ class MainWindow(QMainWindow):
                               <div style="margin-left: 24px;">%s<br></div>
                            """ % (linenum, line.replace('\t', ' → '), err))
             ui.utils.reportBox(self, ''.join(msg), "Import Mindex File")
+        self.updateAndRestoreSelections()
 
 
     def onPrintAll(self):
