@@ -975,6 +975,12 @@ class MainWindow(QMainWindow):
 
     def onDeleteEntry(self):
         "After getting confirmation, delete an entry and its occurrences."
+        # First, we have to make sure we're actually allowed to take this
+        # action, because its keyboard shortcut is "Del", which doesn't use a
+        # Ctrl, Shift, or Alt, which are what trigger the menu checks.
+        if not self._fetchCurrentEntry():
+            return
+
         self.saveSelections()
         entry = self._fetchCurrentEntry()
         eName = entry.getName()
