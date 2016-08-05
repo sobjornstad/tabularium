@@ -204,6 +204,7 @@ class MainWindow(QMainWindow):
         self.initialWindowState()
         self.restoreWindowState()
         self.onSearch()
+        self.form.searchBox.setFocus()
         return True
 
     def closeEvent(self, event): # pylint: disable=unused-argument
