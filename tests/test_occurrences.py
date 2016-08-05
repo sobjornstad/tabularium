@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import date
 
+import db.database as d
 from db.entries import Entry, find
 from db.occurrences import *
 import db.occurrences
@@ -404,3 +405,37 @@ class OccTests(utils.DbTestCase):
         assert not self.o1.isRefType('range')
         with self.assertRaises(KeyError):
             self.o1.isRefType('poo')
+
+    def testFetchForEntryFiltered(self):
+        # self.o1 = Occurrence.makeNew(self.e1, self.v1, '25', 0)
+        o1 = self.o1
+        o2 = Occurrence.makeNew(self.e1, self.v1, '6', 0)
+        o3 = Occurrence.makeNew(self.e1, self.v2, '7', 0)
+        o4 = Occurrence.makeNew(self.e1, self.v3, '8', 0)
+
+        # manually set dates
+        d.cursor.execute('''UPDATE occurrences SET dAdded = '2012-01-01'
+                            WHERE oid=?''', (o1.getOid(),))
+        d.cursor.execute('''UPDATE occurrences SET dEdited = '2012-04-01'
+                          WHERE oid=?''', (o2.getOid(),))
+        # others using today's date, sometime after 2012
+
+        assert len(fetchForEntryFiltered(self.e1)) == 4
+        assert len(fetchForEntryFiltered(
+            self.e1, enteredDate=('2011-01-01', '2013-01-01'))) == 1
+        assert len(fetchForEntryFiltered(
+            self.e1, modifiedDate=('2011-01-01', '2013-01-01'))) == 1
+        assert len(fetchForEntryFiltered(self.e1, source=self.s1)) == 3
+        assert len(fetchForEntryFiltered(
+            self.e1, source=self.s1, volume=(2, 2))) == 1
+        assert len(fetchForEntryFiltered(
+            self.e1, source=self.s1, volume=(1, 2))) == 3
+        with self.assertRaises(AssertionError): # can't search by just volume
+            fetchForEntryFiltered(self.e1, volume=(1, 4))
+        # combined
+        assert (fetchForEntryFiltered(
+                    self.e1, source=self.s1, volume=(self.v1.getNum(), 22),
+                    modifiedDate=('2011-01-01', '2013-01-01'))[0].getOid()
+                    == o2.getOid())
+        # FIXME: for some reason direct equality doesn't work and I'm not sure
+        # why: does the date get incorrectly updated for some reason?

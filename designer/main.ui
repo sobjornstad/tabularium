@@ -133,7 +133,7 @@ If the interface is sluggish, try turning this off.</string>
            <enum>Qt::ElideRight</enum>
           </property>
           <property name="layoutMode">
-           <enum>QListView::SinglePass</enum>
+           <enum>QListView::Batched</enum>
           </property>
           <property name="uniformItemSizes">
            <bool>true</bool>

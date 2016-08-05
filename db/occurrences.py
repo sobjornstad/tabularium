@@ -275,6 +275,59 @@ def fetchForEntry(entry):
     d.cursor.execute('SELECT oid FROM occurrences WHERE eid=?', (eid,))
     return [Occurrence(i[0]) for i in d.cursor.fetchall()]
 
+def fetchForEntryFiltered(entry, enteredDate=None, modifiedDate=None,
+                          source=None, volume=None):
+    """
+    Return a list of all Occurrences for a given Entry that additionally match
+    some criteria.
+
+    enteredDate  : tuple of start/end YYYY-MM-DD date strings
+    modifiedDate : tuple of start/end YYYY-MM-DD date strings
+    source : Source the occurrence must be in
+    volume : tuple of inclusive int volume numbers the occurrence must be in
+    """
+    query = ['SELECT oid FROM occurrences WHERE eid=?']
+    params = [str(entry.getEid())]
+    if enteredDate:
+        query.append(' AND dAdded>=? AND dAdded<=?')
+        assert len(enteredDate) == 2
+        assert len(enteredDate[0]) == len(enteredDate[1]) == 10
+        assert (len(enteredDate[0].split('-')) ==
+                len(enteredDate[1].split('-')) == 3)
+        params.append(enteredDate[0])
+        params.append(enteredDate[1])
+    if modifiedDate:
+        query.append(' AND dEdited>=? AND dEdited<=?')
+        assert len(modifiedDate) == 2
+        assert len(modifiedDate[0]) == len(modifiedDate[1]) == 10
+        assert (len(modifiedDate[0].split('-')) ==
+                len(modifiedDate[1].split('-')) == 3)
+        params.append(modifiedDate[0])
+        params.append(modifiedDate[1])
+    if source and volume:
+        #FIXME did my list comprehension break anything?
+        vids = []
+        for volnum in range(volume[0], volume[1]+1):
+            vol = db.volumes.byNumAndSource(source, volnum)
+            if vol is not None:
+                vids.append(vol.getVid())
+        query.append(' AND vid IN (%s)'
+                     % ','.join('?' * len(vids)))
+        params.extend(vids)
+    if source and not volume:
+        vols = [i.getVid() for i in db.volumes.volumesInSource(source)]
+        query.append(' AND vid IN (%s)' % ','.join('?' * len(vols)))
+        for i in vols:
+            params.append(i)
+    if (not source) and volume:
+        assert False, "Volume without source is not a valid search"
+
+    # TODO DEBUG
+    #print(''.join(query))
+    #print(params)
+    d.cursor.execute(''.join(query), params)
+    return [Occurrence(i[0]) for i in d.cursor.fetchall()]
+
 def parseRange(val):
     """
     Return a tuple of bottom, top integers for a range (a string consisting of

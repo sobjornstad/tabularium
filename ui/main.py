@@ -268,10 +268,8 @@ class MainWindow(QMainWindow):
         sf.regexCheckbox.setChecked(False)
         # set up limits: for occurrences
         self.updateSourceCombo()
-        sf.enteredCheck.toggled.connect(self.onEnteredToggled)
-        sf.modifiedCheck.toggled.connect(self.onModifiedToggled)
-        sf.sourceCheck.toggled.connect(self.onSourceToggled)
-        sf.volumeCheck.toggled.connect(self.onVolumeToggled)
+
+        # set up state
         for i in (sf.enteredCheck, sf.modifiedCheck,
                   sf.sourceCheck, sf.volumeCheck):
             i.setChecked(False)
@@ -280,17 +278,32 @@ class MainWindow(QMainWindow):
         for i in (sf.entriesCommonsCheck, sf.entriesNamesCheck,
                   sf.entriesPlacesCheck, sf.entriesQuotationsCheck,
                   sf.entriesTitlesCheck, sf.entriesUnclassifiedCheck):
-            i.toggled.connect(self.fillEntries)
             i.setChecked(True)
-        sf.entriesAllButton.clicked.connect(
-            lambda: self._setAllEntryCheckboxes(True))
-        sf.entriesNoneButton.clicked.connect(
-            lambda: self._setAllEntryCheckboxes(False))
+            i.toggled.connect(self.fillEntries)
         # for display
         for i in (sf.showInspectCheck, sf.showSourceNameCheck,
                   sf.showAddedCheck, sf.showEnteredCheck,
                   sf.showDiaryCheck, sf.showNearbyCheck):
             i.setChecked(True)
+
+        # connect signals
+        sf.enteredCheck.toggled.connect(self.onEnteredToggled)
+        sf.modifiedCheck.toggled.connect(self.onModifiedToggled)
+        sf.sourceCheck.toggled.connect(self.onSourceToggled)
+        sf.volumeCheck.toggled.connect(self.onVolumeToggled)
+        for i in (sf.occurrencesAddedDateSpin1, sf.occurrencesEditedDateSpin1,
+                  sf.occurrencesAddedDateSpin2, sf.occurrencesEditedDateSpin2):
+            i.dateChanged.connect(self._resetForOccurrenceFilter)
+        sf.occurrencesSourceCombo.currentIndexChanged.connect(
+            self.onOccurrenceSourceChanged)
+        sf.occurrencesVolumeSpin1.valueChanged.connect(
+            self._resetForOccurrenceFilter)
+        sf.occurrencesVolumeSpin2.valueChanged.connect(
+            self._resetForOccurrenceFilter)
+        sf.entriesAllButton.clicked.connect(
+            lambda: self._setAllEntryCheckboxes(True))
+        sf.entriesNoneButton.clicked.connect(
+            lambda: self._setAllEntryCheckboxes(False))
 
     def restoreWindowState(self):
         "Restore state saved by saveWindowState."
@@ -358,7 +371,6 @@ class MainWindow(QMainWindow):
         def setupSourceCombo(value):
             i = sf.occurrencesSourceCombo.findText(value)
             sf.occurrencesSourceCombo.setCurrentIndex(i)
-            self.onSourceToggled() # for whatever reason above doesn't emit
         wrapper(setupSourceCombo, 'sourceCombo')
         wrapper(sf.occurrencesVolumeSpin1.setValue, 'minVolume')
         wrapper(sf.occurrencesVolumeSpin2.setValue, 'maxVolume')
@@ -429,8 +441,30 @@ class MainWindow(QMainWindow):
         self._resetForOccurrence()
         entry = self._fetchCurrentEntry()
         if entry is not None:
+            filters = {}
+            sf = self.form
+            if sf.enteredCheck.isChecked():
+                start = sf.occurrencesAddedDateSpin1.date().toString(
+                    'yyyy-MM-dd')
+                finish = sf.occurrencesAddedDateSpin2.date().toString(
+                    'yyyy-MM-dd')
+                filters['enteredDate'] = (start, finish)
+            if sf.modifiedCheck.isChecked():
+                start = sf.occurrencesEditedDateSpin1.date().toString(
+                    'yyyy-MM-dd')
+                finish = sf.occurrencesEditedDateSpin2.date().toString(
+                    'yyyy-MM-dd')
+                filters['modifiedDate'] = (start, finish)
+            if sf.sourceCheck.isChecked():
+                source = self._getSourceComboSelection()
+                if source:
+                    filters['source'] = source
+            if sf.volumeCheck.isChecked():
+                filters['volume'] = (sf.occurrencesVolumeSpin1.value(),
+                                     sf.occurrencesVolumeSpin2.value())
             # hold onto objects for reference by _fetchCurrentOccurrence
-            self.currentOccs = entry.getOccurrences()
+            self.currentOccs = db.occurrences.fetchForEntryFiltered(entry,
+                                                                    **filters)
             self.currentOccs.sort()
             for i in self.currentOccs:
                 self.form.occurrencesList.addItem(str(i))
@@ -565,8 +599,17 @@ class MainWindow(QMainWindow):
 
         self.onSearch() # immediately update search based on new options
 
-    def onEnteredToggled(self):
-        "Update window state for entered date occurrence limits."
+    def onOccurrenceSourceChanged(self):
+        pass
+        self.onSourceToggled()
+        self._resetForOccurrenceFilter()
+
+    def onEnteredToggled(self, doReset=True):
+        """
+        Update window state for entered date occurrence limits. If calling
+        several of these functions in a row, set doReset to False, as we don't
+        need to refresh the window partway through.
+        """
         state = self.form.enteredCheck.isChecked()
         self.form.occurrencesAddedDateSpin1.setEnabled(state)
         self.form.occurrencesAddedDateSpin2.setEnabled(state)
@@ -577,8 +620,10 @@ class MainWindow(QMainWindow):
         self.form.occurrencesAddedDateSpin2.setMaximumDate(maxd)
         self.form.occurrencesAddedDateSpin1.setDate(mind)
         self.form.occurrencesAddedDateSpin2.setDate(maxd)
+        if doReset:
+            self._resetForOccurrenceFilter()
 
-    def onModifiedToggled(self):
+    def onModifiedToggled(self, doReset=True):
         "Update window state for modified date occurrence limits."
         state = self.form.modifiedCheck.isChecked()
         self.form.occurrencesEditedDateSpin1.setEnabled(state)
@@ -594,8 +639,10 @@ class MainWindow(QMainWindow):
         self.form.occurrencesEditedDateSpin2.setMaximumDate(maxd)
         self.form.occurrencesEditedDateSpin1.setDate(mind)
         self.form.occurrencesEditedDateSpin2.setDate(maxd)
+        if doReset:
+            self._resetForOccurrenceFilter()
 
-    def onSourceToggled(self):
+    def onSourceToggled(self, doReset=True):
         "Update window state for modified source occurrence limits."
         self.updateSourceCombo() # in case sources have changed
         state = self.form.sourceCheck.isChecked()
@@ -614,8 +661,10 @@ class MainWindow(QMainWindow):
             self.form.occurrencesVolumeSpin2.setMinimum(1)
             self.form.occurrencesVolumeSpin2.setMaximum(1)
             self.form.occurrencesSourceCombo.setCurrentIndex(0) # all
+        if doReset:
+            self._resetForOccurrenceFilter()
 
-    def onVolumeToggled(self):
+    def onVolumeToggled(self, doReset=True):
         "Update window state for modified volume occurrence limits."
         state = self.form.volumeCheck.isChecked()
         self.form.occurrencesVolumeSpin1.setEnabled(state)
@@ -631,17 +680,22 @@ class MainWindow(QMainWindow):
             self.form.occurrencesVolumeSpin2.setMaximum(maxv)
             self.form.occurrencesVolumeSpin1.setValue(minv)
             self.form.occurrencesVolumeSpin2.setValue(maxv)
+        if doReset:
+            self._resetForOccurrenceFilter()
 
     def updateSourceCombo(self):
-        oldSelection = self.form.occurrencesSourceCombo.currentText()
-        self.form.occurrencesSourceCombo.clear()
-        self.form.occurrencesSourceCombo.addItem(db.consts.noSourceLimitText)
+        combo = self.form.occurrencesSourceCombo
+        oldSelection = combo.currentText()
+        oldBlockSignals = combo.blockSignals(True)
+        combo.clear()
+        combo.addItem(db.consts.noSourceLimitText)
         for i in db.sources.allSources():
-            self.form.occurrencesSourceCombo.addItem(i.getName())
+            combo.addItem(i.getName())
         # restore old selection if possible
-        index = self.form.occurrencesSourceCombo.findText(oldSelection)
+        index = combo.findText(oldSelection)
         if index != -1:
-            self.form.occurrencesSourceCombo.setCurrentIndex(index)
+            combo.setCurrentIndex(index)
+        combo.blockSignals(oldBlockSignals)
 
 
     def _getSourceComboSelection(self):
@@ -1344,10 +1398,11 @@ class MainWindow(QMainWindow):
         filters, to make sure that all the spin/calendar/combo boxes are in the
         correct state for the check boxes.
         """
-        self.onEnteredToggled()
-        self.onModifiedToggled()
-        self.onSourceToggled()
-        self.onVolumeToggled()
+        self.onEnteredToggled(False)
+        self.onModifiedToggled(False)
+        self.onSourceToggled(False)
+        self.onVolumeToggled(False)
+        self._resetForOccurrenceFilter()
 
     # Reset functions: since more or less needs to be reset for each, do a
     # sort of cascade.
@@ -1360,6 +1415,9 @@ class MainWindow(QMainWindow):
     def _resetForNearby(self):
         self.form.nearbyList.clear()
         self.form.inspectBox.clear()
+    def _resetForOccurrenceFilter(self):
+        self.saveSelections()
+        self.updateAndRestoreSelections()
 
     def searchFocusLost(self, old, _):
         """
