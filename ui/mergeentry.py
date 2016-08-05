@@ -69,9 +69,7 @@ class MergeEntryDialog(QDialog):
             _mergeOccurrences(occs, self.curEntry, newEntry, True, occs[0])
         else:
             _mergeOccurrences(occs, self.curEntry, newEntry)
-
-        if not self.moveOcc:
-            self.curEntry.delete()
+        db.entries.deleteOrphaned()
         super(MergeEntryDialog, self).accept()
 
 def _mergeOccurrences(occs, curEntry, newEntry,
