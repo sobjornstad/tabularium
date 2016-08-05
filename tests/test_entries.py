@@ -130,14 +130,21 @@ class DbTests(utils.DbTestCase):
                 entryTypes['quote'], entryTypes['title']))) == 3
         assert len(db.entries.find("%t%", (entryTypes['person'],))) == 1
 
+        e4 = db.entries.Entry.makeNew("An entry with a % in it",
+                classification=entryTypes['ord'])
+        e5 = db.entries.Entry.makeNew("An entry with a something else in it",
+                classification=entryTypes['ord'])
+        assert len(db.entries.find("An entry with a % in it")) == 1
+        assert len(db.entries.find(
+            db.entries.percentageWrap("entry with a % in"))) == 1
+
     def testDupeEntries(self):
         e1 = db.entries.Entry.makeNew("barf")
         assert db.entries.Entry.makeNew("barf") is None
 
     def testPercentageWrap(self):
-        # this is a tautological test, but it took longer to write this comment
-        # than the test so we might as well
         assert db.entries.percentageWrap("foo") == "%foo%"
+        assert db.entries.percentageWrap("f%oo") == "%f\%oo%"
 
     def testSortKeyTransform(self):
         t = db.entries.sortKeyTransform

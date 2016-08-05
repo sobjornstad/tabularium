@@ -1442,7 +1442,8 @@ def exceptionHook(exctype, value, tb):
               "Things you can try:\n"
               "* Restart Tabularium and try again.\n\n"
               "If problems continue, please contact support and include "
-              "the following technical details:\n\n")
+              "an explanation of what you were doing when the error occurred "
+              "along with the following technical details:\n\n")
     tbText += ''.join(traceback.format_exception(exctype, value, tb))
     ui.utils.reportBox(None, tbText, "Oops!")
     return
