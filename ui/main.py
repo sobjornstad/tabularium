@@ -424,13 +424,15 @@ class MainWindow(QMainWindow):
         classification = self._getOKClassifications()
         if self.searchOptions['regex']:
             try:
-                entries = db.entries.find(self.search, classification, True)
+                entries = db.entries.find(self.search, classification, True,
+                                          **self._getOccurrenceFilters())
             except sqlite3.OperationalError:
                 # regex in search box is invalid
                 entries = []
         else:
             entries = db.entries.find(db.entries.percentageWrap(self.search),
-                                      classification)
+                                      classification,
+                                      **self._getOccurrenceFilters())
         return entries
 
     def fillOccurrences(self):
@@ -441,34 +443,41 @@ class MainWindow(QMainWindow):
         self._resetForOccurrence()
         entry = self._fetchCurrentEntry()
         if entry is not None:
-            filters = {}
-            sf = self.form
-            if sf.enteredCheck.isChecked():
-                start = sf.occurrencesAddedDateSpin1.date().toString(
-                    'yyyy-MM-dd')
-                finish = sf.occurrencesAddedDateSpin2.date().toString(
-                    'yyyy-MM-dd')
-                filters['enteredDate'] = (start, finish)
-            if sf.modifiedCheck.isChecked():
-                start = sf.occurrencesEditedDateSpin1.date().toString(
-                    'yyyy-MM-dd')
-                finish = sf.occurrencesEditedDateSpin2.date().toString(
-                    'yyyy-MM-dd')
-                filters['modifiedDate'] = (start, finish)
-            if sf.sourceCheck.isChecked():
-                source = self._getSourceComboSelection()
-                if source:
-                    filters['source'] = source
-            if sf.volumeCheck.isChecked():
-                filters['volume'] = (sf.occurrencesVolumeSpin1.value(),
-                                     sf.occurrencesVolumeSpin2.value())
             # hold onto objects for reference by _fetchCurrentOccurrence
-            self.currentOccs = db.occurrences.fetchForEntryFiltered(entry,
-                                                                    **filters)
+            self.currentOccs = db.occurrences.fetchForEntryFiltered(
+                entry, **self._getOccurrenceFilters())
             self.currentOccs.sort()
             for i in self.currentOccs:
                 self.form.occurrencesList.addItem(str(i))
         self.updateMatchesStatus()
+
+    def _getOccurrenceFilters(self):
+        """
+        Return the current occurrence filters (to be passed to find()) as a
+        dictionary.
+        """
+        filters = {}
+        sf = self.form
+        if sf.enteredCheck.isChecked():
+            start = sf.occurrencesAddedDateSpin1.date().toString(
+                'yyyy-MM-dd')
+            finish = sf.occurrencesAddedDateSpin2.date().toString(
+                'yyyy-MM-dd')
+            filters['enteredDate'] = (start, finish)
+        if sf.modifiedCheck.isChecked():
+            start = sf.occurrencesEditedDateSpin1.date().toString(
+                'yyyy-MM-dd')
+            finish = sf.occurrencesEditedDateSpin2.date().toString(
+                'yyyy-MM-dd')
+            filters['modifiedDate'] = (start, finish)
+        if sf.sourceCheck.isChecked():
+            source = self._getSourceComboSelection()
+            if source:
+                filters['source'] = source
+        if sf.volumeCheck.isChecked():
+            filters['volume'] = (sf.occurrencesVolumeSpin1.value(),
+                                 sf.occurrencesVolumeSpin2.value())
+        return filters
 
     def fillInspect(self):
         """

@@ -286,10 +286,28 @@ def fetchForEntryFiltered(entry, enteredDate=None, modifiedDate=None,
     source : Source the occurrence must be in
     volume : tuple of inclusive int volume numbers the occurrence must be in
     """
-    query = ['SELECT oid FROM occurrences WHERE eid=?']
-    params = [str(entry.getEid())]
+    queryHead = 'SELECT oid FROM occurrences WHERE eid=?'
+    filterQuery, filterParams = occurrenceFilterString(
+        enteredDate, modifiedDate, source, volume)
+    if filterQuery:
+        d.cursor.execute(queryHead + ' AND ' + filterQuery,
+                         [str(entry.getEid())] + filterParams)
+    else:
+        d.cursor.execute(queryHead, (str(entry.getEid()),))
+    return [Occurrence(i[0]) for i in d.cursor.fetchall()]
+
+def occurrenceFilterString(enteredDate=None, modifiedDate=None,
+                           source=None, volume=None):
+    """
+    Return a slice of SQL query string and a list of parameters that filter
+    occurrences by the provided criteria. This can be used to specifically
+    select occurrences or in a JOIN to select entries with existing
+    occurrences.
+    """
+    query = []
+    params = []
     if enteredDate:
-        query.append(' AND dAdded>=? AND dAdded<=?')
+        query.append(' AND occurrences.dAdded>=? AND occurrences.dAdded<=?')
         assert len(enteredDate) == 2
         assert len(enteredDate[0]) == len(enteredDate[1]) == 10
         assert (len(enteredDate[0].split('-')) ==
@@ -297,7 +315,7 @@ def fetchForEntryFiltered(entry, enteredDate=None, modifiedDate=None,
         params.append(enteredDate[0])
         params.append(enteredDate[1])
     if modifiedDate:
-        query.append(' AND dEdited>=? AND dEdited<=?')
+        query.append(' AND occurrences.dEdited>=? AND occurrences.dEdited<=?')
         assert len(modifiedDate) == 2
         assert len(modifiedDate[0]) == len(modifiedDate[1]) == 10
         assert (len(modifiedDate[0].split('-')) ==
@@ -305,7 +323,6 @@ def fetchForEntryFiltered(entry, enteredDate=None, modifiedDate=None,
         params.append(modifiedDate[0])
         params.append(modifiedDate[1])
     if source and volume:
-        #FIXME did my list comprehension break anything?
         vids = []
         for volnum in range(volume[0], volume[1]+1):
             vol = db.volumes.byNumAndSource(source, volnum)
@@ -322,11 +339,8 @@ def fetchForEntryFiltered(entry, enteredDate=None, modifiedDate=None,
     if (not source) and volume:
         assert False, "Volume without source is not a valid search"
 
-    # TODO DEBUG
-    #print(''.join(query))
-    #print(params)
-    d.cursor.execute(''.join(query), params)
-    return [Occurrence(i[0]) for i in d.cursor.fetchall()]
+    queryStr = ''.join(query)[5:] # to remove the initial AND
+    return queryStr, params
 
 def parseRange(val):
     """

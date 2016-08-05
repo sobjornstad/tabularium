@@ -138,7 +138,8 @@ def nameExists(name):
     else:
         return False
 
-def find(search, classification=tuple(entryTypes.values()), regex=False):
+def find(search, classification=tuple(entryTypes.values()), regex=False,
+         enteredDate=None, modifiedDate=None, source=None, volume=None):
     """
     Get a list of Entries matching the given criteria.
 
@@ -159,15 +160,24 @@ def find(search, classification=tuple(entryTypes.values()), regex=False):
             this error will propagate.
     """
 
-    query = "SELECT eid FROM entries WHERE name %s ? AND classification IN (%s)"
-    placeholders = ','.join('?' * len(classification))
-    query = query % ('REGEXP' if regex else 'LIKE', placeholders)
+    query = """SELECT DISTINCT entries.eid FROM occurrences
+               INNER JOIN entries ON entries.eid = occurrences.eid
+               WHERE name %s ?
+                     AND classification IN (%s)
+                     %s"""
+    classifPlaceholders = ','.join('?' * len(classification))
+    occQuery, occQueryParams = db.occurrences.occurrenceFilterString(
+        enteredDate, modifiedDate, source, volume)
+    query = query % ('REGEXP' if regex else 'LIKE',
+                     classifPlaceholders,
+                     'AND ' + occQuery if occQuery else '')
 
-    d.cursor.execute(query, (search,) + classification)
+    d.cursor.execute(query, (search,) + classification + tuple(occQueryParams))
     results = d.cursor.fetchall()
     return [Entry(r[0]) for r in results]
 
-def findOne(search, classification=tuple(entryTypes.values()), regex=False):
+def findOne(search, classification=tuple(entryTypes.values()), regex=False,
+            enteredDate=None, modifiedDate=None, source=None, volume=None):
     """
     Interface to find() for when only one result should be possible.
 
@@ -179,7 +189,8 @@ def findOne(search, classification=tuple(entryTypes.values()), regex=False):
     we've somehow let the database get in an inconsistent state where there
     are duplicates and shouldn't be, and we'd like to know about that.
     """
-    results = find(search, classification, regex)
+    results = find(search, classification, regex,
+                   enteredDate, modifiedDate, source, volume)
     if len(results) == 1:
         return results[0]
     elif not results:
