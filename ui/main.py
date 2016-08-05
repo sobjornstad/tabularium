@@ -1025,7 +1025,7 @@ class MainWindow(QMainWindow):
 
         curEntry = self._fetchCurrentEntry()
         curOcc = self._fetchCurrentOccurrence()
-        dialog = ui.mergeentry.MoveOccurrenceDialog(self)
+        dialog = ui.mergeentry.MergeEntryDialog(self)
         dialog.setFrom(curEntry)
         dialog.setMoveSingleOccurrence(curOcc)
         dialog.setTitle("Move occurrence '%s' to..." % str(curOcc))
