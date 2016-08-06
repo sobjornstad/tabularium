@@ -851,7 +851,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionNew_DB">
    <property name="text">
-    <string>New Database...</string>
+    <string>&amp;New Database...</string>
    </property>
    <property name="statusTip">
     <string>Create a completely new Tabularium database.</string>
@@ -859,7 +859,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionSwitch_Database">
    <property name="text">
-    <string>Open Database...</string>
+    <string>&amp;Open Database...</string>
    </property>
    <property name="statusTip">
     <string>Close this Tabularium database and open a different one.</string>
@@ -881,12 +881,12 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionExport">
    <property name="text">
-    <string>Export...</string>
+    <string>Export Mindex File...</string>
    </property>
   </action>
   <action name="actionQuit">
    <property name="text">
-    <string>Quit</string>
+    <string>&amp;Quit</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>

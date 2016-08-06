@@ -98,23 +98,7 @@ class Occurrence(object):
         return not self.__eq__(other)
 
     def __str__(self):
-        if self._type == refTypes['num'] or self._type == refTypes['range']:
-            source = self._volume.getSource()
-            if source.isSingleVol():
-                return "%s %s" % (source.getAbbrev(), self._ref)
-            else:
-                return "%s %s.%s" % (source.getAbbrev(),
-                                     self._volume.getNum(),
-                                     self._ref)
-        elif self._type == refTypes['redir']:
-            source = self._volume.getSource()
-            vol = self._volume.getNum()
-            if source.isSingleVol():
-                return '%s: see "%s"' % (source.getAbbrev(), self._ref)
-            else:
-                return '%s %s: see "%s"' % (source.getAbbrev(), vol, self._ref)
-        else:
-            assert False, "invalid reftype in occurrence"
+        return self.getUOFRepresentation(displayFormatting=True)
 
     def __repr__(self):
         return '<' + self.__str__() + '>'
@@ -138,6 +122,36 @@ class Occurrence(object):
         return "%s/%s/%s/%s" % (self._volume.getSource().getAbbrev().lower(),
                                 self._volume.getNum(), self._ref,
                                 self._entry.getName().lower())
+
+    def getUOFRepresentation(self, displayFormatting=False):
+        """
+        Get a string representation of this occurrence. This will be in strict
+        UOF, or if displayFormatting is True, will have a slightly friendlier
+        representation for references.
+
+        Results from this function can be strung together with | and remain
+        valid UOF, but cannot necessarily be combined cleanly in other ways.
+        """
+        if self._type == refTypes['num'] or self._type == refTypes['range']:
+            source = self._volume.getSource()
+            if source.isSingleVol():
+                return "%s %s" % (source.getAbbrev(), self._ref)
+            else:
+                return "%s %s.%s" % (source.getAbbrev(),
+                                     self._volume.getNum(),
+                                     self._ref)
+        elif self._type == refTypes['redir']:
+            source = self._volume.getSource()
+            vol = self._volume.getNum()
+            if source.isSingleVol():
+                return (('%s: see "%s"' if displayFormatting else '%s.see %s')
+                        % (source.getAbbrev(), self._ref))
+            else:
+                return (('%s %s: see "%s"' if displayFormatting
+                         else '%s%s.see %s')
+                        % (source.getAbbrev(), vol, self._ref))
+        else:
+            assert False, "invalid reftype in occurrence"
 
     def getEntry(self):
         return self._entry

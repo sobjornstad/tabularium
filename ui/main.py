@@ -25,6 +25,7 @@ import db.analytics
 import db.consts
 import db.database
 import db.entries
+import db.exporting
 import db.importing
 import db.occurrences
 import db.printing
@@ -116,8 +117,8 @@ class MainWindow(QMainWindow):
 
         # initialize db and set up searching and entries
         self.search = None
-        self.searchStack = None
-        self.searchForward = None
+        self.searchStack = []
+        self.searchForward = []
         self.savedSelections = None
         self.savedTexts = None
         self.dbLocation = ui.settings.getDbLocation()
@@ -767,7 +768,7 @@ class MainWindow(QMainWindow):
         "Get filename for, create, and open a new database."
         # get filename from user
         fname = QFileDialog.getSaveFileName(
-            caption="New Tabularium Database",
+            caption="Save New Tabularium Database",
             filter="Tabularium databases (*.tdb);;All files (*)")[0]
         if not fname:
             return False
@@ -828,6 +829,33 @@ class MainWindow(QMainWindow):
             ui.utils.reportBox(self, ''.join(msg), "Import Mindex File")
         self.updateAndRestoreSelections()
 
+    def onExportMindex(self):
+        def progressCallback(progress):
+            self.form.statusBar.showMessage(progress)
+            QApplication.processEvents()
+
+        fname = QFileDialog.getSaveFileName(
+            caption="Export Mindex File",
+            filter="Mindex files (*.mindex);;All files (*)")[0]
+        if not fname:
+            return
+        fname = ui.utils.forceExtension(fname, 'mindex')
+        if fname is None:
+            return False
+
+        # pylint: disable=no-member
+        QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
+        try:
+            self.form.statusBar.showMessage("Exporting entries...")
+            QApplication.processEvents()
+            db.exporting.exportMindex(fname, progressCallback)
+        finally:
+            QApplication.restoreOverrideCursor()
+            self.form.statusBar.clearMessage()
+
+        ui.utils.informationBox(
+            "%i entries exported." % len(db.entries.allEntries()),
+            "Export Mindex File")
 
     def onPrintAll(self):
         self._printWrapper(db.printing.printEntriesAsIndex)
@@ -1173,6 +1201,7 @@ class MainWindow(QMainWindow):
         sf.actionNew_DB.triggered.connect(self.onNewDB)
         sf.actionSwitch_Database.triggered.connect(self.onOpenDB)
         sf.actionImport.triggered.connect(self.onImportMindex)
+        sf.actionExport.triggered.connect(self.onExportMindex)
         sf.actionMove_to_entry.triggered.connect(self.onMoveToEntry)
 
     def checkAllMenus(self):
