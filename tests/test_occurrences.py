@@ -255,7 +255,7 @@ class OccTests(utils.DbTestCase):
         # put in test sources, volumes, and entries we can play with,
         # along with one occurrence (others are added in tests as needed)
         self.dbSetUp()
-        self.s1 = Source.makeNew('Chronic Book', (1,100), (5,80), 25, 'CD',
+        self.s1 = Source.makeNew('Chronic Book', (1,100), (5,80), 1, 'CD',
                                  sourceTypes['diary'])
         self.s2 = Source.makeNew('Topic Book', (1,1), (5,240), 2, 'TB',
                                  sourceTypes['other'])

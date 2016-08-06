@@ -213,10 +213,11 @@ class Occurrence(object):
         d.cursor.execute(q, (self._entry.getEid(),))
         return [Occurrence(oidTuple[0]) for oidTuple in d.cursor.fetchall()]
 
-    def getNearby(self, nearRange=1):
+    def getNearby(self):
         """
-        Find all occurrences that are in the same volume and within /nearRange/
-        pages/indices of it, excepting self, and return their entries.
+        Find all occurrences that are in the same volume and within some range
+        of pages/indices of it, excepting self, and return their entries. The
+        range is determined by the source's options.
 
         Note that nearby is capable of finding things that are nearby ranges,
         but is not currently always capable of finding ranges themselves in
@@ -236,13 +237,14 @@ class Occurrence(object):
         # Notice that the ranges can go outside volume validation, but this
         # doesn't do any harm, as the numbers aren't used beyond this SELECT.
         page = self._ref
+        nearRange = self.getVolume().getSource().getNearbyRange()
         if self._type == refTypes['range']:
             bottom, top = parseRange(page)
             pageStart = bottom - nearRange
             pageEnd = top + nearRange
         else:
-            pageStart = int(page) - 1
-            pageEnd = int(page) + 1
+            pageStart = int(page) - nearRange
+            pageEnd = int(page) + nearRange
 
         q = '''SELECT oid FROM occurrences
                WHERE vid = ? AND (type = 0 OR type = 1)
