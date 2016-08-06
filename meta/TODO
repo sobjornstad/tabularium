@@ -21,3 +21,11 @@ SUGGESTIONS:
 * Reconsider UOF, both the format and the parsing thereof. It has not turned out all that well, unfortunately. Braces kind of suck to type and are often not actually necessary for clarity, despite covering tons of corner cases things that look obvious to a person still aren't handled properly...etc. Oh, and the parser is like 400 lines of spaghetti code. (One small issue is that you can write no volume number for a multi-volume source, and it'll be assumed to be volume 1. I don't want to even try to fix this in the present code.)
 * Email indexing
 * Limit to *nK* matches -- option next to inc/regex for speed?
+
+SUGGESTED TOOLS:
+* Duplicates Tool
+* Entry Merge Tool
+* Invalid Redirect Check
+* Mass Deletion Tool
+* Proper Name Conflict Tool
+* Sort Check Tool

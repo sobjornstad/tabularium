@@ -717,7 +717,7 @@ If the interface is sluggish, try turning this off.</string>
      <x>0</x>
      <y>0</y>
      <width>925</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -735,7 +735,6 @@ If the interface is sluggish, try turning this off.</string>
      <addaction name="actionVisible_entries"/>
      <addaction name="separator"/>
      <addaction name="action_Simplification"/>
-     <addaction name="action_Notes"/>
     </widget>
     <addaction name="actionNew_DB"/>
     <addaction name="actionSwitch_Database"/>
@@ -801,14 +800,6 @@ If the interface is sluggish, try turning this off.</string>
      <string>&amp;Tools</string>
     </property>
     <addaction name="actionClassify_Entries"/>
-    <addaction name="separator"/>
-    <addaction name="actionDuplicates_Tool"/>
-    <addaction name="actionEntry_Merge_Tool"/>
-    <addaction name="actionInvalid_Redirect_Check"/>
-    <addaction name="actionMass_Deletion_Tool"/>
-    <addaction name="actionProper_Name_Conflict_Tool"/>
-    <addaction name="actionSort_Check_Tool"/>
-    <addaction name="separator"/>
     <addaction name="actionLetter_Distribution_Check"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -1123,9 +1114,6 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionClassify_Entries">
    <property name="text">
     <string>Classify Entries...</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+T, C</string>
    </property>
   </action>
   <action name="actionInvalid_Redirect_Check">
