@@ -246,18 +246,16 @@ class Occurrence(object):
             pageStart = int(page) - nearRange
             pageEnd = int(page) + nearRange
 
-        q = '''SELECT oid FROM occurrences
-               WHERE vid = ? AND (type = 0 OR type = 1)
-                   AND CAST(ref as integer) BETWEEN ? AND ?
-                   AND oid != ?'''
+        q = """SELECT DISTINCT entries.eid FROM entries
+               INNER JOIN occurrences ON occurrences.eid = entries.eid
+               WHERE vid = ?
+                     AND (type = 0 OR type = 1)
+                     AND CAST(ref as integer) BETWEEN ? AND ?
+                     AND oid != ?
+               ORDER BY LOWER(sortkey)"""
         d.cursor.execute(q, (self._volume.getVid(), pageStart,
                              pageEnd, self._oid))
-        occs = [Occurrence(i[0]) for i in d.cursor.fetchall()]
-
-        # fetch list of entries nearby
-        entries = list(set(i.getEntry() for i in occs))
-        entries.sort(key=lambda i: i._sk)
-
+        entries = [db.entries.Entry(i[0]) for i in d.cursor.fetchall()]
         return entries
 
 def allOccurrences():
