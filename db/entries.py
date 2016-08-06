@@ -61,6 +61,8 @@ class Entry(object):
     def __lt__(self, other):
         "Sort by sort key."
         return self._sk.lower() < other._sk.lower()
+    def __hash__(self):
+        return self._eid
 
     def __str__(self):
         return self._name

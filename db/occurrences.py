@@ -217,8 +217,6 @@ class Occurrence(object):
         """
         Find all occurrences that are in the same volume and within /nearRange/
         pages/indices of it, excepting self, and return their entries.
-        Eventually /nearRange/ should be part of the source options; for now
-        this will ordinarily use the default value of 1.
 
         Note that nearby is capable of finding things that are nearby ranges,
         but is not currently always capable of finding ranges themselves in
@@ -255,7 +253,7 @@ class Occurrence(object):
         occs = [Occurrence(i[0]) for i in d.cursor.fetchall()]
 
         # fetch list of entries nearby
-        entries = [i.getEntry() for i in occs]
+        entries = list(set(i.getEntry() for i in occs))
         entries.sort(key=lambda i: i._sk)
 
         return entries
