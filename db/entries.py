@@ -175,7 +175,8 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
         # regexes. This ensures we catch, e.g., "100%", as improperly escaped.
         search = search.replace(r'%', r'\%')
 
-    if enteredDate == modifiedDate == source == volume == None:
+    if (enteredDate is None and modifiedDate is None
+            and source is None and volume is None):
         # The last %s is just a fake so that the below code works without
         # modification: nothing will ever be substituted there.
         query = """SELECT eid FROM entries
