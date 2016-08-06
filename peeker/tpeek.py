@@ -17,6 +17,10 @@ def find(args):
         entries = db.entries.find(args.search[0], regex=True)
     else:
         entries = db.entries.find(db.entries.percentageWrap(args.search[0]))
+
+    if not entries:
+        print("No matches.")
+        sys.exit(1)
     print("%i match%s:" % (len(entries), 'es' if len(entries) != 1 else ''))
     # Infuriatingly, textwrap can't properly handle non-breaking spaces,
     # although a Google search suggests this was supposedly fixed in 2014
@@ -39,9 +43,6 @@ def find(args):
             else:
                 occStrs[-1] += str(o)
         print(str(e) + '\n' +  '\n'.join(occStrs))
-
-    # indicate whether a match was found with exit status
-    sys.exit(0 if len(entries) else 1)
 
 def frobnicate(args):
     print("We are frobnicating!")
@@ -72,7 +73,13 @@ def parseArgs():
 
     ### now parse ###
     args = parser.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except AttributeError:
+        # no action specified
+        print("Type 'tpeek --help' for information on using tpeek.")
+        sys.exit(0)
+
 
 def initDb():
     db.database.connect(DATABASE_PATH)
