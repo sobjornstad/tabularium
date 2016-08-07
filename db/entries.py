@@ -188,18 +188,19 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
         # The last %s is just a fake so that the below code works without
         # modification: nothing will ever be substituted there.
         query = """SELECT eid FROM entries
-                   WHERE name %s ? ESCAPE '\\'
+                   WHERE name %s ? %s
                          AND classification IN (%s)%s"""
     else:
         query = """SELECT DISTINCT entries.eid FROM occurrences
                    INNER JOIN entries ON entries.eid = occurrences.eid
-                   WHERE name %s ? ESCAPE '\\'
+                   WHERE name %s ? %s
                          AND classification IN (%s)
                          %s"""
     classifPlaceholders = ','.join('?' * len(classification))
     occQuery, occQueryParams = db.occurrences.occurrenceFilterString(
         enteredDate, modifiedDate, source, volume)
     query = query % ('REGEXP' if regex else 'LIKE',
+                     "ESCAPE '\\'" if not regex else '',
                      classifPlaceholders,
                      'AND ' + occQuery if occQuery else '')
 
