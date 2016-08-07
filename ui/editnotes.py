@@ -80,7 +80,7 @@ class NotesBrowser(QDialog):
             sourceName = jumpToSource.name
             # the following is the way we choose to display volume names, and
             # could change in the future
-            volumeName = jumpToSource.abbrev + str(jumpToVolume.getNum())
+            volumeName = jumpToSource.abbrev + str(jumpToVolume.num)
             item = self.form.tree.findItems(sourceName, Qt.MatchExactly)[0]
             numChildren = item.childCount()
             if numChildren == 0:
@@ -156,11 +156,11 @@ class NotesBrowser(QDialog):
             # we know selection is a volume because it's not possible to
             # change the editor text in a top-level heading, or nothing
             if not self.form.editor.toPlainText().strip():
-                self.currentlySelectedVolume.setNotes('')
+                self.currentlySelectedVolume.notes = ''
             else:
                 newHtml = self.form.editor.toHtml()
                 newHtml = newHtml.replace('&lt;', '<').replace('&gt;', '>')
-                self.currentlySelectedVolume.setNotes(newHtml)
+                self.currentlySelectedVolume.notes = newHtml
         self.editorTextChanged = False
 
     def fillNotesWidget(self):
@@ -181,7 +181,7 @@ class NotesBrowser(QDialog):
             self.form.editor.setHtml(html)
             self.form.editor.setReadOnly(True)
         elif st == 'sourceWithoutVols' or st == 'volume':
-            html = self._selectedVolume().getNotes()
+            html = self._selectedVolume().notes
             self.form.editor.setHtml(html)
             self.form.editor.setReadOnly(False)
         self.form.editor.blockSignals(oldBlockSignals)
@@ -199,7 +199,7 @@ class NotesBrowser(QDialog):
             if not source.isSingleVol():
                 volumes = db.volumes.volumesInSource(source)
                 for volume in volumes:
-                    strList = [source.abbrev + str(volume.getNum())]
+                    strList = [source.abbrev + str(volume.num)]
                     TreeWidgetItem(sourceItem, strList)
             sourceItem.sortChildren(0, Qt.AscendingOrder)
         self.form.tree.sortByColumn(0, Qt.AscendingOrder)

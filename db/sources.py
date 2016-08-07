@@ -291,7 +291,7 @@ class Source(object):
         """
         volumes = db.volumes.volumesInSource(self)
 
-        vidList = [i.getVid() for i in volumes]
+        vidList = [i.vid for i in volumes]
         bindings = ','.join('?' * len(volumes))
         q = 'SELECT oid FROM occurrences WHERE vid IN (%s)' % (bindings)
         d.cursor.execute(q, vidList)

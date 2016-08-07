@@ -30,31 +30,31 @@ class VolumeTests(utils.DbTestCase):
                                 date(2015, 7, 7), date(2015, 8, 10))
 
         # method checking
-        assert v1.getVid() == 1
-        assert v1.getNum() == 1
-        assert v2.getNum() == 2
-        assert v1.getSource() == s1
-        assert v2.getNotes() == "This is volume 2."
-        assert v1.getDopened() == date(2015, 6, 1)
-        assert v1.getDclosed() == date(2015, 7, 6)
+        assert v1.vid == 1
+        assert v1.num == 1
+        assert v2.num == 2
+        assert v1.source == s1
+        assert v2.notes == "This is volume 2."
+        assert v1.dateOpened == date(2015, 6, 1)
+        assert v1.dateClosed == date(2015, 7, 6)
 
-        v1.setDopened(date(2015, 8, 8))
-        v1.setDclosed(date(2015, 8, 9))
-        v1.setNotes("That was a *very* eventful two days...")
+        v1.dateOpened = date(2015, 8, 8)
+        v1.dateClosed = date(2015, 8, 9)
+        v1.notes = "That was a *very* eventful two days..."
         with self.assertRaises(DuplicateError):
-            v1.setNum(2)
-        v1.setNum(3)
+            v1.num = 2
+        v1.num = 3
         reFetchVol = Volume(1)
-        assert reFetchVol.getDopened() == date(2015, 8, 8)
-        assert reFetchVol.getDclosed() == date(2015, 8, 9)
-        assert reFetchVol.getNotes() == "That was a *very* eventful two days..."
-        assert reFetchVol.getNum() == 3
+        assert reFetchVol.dateOpened == date(2015, 8, 8)
+        assert reFetchVol.dateClosed == date(2015, 8, 9)
+        assert reFetchVol.notes == "That was a *very* eventful two days..."
+        assert reFetchVol.num == 3
 
         assert len(allVolumes()) == 3 # v1 and v2 plus dummy volume for s2
         assert len(volumesInSource(s2)) == 1
-        assert volumesInSource(s2)[0].getNum() == 1
-        assert volumesInSource(s2)[0].getSource() == s2
-        assert volumesInSource(s2)[0].getNotes() == ""
+        assert volumesInSource(s2)[0].num == 1
+        assert volumesInSource(s2)[0].source == s2
+        assert volumesInSource(s2)[0].notes == ""
 
     def testDelete(self):
         s1 = Source.makeNew('Chronic Book', (1,100), (5,80), 25, 'CD',

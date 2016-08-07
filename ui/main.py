@@ -497,7 +497,7 @@ class MainWindow(QMainWindow):
         if occ is None:
             return
         vol = occ.volume
-        source = vol.getSource()
+        source = vol.source
         # the added and edited dates
         daStr = "Entered %s<br>" % occ.dateAdded
         deStr = "Modified %s<br>" % occ.dateAdded
@@ -517,7 +517,7 @@ class MainWindow(QMainWindow):
             if diaryVolume is not None:
                 s += "<br>"
                 s += "Entered during<br>"
-                s += "diary volume %i" % (diaryVolume.getNum())
+                s += "diary volume %i" % (diaryVolume.num)
             else:
                 s += "<br>(no diary volume open<br>"
                 s += "when entered)"
@@ -1111,7 +1111,7 @@ class MainWindow(QMainWindow):
         "Open the notes for the source of the currently selected occurrence."
         occ = self._fetchCurrentOccurrence()
         volume = occ.volume
-        source = volume.getSource()
+        source = volume.source
         nb = ui.editnotes.NotesBrowser(self, jumpToSource=source,
                                        jumpToVolume=volume)
         nb.exec_()
@@ -1123,7 +1123,7 @@ class MainWindow(QMainWindow):
         """
         occ = self._fetchCurrentOccurrence()
         diaryVolume = db.volumes.findDateInDiary(occ.dateAdded)
-        source = diaryVolume.getSource()
+        source = diaryVolume.source
         nb = ui.editnotes.NotesBrowser(self, jumpToSource=source,
                                        jumpToVolume=diaryVolume)
         nb.exec_()

@@ -79,7 +79,7 @@ class UOFTests(utils.DbTestCase):
             for j in reflist:
                 source, vol, ref, rtype = j
                 vals += "%s %s.%s (%i)" % (
-                        source.abbrev, vol.getNum(), str(ref), rtype)
+                        source.abbrev, vol.num, str(ref), rtype)
                 vals += " == "
             assert vals == testDict[i], \
                     "vals was: %r\ntestDict was: %r" % (vals, testDict[i])
@@ -379,7 +379,7 @@ class OccTests(utils.DbTestCase):
             fetchForEntryFiltered(self.e1, volume=(1, 4))
         # combined
         assert (fetchForEntryFiltered(
-                self.e1, source=self.s1, volume=(self.v1.getNum(), 22),
+                self.e1, source=self.s1, volume=(self.v1.num, 22),
                 modifiedDate=('2011-01-01', '2013-01-01'))[0].oid == o2.oid)
         # FIXME: for some reason direct equality doesn't work and I'm not sure
         # why: does the date get incorrectly updated for some reason?

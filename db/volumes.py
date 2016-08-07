@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
+# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
+
+import datetime
+import json
 
 import db.database as d
 import db.consts
 import db.sources
 import db.entries
-import json
-import datetime
 from db.utils import dateSerializer, dateDeserializer
 
 class DuplicateError(Exception):
@@ -32,8 +33,8 @@ class Volume(object):
         q = 'SELECT sid, num, notes, dopened, dclosed FROM volumes WHERE vid=?'
         d.cursor.execute(q, (vid,))
         sid, self._num, self._notes, dopened, dclosed = d.cursor.fetchall()[0]
-        self._dopened = dateDeserializer(dopened)
-        self._dclosed = dateDeserializer(dclosed)
+        self._dateOpened = dateDeserializer(dopened)
+        self._dateClosed = dateDeserializer(dclosed)
         self._source = db.sources.Source(sid)
         self._vid = vid
 
@@ -80,52 +81,58 @@ class Volume(object):
 
 
     def __eq__(self, other):
-        return (self._source == other._source and self._num == other._num and
-                self._notes == other._notes and self._vid == other._vid)
+        return self._vid == other._vid
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def getVid(self):
+    @property
+    def vid(self):
         return self._vid
-    def getNum(self):
-        return self._num
-    def getSource(self):
-        return self._source
-    def getNotes(self):
-        return self._notes
-    def getDopened(self):
-        return self._dopened
-    def getDclosed(self):
-        return self._dclosed
-    def getFormattedDopened(self):
-        if self._dopened is None:
-            return None
-        return self._dopened.strftime(db.consts.DATE_FORMAT)
-    def getFormattedDclosed(self):
-        if self._dclosed is None:
-            return None
-        return self._dclosed.strftime(db.consts.DATE_FORMAT)
-    def hasDates(self):
-        return (self._dclosed is not None and self._dopened is not None)
 
-    def setNum(self, num):
+    @property
+    def num(self):
+        return self._num
+    @num.setter
+    def num(self, num):
         if self._num != num:
             if volExists(self._source, num):
                 raise DuplicateError(self._source, num)
             self._num = num
-            self.dump()
-    def setDopened(self, date):
-        if self._dopened != date:
-            self._dopened = date
-            self.dump()
-    def setDclosed(self, date):
-        if self._dclosed != date:
-            self._dclosed = date
-            self.dump()
-    def setNotes(self, notes):
+            self._flush()
+
+    @property
+    def source(self):
+        return self._source
+
+    @property
+    def notes(self):
+        return self._notes
+    @notes.setter
+    def notes(self, notes):
         if self._notes != notes:
             self._notes = notes
-            self.dump()
+            self._flush()
+
+    @property
+    def dateOpened(self):
+        return self._dateOpened
+    @dateOpened.setter
+    def dateOpened(self, date):
+        if self._dateOpened != date:
+            self._dateOpened = date
+            self._flush()
+
+    @property
+    def dateClosed(self):
+        return self._dateClosed
+    @dateClosed.setter
+    def dateClosed(self, date):
+        if self._dateClosed != date:
+            self._dateClosed = date
+            self._flush()
+
+    def hasDates(self):
+        return (self._dateOpened is not None and self._dateClosed is not None)
 
     def delete(self):
         d.cursor.execute('DELETE FROM occurrences WHERE vid=?', (self._vid,))
@@ -133,13 +140,13 @@ class Volume(object):
         d.cursor.execute('DELETE FROM volumes WHERE vid=?', (self._vid,))
         d.checkAutosave()
 
-    def dump(self):
+    def _flush(self):
         q = """UPDATE volumes
                SET sid=?, num=?, notes=?, dopened=?, dclosed=?
                WHERE vid=?"""
         d.cursor.execute(q, (self._source.sid, self._num, self._notes,
-                         dateSerializer(self._dopened),
-                         dateSerializer(self._dclosed), self._vid))
+                         dateSerializer(self._dateOpened),
+                         dateSerializer(self._dateClosed), self._vid))
         d.checkAutosave()
 
 
@@ -168,7 +175,7 @@ def volExists(source, num):
     d.cursor.execute(q, (sid, num))
     return True if d.cursor.fetchall() else False
 
-def findNextDopened(source):
+def findNextDateOpened(source):
     """
     Try to guess, or at least come close to, the date the user would like a new
     volume of a source to be opened on: we'll find when the last one was closed
@@ -176,7 +183,7 @@ def findNextDopened(source):
 
     If there are no volumes of that source yet, return the current date.
 
-    Return value is a datetime.date.
+    Return value as a datetime.date.
     """
     d.cursor.execute('''SELECT dclosed FROM volumes
                         WHERE num=(SELECT MAX(num) FROM volumes)
@@ -208,8 +215,8 @@ def findDateInDiary(date):
     Given a Date, return the diary Volume that was open during that time, or
     None if there is no diary volume or volume open during that date.
     """
-    #TODO: Make sure we can't have several diary volumes open at the same time
-
+    #TODO: Make sure we can't have several diary volumes open at the same time.
+    # Actually, this could be a problem with the other notes functions too.
     diary = db.sources.getDiary()
     if diary is None:
         return None

@@ -27,13 +27,13 @@ class EditOccurrenceWindow(QDialog):
         self.entry = entry
         self.occ = occurrence
         self.vol = occurrence.volume
-        self.source = self.vol.getSource()
+        self.source = self.vol.source
 
         self.form.entryBox.setText(self.entry.name)
         startValid, endValid = self.source.volVal
         self.form.volumeSpin.setMinimum(startValid)
         self.form.volumeSpin.setMaximum(endValid)
-        self.form.volumeSpin.setValue(self.vol.getNum())
+        self.form.volumeSpin.setValue(self.vol.num)
         if self.occ.isRefType('redir'):
             self.form.referenceBox.setText("see " + self.occ.ref)
         else:

@@ -122,6 +122,17 @@ def forceExtension(filename, ext):
                 return None
     return filename
 
+def formatDate(date):
+    """
+    Format a datetime using the user's date format preferences.
+    """
+    #TODO: Actually implement user date format preferences.
+    DATE_FORMAT = '%Y-%m-%d'
+    if date is None:
+        return None
+    else:
+        return date.strftime(DATE_FORMAT)
+
 
 class ConfirmationDialog(QDialog):
     """

@@ -119,8 +119,8 @@ def getFormattedEntriesList(entries, callback=None):
         for occ in occs:
             vol = occ.volume
             sourceAbbrev = '\\textsc{%s}' % mungeLatex(
-                vol.getSource().abbrev.lower())
-            volNum = vol.getNum()
+                vol.source.abbrev.lower())
+            volNum = vol.num
             ref = mungeLatex(occ.ref)
             if occ.isRefType('num'):
                 occList.append("%s~%s.%s" % (sourceAbbrev, volNum, ref))
@@ -230,7 +230,7 @@ def makeSimplification(callback=None):
                 txt += ' (--%s)' % db.occurrences.parseRange(occ.ref)[1]
             occStrs.append(txt)
 
-        book = occGroup.volume.getSource().abbrev
+        book = occGroup.volume.source.abbrev
         # get the __str__ repr, but without the book part
         ref = ''.join(key.split(book)[1:]).strip()
         latexStr = "\\theoccset{%s}{%s}\n\\theoccurrences{%s}" % (

@@ -41,15 +41,15 @@ class VolumeTableModel(QAbstractTableModel):
         robj = self.vols[index.row()]
         col = index.column()
         if col == 0:
-            return robj.getNum()
+            return robj.num
         elif col == 1:
-            val = robj.getFormattedDopened()
+            val = ui.utils.formatDate(robj.dateOpened)
             return val if val is not None else "N/A"
         elif col == 2:
-            val = robj.getFormattedDclosed()
+            val = ui.utils.formatDate(robj.dateClosed)
             return val if val is not None else "N/A"
         elif col == 3:
-            return "Available" if robj.getNotes() else "None"
+            return "Available" if robj.notes else "None"
         else:
             assert False, "Invalid column!"
             return None
@@ -66,13 +66,13 @@ class VolumeTableModel(QAbstractTableModel):
         self.curSortIsReversed = rev
 
         if column == 0:
-            key = lambda i: i.getNum()
+            key = lambda i: i.num
         elif column == 1:
-            key = lambda i: i.getDopened()
+            key = lambda i: i.dateOpened
         elif column == 2:
-            key = lambda i: i.getDclosed()
+            key = lambda i: i.dateClosed
         elif column == 3:
-            key = lambda i: "Available" if i.getNotes() else "None"
+            key = lambda i: "Available" if i.notes else "None"
 
         self.beginResetModel()
         self.vols.sort(key=key, reverse=rev)
@@ -193,7 +193,7 @@ class NewVolumeDialog(QDialog):
         self.form.volNumSpin.setMinimum(minVolValid)
         self.form.volNumSpin.setMaximum(maxVolValid)
         self.form.volNumSpin.setValue(volSuggestion)
-        defaultDate = db.volumes.findNextDopened(self.source)
+        defaultDate = db.volumes.findNextDateOpened(self.source)
         self.form.dOpenedEdit.setDate(defaultDate)
         self.form.dClosedEdit.setDate(defaultDate)
 
@@ -213,12 +213,12 @@ class NewVolumeDialog(QDialog):
     def fillForEdit(self):
         self.setWindowTitle("Edit Volume")
         self.form.createButton.setText("&Save")
-        self.form.volNumSpin.setValue(self.volume.getNum())
+        self.form.volNumSpin.setValue(self.volume.num)
 
         if self.volume.hasDates():
             self.form.useDateCheck.setChecked(True)
-            self.form.dOpenedEdit.setDate(self.volume.getDopened())
-            self.form.dClosedEdit.setDate(self.volume.getDclosed())
+            self.form.dOpenedEdit.setDate(self.volume.dateOpened)
+            self.form.dClosedEdit.setDate(self.volume.dateClosed)
         else:
             self.form.useDateCheck.setChecked(False)
             self.form.dOpenedEdit.setDate(datetime.date.today())
@@ -230,7 +230,7 @@ class NewVolumeDialog(QDialog):
         # (SingleVolume and Validation) should be prevented from occurring
         # by the interface.
         if db.volumes.volExists(self.source, num) and not (
-                self.isEditing and num == self.volume.getNum()):
+                self.isEditing and num == self.volume.num):
             ui.utils.errorBox("That volume already exists for this source. "
                               "Maybe you mistyped the number or chose the "
                               "wrong source?", "Volume exists")
@@ -245,9 +245,9 @@ class NewVolumeDialog(QDialog):
         try:
             # we start with an empty notes field here
             if self.isEditing:
-                self.volume.setNum(num)
-                self.volume.setDopened(dOpened)
-                self.volume.setDclosed(dClosed)
+                self.volume.num = num
+                self.volume.dateOpened = dOpened
+                self.volume.dateClosed = dClosed
             else:
                 db.volumes.Volume.makeNew(self.source, num, "",
                                           dOpened, dClosed)

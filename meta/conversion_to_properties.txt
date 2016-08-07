@@ -39,3 +39,18 @@ _sid getSid ---                           ==> sid
 Does delete really need to execute its own SQL query?
 dump -> _flush
 deletePreview -> previewDelete
+
+VOLUMES
+-------
+
+_num getNum setNum              ==> num
+_notes getNotes setNotes        ==> notes
+_dopened getDopened setDopened  ==> dateOpened
+_dclosed getDclosed setDclosed  ==> dateClosed
+_source getSource ---           ==> source
+_vid getVid ---                 ==> vid
+
+getFormattedDopened/closed - search and destroy, should be in ui even ("f)
+dump->flush
+
+findNextDopened -> findNextDateOpened

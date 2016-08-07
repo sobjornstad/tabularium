@@ -73,7 +73,7 @@ class Occurrence(object):
         dAdded = dateSerializer(datetime.date.today())
         dEdited = dAdded
         eid = entry.eid
-        vid = volume.getVid()
+        vid = volume.vid
 
         # check for dupes
         _raiseDupeIfExists(eid, vid, ref, type)
@@ -102,8 +102,8 @@ class Occurrence(object):
         """
         def getOccSortKey(occ):
             return "%s/%s/%s/%s" % (
-                occ._volume.getSource().abbrev.lower(),
-                occ._volume.getNum(), occ._ref, occ._entry.sortKey.lower())
+                occ._volume.source.abbrev.lower(),
+                occ._volume.num, occ._ref, occ._entry.sortKey.lower())
         if hasattr(other, '_volume') and hasattr(other, '_ref'):
             return (generate_index(getOccSortKey(self)) <
                     generate_index(getOccSortKey(other)))
@@ -120,7 +120,7 @@ class Occurrence(object):
     @entry.setter
     def entry(self, entry):
         "NOTE: Can raise DuplicateError, caller must handle this."
-        _raiseDupeIfExists(entry.eid, self._volume.getVid(),
+        _raiseDupeIfExists(entry.eid, self._volume.vid,
                           self._ref, self._reftype)
         self._entry = entry
         self.flush()
@@ -187,7 +187,7 @@ class Occurrence(object):
         query = '''UPDATE occurrences
                    SET eid=?, vid=?, ref=?, type=?, dEdited=?, dAdded=?
                    WHERE oid=?'''
-        d.cursor.execute(query, (self._entry.eid, self._volume.getVid(),
+        d.cursor.execute(query, (self._entry.eid, self._volume.vid,
                 self._ref, self._reftype, dateSerializer(dEdited),
                 dateSerializer(self._dateAdded), self._oid))
         d.checkAutosave()
@@ -207,16 +207,16 @@ class Occurrence(object):
         valid UOF, but cannot necessarily be combined cleanly in other ways.
         """
         if self.isRefType('num') or self.isRefType('range'):
-            source = self._volume.getSource()
+            source = self._volume.source
             if source.isSingleVol():
                 return "%s %s" % (source.abbrev, self._ref)
             else:
                 return "%s %s.%s" % (source.abbrev,
-                                     self._volume.getNum(),
+                                     self._volume.num,
                                      self._ref)
         elif self.isRefType('redir'):
-            source = self._volume.getSource()
-            vol = self._volume.getNum()
+            source = self._volume.source
+            vol = self._volume.num
             if source.isSingleVol():
                 return (('%s: see "%s"' if displayFormatting else '%s.see %s')
                         % (source.abbrev, self._ref))
@@ -260,7 +260,7 @@ class Occurrence(object):
         # Notice that the ranges can go outside volume validation, but this
         # doesn't do any harm, as the numbers aren't used beyond this SELECT.
         page = self._ref
-        nearRange = self.volume.getSource().nearbyRange
+        nearRange = self.volume.source.nearbyRange
         if self._reftype == refTypes['range']:
             bottom, top = parseRange(page)
             pageStart = bottom - nearRange
@@ -276,7 +276,7 @@ class Occurrence(object):
                      AND CAST(ref as integer) BETWEEN ? AND ?
                      AND oid != ?
                ORDER BY LOWER(sortkey)"""
-        d.cursor.execute(q, (self._volume.getVid(), pageStart,
+        d.cursor.execute(q, (self._volume.vid, pageStart,
                              pageEnd, self._oid))
         entries = [db.entries.Entry(i[0]) for i in d.cursor.fetchall()]
         return entries
@@ -348,12 +348,12 @@ def occurrenceFilterString(enteredDate=None, modifiedDate=None,
         for volnum in range(volume[0], volume[1]+1):
             vol = db.volumes.byNumAndSource(source, volnum)
             if vol is not None:
-                vids.append(vol.getVid())
+                vids.append(vol.vid)
         query.append(' AND vid IN (%s)'
                      % ','.join('?' * len(vids)))
         params.extend(vids)
     if source and not volume:
-        vols = [i.getVid() for i in db.volumes.volumesInSource(source)]
+        vols = [i.vid for i in db.volumes.volumesInSource(source)]
         query.append(' AND vid IN (%s)' % ','.join('?' * len(vols)))
         for i in vols:
             params.append(i)
