@@ -73,7 +73,7 @@ class Occurrence(object):
     def makeNew(cls, entry, volume, ref, type):
         dAdded = dateSerializer(datetime.date.today())
         dEdited = dAdded
-        eid = entry.getEid()
+        eid = entry.eid
         vid = volume.getVid()
 
         # check for dupes
@@ -120,7 +120,7 @@ class Occurrence(object):
         """
         return "%s/%s/%s/%s" % (self._volume.getSource().getAbbrev().lower(),
                                 self._volume.getNum(), self._ref,
-                                self._entry.getName().lower())
+                                self._entry.sortKey.lower())
 
     def getUOFRepresentation(self, displayFormatting=False):
         """
@@ -194,7 +194,7 @@ class Occurrence(object):
             self.dump()
     def setEntry(self, entry):
         "NOTE: Can raise DuplicateError, caller must handle this."
-        raiseDupeIfExists(entry.getEid(), self._volume.getVid(),
+        raiseDupeIfExists(entry.eid, self._volume.getVid(),
                           self._ref, self._type)
         self._entry = entry
         self.dump()
@@ -208,7 +208,7 @@ class Occurrence(object):
         query = '''UPDATE occurrences
                    SET eid=?, vid=?, ref=?, type=?, dEdited=?, dAdded=?
                    WHERE oid=?'''
-        d.cursor.execute(query, (self._entry.getEid(), self._volume.getVid(),
+        d.cursor.execute(query, (self._entry.eid, self._volume.getVid(),
                 self._ref, self._type, dateSerializer(dEdited),
                 dateSerializer(self._da), self._oid))
         d.checkAutosave()
@@ -223,7 +223,7 @@ class Occurrence(object):
         self).
         """
         q = 'SELECT oid FROM occurrences WHERE eid=?'
-        d.cursor.execute(q, (self._entry.getEid(),))
+        d.cursor.execute(q, (self._entry.eid,))
         return [Occurrence(oidTuple[0]) for oidTuple in d.cursor.fetchall()]
 
     def getNearby(self):
@@ -282,7 +282,7 @@ def fetchForEntry(entry):
     """
     Return a list of all Occurrences for a given Entry.
     """
-    eid = entry.getEid()
+    eid = entry.eid
     d.cursor.execute('SELECT oid FROM occurrences WHERE eid=?', (eid,))
     return [Occurrence(i[0]) for i in d.cursor.fetchall()]
 
@@ -302,9 +302,9 @@ def fetchForEntryFiltered(entry, enteredDate=None, modifiedDate=None,
         enteredDate, modifiedDate, source, volume)
     if filterQuery:
         d.cursor.execute(queryHead + ' AND ' + filterQuery,
-                         [str(entry.getEid())] + filterParams)
+                         [str(entry.eid)] + filterParams)
     else:
-        d.cursor.execute(queryHead, (str(entry.getEid()),))
+        d.cursor.execute(queryHead, (str(entry.eid),))
     return [Occurrence(i[0]) for i in d.cursor.fetchall()]
 
 def occurrenceFilterString(enteredDate=None, modifiedDate=None,

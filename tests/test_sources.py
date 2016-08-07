@@ -66,13 +66,13 @@ class SourceTests(utils.DbTestCase):
         e2 = Entry.makeNew("Melgreth, Maudia")
         o1 = Occurrence.makeNew(e2, v2, '25', 0)
         o2 = Occurrence.makeNew(e2, v2, '50', 0)
-        assert len(e2.getOccurrences()) == 2
+        assert len(fetchForEntry(e2)) == 2
         with self.assertRaises(TrouncesError) as e:
             s1.setValidPage((1, 30))
             assert 'Changing the page max' in e
             assert 'would make 1 occurrence invalid' in e
         s1.setValidPage((1, 30), overrideTrounce=True)
-        assert len(e2.getOccurrences()) == 1
+        assert len(fetchForEntry(e2)) == 1
 
 
     def testDelete(self):

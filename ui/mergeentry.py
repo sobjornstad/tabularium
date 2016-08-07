@@ -38,8 +38,8 @@ class MergeEntryDialog(QDialog):
 
     def setFrom(self, entry):
         self.curEntry = entry
-        self.form.fromBox.setText(entry.getName())
-        self.form.toBox.setText(entry.getName())
+        self.form.fromBox.setText(entry.name)
+        self.form.toBox.setText(entry.name)
         self.form.toBox.selectAll()
         self.form.toBox.setFocus()
 
@@ -71,7 +71,7 @@ class MergeEntryDialog(QDialog):
                 "exist." % newEntryName, "Cannot merge entry")
             return
         # compare lowercase because the find functions are case-insensitive
-        if newEntryName.lower() == self.curEntry.getName().lower():
+        if newEntryName.lower() == self.curEntry.name.lower():
             ui.utils.errorBox("You can't merge an entry into itself!",
                               "Cannot merge entry")
             return
@@ -96,8 +96,7 @@ def _mergeOccurrences(occs, curEntry, newEntry,
     in the volume of the occurrence redirectFromOcc.
     """
     for occ in occs:
-        if occ.getRef() == (newEntry.getName(),
-                            db.consts.refTypes['redir']):
+        if occ.getRef() == (newEntry.name, db.consts.refTypes['redir']):
             # this is a redirect to the entry we're moving it to; ignore it
             occ.delete()
             continue
@@ -111,5 +110,5 @@ def _mergeOccurrences(occs, curEntry, newEntry,
         assert redirectFromOcc is not None, \
             "leaveRedirect requires redirectFromOcc to be specified"
         db.occurrences.Occurrence.makeNew(
-            curEntry, redirectFromOcc.getVolume(), newEntry.getName(),
+            curEntry, redirectFromOcc.getVolume(), newEntry.name,
             db.consts.refTypes['redir'])

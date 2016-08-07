@@ -80,9 +80,8 @@ class AddEntryWindow(QDialog):
         Called if modifying/basing on an existing entry; finds the
         corresponding entry and determines its classification.
         """
-        classification = entry.getClassification()
         for i in self.allRadios:
-            if entryTypes[i.property('cKey')] == classification:
+            if entryTypes[i.property('cKey')] == entry.classification:
                 i.setChecked(True)
 
     def putRedirect(self, to):
@@ -96,7 +95,7 @@ class AddEntryWindow(QDialog):
         when it gets to the add occurrence dialog.
         """
         self.putClassification(to)
-        name = to.getName().replace(',', '\\,')
+        name = to.name.replace(',', '\\,')
         self.preparedOccurrence = " {see " + name + "}"
 
     def setEditing(self):
@@ -180,9 +179,9 @@ class AddEntryWindow(QDialog):
                     "a different name, or use the Merge feature.",
                     "Entry exists")
                 return
-            entryToEdit.setName(newName)
-            entryToEdit.setSortKey(newSk)
-            entryToEdit.setClassification(classif)
+            entryToEdit.name = newName
+            entryToEdit.sortKey = newSk
+            entryToEdit.classification = classif
             super(AddEntryWindow, self).accept()
         else:
             existingEntry = db.entries.findOne(newName)

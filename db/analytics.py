@@ -41,7 +41,7 @@ def letterDistribution():
     # Find the first character of every sort key and tally them up.
     firstChars = {}
     for entry in entries:
-        char = entry.getSortKey()[:1].lower()
+        char = entry.sortKey[:1].lower()
         firstChars[char] = firstChars.get(char, 0) + 1
 
     # Combine digits and symbols into single entries.

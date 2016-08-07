@@ -1,0 +1,14 @@
+ENTRIES
+-------
+
+_name getName setName ==> name
+_eid getEid setEid    ==> eid
+_sk getSk setSortKey  ==> sortKey
+_clf getClassification setClassification ==> classification
+_da getDadded ---     ==> dateAdded
+_de getDedited ---    ==> dateEdited
+
+Also wipe out getOccurrences() -- replace with db.occurrences.fetchForEntry
+
+OCCURRENCES
+-----------

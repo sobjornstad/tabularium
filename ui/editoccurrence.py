@@ -29,7 +29,7 @@ class EditOccurrenceWindow(QDialog):
         self.vol = occurrence.getVolume()
         self.source = self.vol.getSource()
 
-        self.form.entryBox.setText(self.entry.getName())
+        self.form.entryBox.setText(self.entry.name)
         startValid, endValid = self.source.getVolVal()
         self.form.volumeSpin.setMinimum(startValid)
         self.form.volumeSpin.setMaximum(endValid)

@@ -22,10 +22,10 @@ class Entry(object):
         q = 'SELECT name, sortkey, classification, dEdited, dAdded ' \
                 'FROM entries WHERE eid=?'
         d.cursor.execute(q, (eid,))
-        self._name, self._sk, self._clf, self._de, self._da = \
-                d.cursor.fetchall()[0]
-        self._da = dateDeserializer(self._da)
-        self._de = dateDeserializer(self._de)
+        self._name, self._sortKey, self._classification, self._dateEdited, \
+            self._dateAdded = d.cursor.fetchall()[0]
+        self._dateEdited = dateDeserializer(self._dateEdited)
+        self._dateAdded = dateDeserializer(self._dateAdded)
         self._eid = eid
 
     @classmethod
@@ -54,8 +54,7 @@ class Entry(object):
 
 
     def __eq__(self, other):
-        return (self._eid == other._eid and self._name == other._name and
-                self._clf == other._clf and self._sk == other._sk)
+        return self._eid == other._eid
     def __ne__(self, other):
         return not self.__eq__(other)
     def __lt__(self, other):
@@ -69,55 +68,64 @@ class Entry(object):
     def __repr__(self):
         return "<" + self._name + ">"
 
-    def getName(self):
+    @property
+    def name(self):
         return self._name
-    def getEid(self):
-        return self._eid
-    def getSortKey(self):
-        return self._sk
-    def getClassification(self):
-        return self._clf
-    def getDadded(self):
-        return self._da
-    def getDedited(self):
-        return self._de
-
-    def setName(self, name):
+    @name.setter
+    def name(self, n):
         """
         Change the name of this entry. Note that this does NOT change the sort
         key -- that needs to be done separately!
         """
-        self._name = name
-        self.dump()
-    def setSortKey(self, sk):
-        self._sk = sk
-        self.dump()
-    def setClassification(self, clf):
-        if self._clf != clf:
-            self._clf = clf
-            self.dump()
+        if self._name != n:
+            self._name = n
+            self.flush()
 
-    def getOccurrences(self):
-        """
-        Call occurrences.fetchForEntry and return a list of all the occs of
-        this entry.
-        """
-        return db.occurrences.fetchForEntry(self)
+    @property
+    def eid(self):
+        return self._eid
+
+    @property
+    def sortKey(self):
+        return self._sortKey
+    @sortKey.setter
+    def sortKey(self, sk):
+        if self._sortKey != sk:
+            self._sortKey = sk
+            self.flush()
+
+    @property
+    def classification(self):
+        return self._classification
+    @classification.setter
+    def classification(self, clf):
+        if self._classification != clf:
+            self._classification = clf
+            self.flush()
+
+    @property
+    def dateAdded(self):
+        return self._dateAdded
+
+    @property
+    def dateEdited(self):
+        return self._dateEdited
+
 
     def delete(self):
         d.cursor.execute('DELETE FROM occurrences WHERE eid=?', (self._eid,))
         d.cursor.execute('DELETE FROM entries WHERE eid=?', (self._eid,))
         d.checkAutosave()
 
-    def dump(self):
+    def flush(self):
         dEdited  = datetime.date.today()
 
         q = '''UPDATE entries
                SET name=?, sortkey=?, classification=?, dAdded=?, dEdited=?
                WHERE eid=?'''
-        d.cursor.execute(q, (self._name, self._sk, self._clf,
-                         dateSerializer(self._da), dateSerializer(dEdited),
-                         self._eid))
+        d.cursor.execute(q, (self._name, self._sortKey, self._classification,
+                         dateSerializer(self._dateAdded),
+                         dateSerializer(dEdited), self._eid))
         d.checkAutosave()
 
 

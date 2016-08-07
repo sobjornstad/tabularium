@@ -31,7 +31,7 @@ class AddOccWindow(QDialog):
         self.parent = parent # may be mw or entry dialog
         self.entry = entry
 
-        self.form.entryBox.setText(self.entry.getName())
+        self.form.entryBox.setText(self.entry.name)
         if preparedOccurrence:
             self.form.valueBox.setText(preparedOccurrence)
             self.form.valueBox.setCursorPosition(0)
@@ -76,6 +76,6 @@ class AddOccWindow(QDialog):
         If entry has no occurrences (i.e., if it was new), delete the entry,
         because we can't have entries without occurrences.
         """
-        if not self.entry.getOccurrences():
+        if not db.occurrences.fetchForEntry(self.entry):
             self.entry.delete()
         super(AddOccWindow, self).reject()

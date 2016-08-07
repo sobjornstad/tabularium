@@ -16,31 +16,31 @@ class DbTests(utils.DbTestCase):
         e2 = db.entries.Entry.makeNew(e2Name, "ZKaterina", 5)
 
         # nothing else in the db yet, so this is quite clear
-        assert e1.getEid() == 1
-        assert e2.getEid() == 2
-        assert e1.getName() == e1Name
-        assert e2.getName() == e2Name
-        assert e1.getSortKey() == e1.getName()
-        assert e2.getSortKey() == "ZKaterina"
-        assert e1.getClassification() == 0
-        assert e2.getClassification() == 5
+        assert e1.eid == 1
+        assert e2.eid == 2
+        assert e1.name == e1Name
+        assert e2.name == e2Name
+        assert e1.sortKey == e1.name
+        assert e2.sortKey == "ZKaterina"
+        assert e1.classification == 0
+        assert e2.classification == 5
 
         newName = "Maudia (Maudlin)"
-        e1.setName(newName)
-        assert e1.getName() == newName
-        assert e1.getSortKey() == e1Name # not automatically changed
-        e1.setSortKey(newName)
-        assert e1.getSortKey() == e1.getName()
-        e1.setClassification(4)
-        assert e1.getClassification() == 4
+        e1.name = newName
+        assert e1.name == newName
+        assert e1.sortKey == e1Name # not automatically changed
+        e1.sortKey = newName
+        assert e1.sortKey == e1.name
+        e1.classification = 4
+        assert e1.classification == 4
 
         assert e1 != e2
         anotherE = e1
         assert e1 == anotherE
 
         # date
-        assert e1.getDadded() == date.today()
-        assert e1.getDedited() == date.today()
+        assert e1.dateAdded == date.today()
+        assert e1.dateEdited == date.today()
 
     def testFind(self):
         e1Name = "Maudi (Maudlin)"
@@ -53,13 +53,13 @@ class DbTests(utils.DbTestCase):
         e3 = db.entries.Entry.makeNew(e3Name)
 
         # test find multiple on single entry
-        e1eid = e1.getEid()
+        e1eid = e1.eid
         obj = db.entries.find(e1Name)
-        assert obj[0].getEid() == e1eid
+        assert obj[0].eid == e1eid
 
         # test findOne on single entry
         obj = db.entries.findOne(e1Name)
-        assert obj.getEid() == e1eid
+        assert obj.eid == e1eid
 
         # test globbing: should find all, since all have this word
         assert len(db.entries.find("%Maudlin%")) == 3
@@ -73,14 +73,14 @@ class DbTests(utils.DbTestCase):
 
         # try changing
         newName = "Kathariana"
-        e3.setName(newName)
+        e3.name = newName
         obj = db.entries.findOne(e2Name)
-        assert obj.getName() == e2Name
+        assert obj.name == e2Name
         obj = db.entries.findOne(newName)
-        assert obj.getName() == newName
+        assert obj.name == newName
 
         # test fetching by id
-        assert db.entries.Entry(e1eid).getEid() == e1.getEid()
+        assert db.entries.Entry(e1eid).eid == e1.eid
 
         # test allEntries
         assert len(db.entries.allEntries()) == 3
@@ -93,7 +93,7 @@ class DbTests(utils.DbTestCase):
         v1 = Volume.makeNew(s1, 1, "This is volume 1.",
                             date(2015, 6, 1), date(2015, 7, 6))
         o1 = db.occurrences.Occurrence.makeNew(e1, v1, '25', 0)
-        l = e1.getOccurrences()
+        l = db.occurrences.fetchForEntry(e1)
         assert len(l) == 1
         assert l[0].getEntry() == e1
 
@@ -101,7 +101,7 @@ class DbTests(utils.DbTestCase):
         assert db.entries.Entry(e1eid)
 
         # occurrence that should be deleted
-        e1occs = e1.getOccurrences()
+        e1occs = db.occurrences.fetchForEntry(e1)
         oids = [i.getOid() for i in e1occs]
         assert db.occurrences.Occurrence(oids[0])
         # occurrence that should NOT be deleted

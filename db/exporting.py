@@ -12,7 +12,7 @@ def exportMindex(filename, callback=None):
     Periodically call callback function (if supplied) with a progress message.
     """
     entries = db.entries.allEntries()
-    entries.sort(key=lambda i: i.getSortKey().lower())
+    entries.sort(key=lambda i: i.sortKey.lower())
 
     lines = []
     lastPercent = 0
@@ -25,11 +25,11 @@ def exportMindex(filename, callback=None):
 
         occs = db.occurrences.fetchForEntry(entry)
         occStrs = [i.getUOFRepresentation() for i in occs]
-        assert '\t' not in entry.getName(), \
+        assert '\t' not in entry.name, \
                 "Your entry has a tab in its name! This is not allowed and " \
                 "should not be possible."
-        lines.append('%s\t%s\t%s' % (entry.getName(), ' | '.join(occStrs),
-                                     entry.getSortKey()))
+        lines.append('%s\t%s\t%s' % (entry.name, ' | '.join(occStrs),
+                                     entry.sortKey))
     if callback:
         callback("Writing file...")
     with open(filename, 'wt') as f:

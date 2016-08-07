@@ -969,18 +969,18 @@ class MainWindow(QMainWindow):
         self.saveSelections()
         ae = ui.addentry.AddEntryWindow(self)
         if entry:
-            ae.initializeSortKeyCheck(entry.getName(), entry.getSortKey())
+            ae.initializeSortKeyCheck(entry.name, entry.sortKey)
             ae.putClassification(entry)
-            ae.resetTitle("New Entry Based On '%s'" % entry.getName())
+            ae.resetTitle("New Entry Based On '%s'" % entry.name)
         if text:
             ae.initializeSortKeyCheck(text, text)
         if redirTo:
             ae.putRedirect(redirTo)
-            ae.resetTitle("New Redirect To '%s'" % redirTo.getName())
+            ae.resetTitle("New Redirect To '%s'" % redirTo.name)
         if edit:
             assert entry is not None, "Must specify entry when using edit=True"
             ae.setEditing()
-            ae.resetTitle("Edit Entry '%s'" % entry.getName())
+            ae.resetTitle("Edit Entry '%s'" % entry.name)
         r = ae.exec_()
         if r:
             self.updateAndRestoreSelections()
@@ -1003,7 +1003,7 @@ class MainWindow(QMainWindow):
         curEntry = self._fetchCurrentEntry()
         dialog = ui.mergeentry.MergeEntryDialog(self)
         dialog.setFrom(curEntry)
-        dialog.setTitle("Merge '%s' into..." % curEntry.getName())
+        dialog.setTitle("Merge '%s' into..." % curEntry.name)
         if not dialog.exec_():
             return
         self.updateAndRestoreSelections()
@@ -1018,7 +1018,7 @@ class MainWindow(QMainWindow):
 
         self.saveSelections()
         entry = self._fetchCurrentEntry()
-        eName = entry.getName()
+        eName = entry.name
         occsAffected = len(db.occurrences.fetchForEntry(entry))
         # at some point, replace this with undo
         r = ui.utils.questionBox(
@@ -1086,7 +1086,7 @@ class MainWindow(QMainWindow):
         if len(occ.getOccsOfEntry()) == 1:
             entry = occ.getEntry()
             qString += " (The entry '%s' will be deleted too.)" % (
-                entry.getName())
+                entry.name)
         r = ui.utils.questionBox(qString, "Delete entry?")
         if r:
             occ.delete()
@@ -1466,9 +1466,9 @@ def selectFirstAndFocus(listWidget):
     listWidget.setFocus()
 
 def fillListWidgetWithEntries(widget, entries):
-    entries.sort(key=lambda i: i.getSortKey().lower())
+    entries.sort(key=lambda i: i.sortKey.lower())
     for i in entries:
-        widget.addItem(i.getName())
+        widget.addItem(i.name)
 
 def exceptionHook(exctype, value, tb):
     """

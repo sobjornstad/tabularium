@@ -41,9 +41,9 @@ class ClassificationWindow(QDialog):
     def fillEntries(self):
         "Fill box of entries to classify from the database."
         entries = db.entries.find('%', (db.consts.entryTypes['unclassified'],))
-        entries.sort(key=lambda i: i.getSortKey().lower())
+        entries.sort(key=lambda i: i.sortKey.lower())
         for i in entries:
-            self.form.entryList.addItem(i.getName())
+            self.form.entryList.addItem(i.name)
         self.entries = entries # save for reference when editing
 
     def onSelect(self):
@@ -54,7 +54,7 @@ class ClassificationWindow(QDialog):
         """
         self._considerEnableDisable()
         entry = self.entries[self.form.entryList.currentRow()]
-        classif = entry.getClassification()
+        classif = entry.classification
         button = self.valToButton[classif]
         old = button.blockSignals(True)  # don't call onSet again as we're
         button.setChecked(True)          # busy handling this; then it would
@@ -76,7 +76,7 @@ class ClassificationWindow(QDialog):
         row = self.form.entryList.currentRow()
         for button, value in self.buttonToVal.items():
             if button.isChecked():
-                self.entries[row].setClassification(value)
+                self.entries[row].classification = value
                 break
         self.form.entryList.setCurrentRow(row + 1)
         self._considerEnableDisable()

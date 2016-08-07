@@ -81,7 +81,7 @@ def printEntriesAsIndex(entries=None, callback=None):
 
 
 def getFormattedEntriesList(entries, callback=None):
-    entries.sort(key=lambda i: i.getSortKey().lower())
+    entries.sort(key=lambda i: i.sortKey.lower())
 
     formatted = []
     prevEname = [None]
@@ -95,7 +95,7 @@ def getFormattedEntriesList(entries, callback=None):
                 lastPercent = percent
 
         # process entry
-        eName = entry.getName()
+        eName = entry.name
         eNameList = eName.split(',')
         # update prevEname list, while keeping our own copy
         prevEnameInLoop = prevEname[:]
@@ -113,7 +113,7 @@ def getFormattedEntriesList(entries, callback=None):
                 pass           # entry is after the first one
         newEname = ','.join(eNameList)
 
-        occs = entry.getOccurrences()
+        occs = db.occurrences.fetchForEntry(entry)
         occs.sort()
         occList = []
         for occ in occs:
@@ -225,7 +225,7 @@ def makeSimplification(callback=None):
         key = modifiedRangeKey(occGroup)
         occStrs = []
         for occ in occDictionary[key]:
-            txt = '\\item ' + mungeLatex(occ.getEntry().getName())
+            txt = '\\item ' + mungeLatex(occ.getEntry().name)
             if occ.isRefType('range'):
                 txt += ' (--%s)' % occ.getRef()[0].split('-')[1]
             occStrs.append(txt)
