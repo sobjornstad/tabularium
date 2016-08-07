@@ -30,6 +30,7 @@ def exportMindex(filename, callback=None):
                 "should not be possible."
         lines.append('%s\t%s\t%s' % (entry.getName(), ' | '.join(occStrs),
                                      entry.getSortKey()))
-    callback("Writing file...")
+    if callback:
+        callback("Writing file...")
     with open(filename, 'wt') as f:
         f.write('\n'.join(lines))
