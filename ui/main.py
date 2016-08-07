@@ -31,19 +31,22 @@ import db.occurrences
 import db.printing
 import db.sources
 
+import ui.about
 import ui.addentry
 import ui.addoccurrence
 import ui.editnotes
 import ui.editoccurrence
 import ui.mergeentry
+import ui.opendatabase
 import ui.settings
 import ui.sourcemanager
 import ui.volmanager
 import ui.utils
 import ui.tools_classification
-import ui.opendatabase
 
 from ui.forms.main import Ui_MainWindow
+
+APPLICATION_VERSION = "0.1.0"
 
 class MwEventFilter(QObject):
     """
@@ -204,6 +207,7 @@ class MainWindow(QMainWindow):
         # finally, set up checkboxes etc., and restore state from last run
         self.initialWindowState()
         self.restoreWindowState()
+        self.setWindowTitle("Tabularium – %s" % os.path.basename(location))
         self.onSearch()
         self.form.searchBox.setFocus()
         return True
@@ -1158,6 +1162,11 @@ class MainWindow(QMainWindow):
         ui.utils.reportBox(self, db.analytics.letterDistribution(),
                            "Letter distribution statistics")
 
+    ## Help menu
+    def onAbout(self):
+        "Show the about dialog."
+        ui.about.AboutWindow(self, APPLICATION_VERSION).exec_()
+
 
     ### Menu implementation ###
     def _setupMenus(self):
@@ -1203,6 +1212,7 @@ class MainWindow(QMainWindow):
         sf.actionImport.triggered.connect(self.onImportMindex)
         sf.actionExport.triggered.connect(self.onExportMindex)
         sf.actionMove_to_entry.triggered.connect(self.onMoveToEntry)
+        sf.actionAbout_Tabularium.triggered.connect(self.onAbout)
 
     def checkAllMenus(self):
         """

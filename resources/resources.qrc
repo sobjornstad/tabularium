@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="photos">
+    <file>tabularium.jpg</file>
+  </qresource>
+</RCC>

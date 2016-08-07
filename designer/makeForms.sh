@@ -33,3 +33,6 @@ done
 if [ $didUpdate != 1 ]; then
     echo "No forms to update."
 fi
+
+echo "Updating resources..."
+pyrcc5 resources/resources.qrc -o ui/forms/resources_rc.py
