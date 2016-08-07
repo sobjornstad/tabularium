@@ -19,6 +19,8 @@ SUGGESTIONS:
 * Flymake-style validation of UOF, and maybe checking of above for entries
 * Email indexing
 * Limit to *nK* matches -- option next to inc/regex for speed?
+* Make it possible to change source types (e.g., switch to a different diary source)
+* Allow moving using "merge" and merging using "edit"
 
 SUGGESTED TOOLS:
 * Duplicates Tool

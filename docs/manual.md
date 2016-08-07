@@ -4,10 +4,10 @@ At the core of Tabularium is a somewhat simplified model of a standard index
 (as used in books and other reference works). That it is simplified implies
 that the format is not quite as flexible as in an index that one writes by
 hand. However, squishing the index into a standard format with definite types
-of entries has great advantages as well: it makes it easy to format the index
-in many different ways and to work with the entries in automatic ways:
-combining them, checking for conflicts, searching through only parts of the
-index, and so on.
+of entries has great advantages as well. Specifically, it makes it easy to
+format the index in many different ways and to work with the entries in
+automatic ways: combining them, checking for conflicts, searching through only
+parts of the index, and so on.
 
 Indexes in Tabularium are made up of *sources*, *volumes*, *entries*, and
 *occurrences*; we will provide a brief overview of each of these in turn.
@@ -15,9 +15,10 @@ Indexes in Tabularium are made up of *sources*, *volumes*, *entries*, and
 ## Sources
 
 The highest-level object in Tabularium is the *source*. A source usually
-represents one book or other work: your journal, Wikipedia, your Rolodex, *War
-and Peace*, and a computer file containing anecdotes you’ve collected could all
-be sources. A source can have multiple volumes, if appropriate for that source.
+represents one book or other work: your diary, Wikipedia, your Rolodex, *War
+and Peace*, and a computer file containing anecdotes you’v e collected could
+all be sources. A source can have multiple volumes, if appropriate for that
+source.
 
 Sources have a *name*, used when managing sources; an *abbreviation*, used in
 actual entries so that they don’t get horribly long; and a *type*, which is a
@@ -31,15 +32,15 @@ widely to look for other nearby entries when inspecting an occurrence.
 
 ## Volumes
 
-Many types of sources naturally have multiple volumes: if you keep a paper
-journal, for instance, assuming that you keep writing, eventually you will have
-to start a second notebook. To simplify organization of these types of sources,
-Tabularium supports multi-volume sources. Sources can be flagged as
-multi-volume by ticking the appropriate box when editing the source;
-thereafter, you can edit the volumes of a source in the Manage Volumes dialog.
+Many types of sources naturally have multiple volumes: for example, if you keep
+a paper diary, if you keep writing, eventually you will have to start a second
+notebook. To simplify organization of these types of sources, Tabularium
+supports multi-volume sources. Sources can be flagged as multi-volume by
+ticking the appropriate box when editing the source; thereafter, you can edit
+the volumes of a source in the Manage Volumes dialog.
 
 Volumes are normally numbered sequentially beginning at 1, but you can use any
-scheme that involves only natural numbers.
+scheme that uses positive integers.
 
 Volumes have a *notes* text field associated with them (in the case of
 single-volume sources, the source has notes associated with it). Notes can be
@@ -58,8 +59,7 @@ An entry does not belong to a particular source and can catalog occurrences
 across many different sources.
 
 Entries are listed in the leftmost column of the main window; when you go to
-search your database using the search box, you are normally searching your
-entries.
+search your database using the search box, you are searching your entries.
 
 Tabularium’s index model is not hierarchical; that is, it does not discriminate
 between entries and subentries. Traditional indexes often indent subentries
@@ -82,13 +82,14 @@ an em-dash, like so:
 ## Occurrences
 
 Entries are all very nice, but an index isn’t helpful unless it also tells you
-where the referenced information can be found. *Occurrences* bridge the gap
-between the abstract labels created by entries and the actual source locations.
-An occurrence is composed of a reference to a source (and volume, if a
-multi-volume source) and a *reference number*. Reference numbers typically
-refer to page numbers if these exist for the source being referenced, but they
-can also point to sequentially numbered entries, paragraphs, or any other
-positive integers that make it easy to find the requested information.
+where the referenced information can be found. *Occurrences* tie together
+entries, volumes, and sources, bridging the gap between the abstract labels
+created by entries and the actual information they refer to. An occurrence is
+composed of a reference to a source (and volume, if a multi-volume source) and
+a *reference number*. Reference numbers typically refer to page numbers if
+these exist for the source being referenced, but they can also point to
+sequentially numbered entries, paragraphs, or any other positive integers that
+make it easy to find the requested information.
 
 Occurrences, when displayed in the *Occurrences* column of the main window or
 elsewhere in Tabularium, normally take one of the following formats:
