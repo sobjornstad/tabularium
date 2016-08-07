@@ -813,7 +813,18 @@ class MainWindow(QMainWindow):
             filter="Mindex files (*.mindex);;All files (*)")[0]
         if not fname:
             return
-        numEntries, errors = db.importing.importMindex(fname)
+
+        QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
+        try:
+            self.form.statusBar.showMessage(
+                "Importing (this may take some time depending on the size "
+                "of the file)...")
+            QApplication.processEvents()
+            numEntries, errors = db.importing.importMindex(fname)
+        finally:
+            QApplication.restoreOverrideCursor()
+            self.form.statusBar.clearMessage()
+
         successMsg = (
             "%i entr%s added or merged with existing entries.<br>"
             % (numEntries, "y was" if numEntries == 1 else "ies were"))

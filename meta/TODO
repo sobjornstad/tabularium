@@ -1,15 +1,19 @@
 BUGS:
 
 MAJOR THINGS TO ADD:
-- Tools?
-- Multiple-add
 - Manual
-- Export
 - Undo
 - Consistify text
+- User-specified date format
+- Database check
 
+REFACTORING:
+- Use nearbySpread in that buggy isNearby
+- Func to get UOF from occurrences
+- SQLite full-text search?
 
 SUGGESTIONS:
+* Multiple-add
 * Autocomplete in entry boxes
 * "What links here?" -- backwards redirect
 * Consider doing away with the "inspect" menu; it may be possible to move everything there somewhere else.

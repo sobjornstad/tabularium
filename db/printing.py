@@ -283,7 +283,6 @@ def compileLatex(document):
     Given a complete LaTeX source file /document/, write it, call LaTeX on it,
     and open the system PDF viewer on the results.
     """
-
     # it would be good to delete the tmpdir we used at some point in the future
     tdir = tempfile.mkdtemp()
     oldcwd = os.getcwd()
@@ -294,8 +293,10 @@ def compileLatex(document):
         tfile = os.path.join(tdir, '.'.join([fnamebase, 'tex']))
         with codecs.open(tfile, 'w', 'utf-8') as f:
             f.write(document)
-        r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
-        r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile])
+        FNULL = open(os.devnull, 'w')
+        for i in range(2):
+            r = subprocess.call(['pdflatex', '-interaction=nonstopmode',
+                                 tfile], stdout=FNULL, stderr=FNULL)
         if r:
             raise PrintingError(
                 "Error executing LaTeX! Please run the application in console "
