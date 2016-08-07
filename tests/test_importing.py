@@ -40,6 +40,8 @@ class ImportTests(utils.DbTestCase):
         assert extraTesting.sortKey == "Greta"
         occs = db.occurrences.fetchForEntry(extraTesting)
         assert len(occs) == 2
-        assert occs[0].getRef() == ('7', 0)
-        assert occs[1].getRef() == ('10', 0)
+        assert occs[0].ref == '7'
+        assert occs[0].reftype == 0
+        assert occs[1].ref == '10'
+        assert occs[1].reftype == 0
         assert db.entries.find("This is an invalid line") == []

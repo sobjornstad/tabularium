@@ -56,17 +56,16 @@ class Occurrence(object):
     """
     Represents one reference target of an entry.
     """
-
     def __init__(self, oid):
         query = '''SELECT eid, vid, ref, type, dEdited, dAdded
                    FROM occurrences WHERE oid=?'''
         d.cursor.execute(query, (oid,))
-        eid, vid, self._ref, self._type, self._de, self._da = \
-                d.cursor.fetchall()[0]
+        eid, vid, self._ref, self._reftype, self._dateEdited, \
+            self._dateAdded = d.cursor.fetchall()[0]
         self._entry = db.entries.Entry(eid)
         self._volume = db.volumes.Volume(vid)
-        self._da = dateDeserializer(self._da)
-        self._de = dateDeserializer(self._de)
+        self._dateEdited = dateDeserializer(self._dateEdited)
+        self._dateAdded = dateDeserializer(self._dateAdded)
         self._oid = oid
 
     @classmethod
@@ -77,7 +76,7 @@ class Occurrence(object):
         vid = volume.getVid()
 
         # check for dupes
-        raiseDupeIfExists(eid, vid, ref, type)
+        _raiseDupeIfExists(eid, vid, ref, type)
 
         # create
         q = '''INSERT INTO occurrences
@@ -89,28 +88,11 @@ class Occurrence(object):
         return cls(oid)
 
     def __eq__(self, other):
-        return (self._entry == other._entry and self._ref == other._ref and
-                self._volume == other._volume and self._oid == other._oid and
-                self._de == other._de and self._da == other._da and
-                self._type == other._type)
+        return self._oid == other._oid
     def __ne__(self, other):
         return not self.__eq__(other)
-
-    def __str__(self):
-        return self.getUOFRepresentation(displayFormatting=True)
-
-    def __repr__(self):
-        return '<' + self.__str__() + '>'
-
     def __lt__(self, other):
-        if hasattr(other, '_volume') and hasattr(other, '_ref'):
-            return (generate_index(self.getOccSortKey()) <
-                    generate_index(other.getOccSortKey()))
-
-    def getOccSortKey(self):
         """
-        Get the sort key for an occurrence, used in __cmp__.
-
         We sort occurrences essentially by their __str__ representation, but we
         normalize a few things to avoid weird sorting surprises (e.g., we
         include the volume number even if single-volume). Further, if two
@@ -118,9 +100,102 @@ class Occurrence(object):
         further sorted in order of their entries (this is nice for, say, the
         simplification view).
         """
-        return "%s/%s/%s/%s" % (self._volume.getSource().getAbbrev().lower(),
-                                self._volume.getNum(), self._ref,
-                                self._entry.sortKey.lower())
+        def getOccSortKey(occ):
+            return "%s/%s/%s/%s" % (
+                occ._volume.getSource().getAbbrev().lower(),
+                occ._volume.getNum(), occ._ref, occ._entry.sortKey.lower())
+        if hasattr(other, '_volume') and hasattr(other, '_ref'):
+            return (generate_index(getOccSortKey(self)) <
+                    generate_index(getOccSortKey(other)))
+
+    def __str__(self):
+        return self.getUOFRepresentation(displayFormatting=True)
+    def __repr__(self):
+        return '<' + self.__str__() + '>'
+
+    #TODO: More error-checking right in here?
+    @property
+    def entry(self):
+        return self._entry
+    @entry.setter
+    def entry(self, entry):
+        "NOTE: Can raise DuplicateError, caller must handle this."
+        _raiseDupeIfExists(entry.eid, self._volume.getVid(),
+                          self._ref, self._reftype)
+        self._entry = entry
+        self.flush()
+
+    @property
+    def volume(self):
+        return self._volume
+    @volume.setter
+    def volume(self, volume):
+        self._volume = volume
+        self.flush()
+
+    @property
+    def ref(self):
+        return self._ref
+    @ref.setter
+    def ref(self, ref):
+        if ref != self._ref:
+            self._ref = ref
+            self.flush()
+
+    @property
+    def reftype(self):
+        return self._reftype
+    @reftype.setter
+    def reftype(self, reftype):
+        if reftype != self._reftype:
+            self._reftype = reftype
+            self.flush()
+
+    @property
+    def oid(self):
+        return self._oid
+
+    @property
+    def dateAdded(self):
+        return self._dateAdded
+
+    @property
+    def dateEdited(self):
+        return self._dateEdited
+
+
+    def isRefType(self, reftype):
+        return self._reftype == refTypes[reftype]
+    def getStartPage(self):
+        if self._reftype == refTypes['num']:
+            return self._ref
+        elif self._reftype == refTypes['range']:
+            return self._ref.split('-')[0]
+        else:
+            return None
+    def getEndPage(self):
+        if self._reftype == refTypes['num']:
+            return self._ref
+        elif self._reftype == refTypes['range']:
+            return self._ref.split('-')[1]
+        else:
+            return None
+
+
+    def flush(self):
+        dEdited = datetime.date.today()
+        query = '''UPDATE occurrences
+                   SET eid=?, vid=?, ref=?, type=?, dEdited=?, dAdded=?
+                   WHERE oid=?'''
+        d.cursor.execute(query, (self._entry.eid, self._volume.getVid(),
+                self._ref, self._reftype, dateSerializer(dEdited),
+                dateSerializer(self._dateAdded), self._oid))
+        d.checkAutosave()
+
+    def delete(self):
+        d.cursor.execute('DELETE FROM occurrences WHERE oid=?', (self._oid,))
+        d.checkAutosave()
+
 
     def getUOFRepresentation(self, displayFormatting=False):
         """
@@ -131,7 +206,7 @@ class Occurrence(object):
         Results from this function can be strung together with | and remain
         valid UOF, but cannot necessarily be combined cleanly in other ways.
         """
-        if self._type == refTypes['num'] or self._type == refTypes['range']:
+        if self.isRefType('num') or self.isRefType('range'):
             source = self._volume.getSource()
             if source.isSingleVol():
                 return "%s %s" % (source.getAbbrev(), self._ref)
@@ -139,7 +214,7 @@ class Occurrence(object):
                 return "%s %s.%s" % (source.getAbbrev(),
                                      self._volume.getNum(),
                                      self._ref)
-        elif self._type == refTypes['redir']:
+        elif self.isRefType('redir'):
             source = self._volume.getSource()
             vol = self._volume.getNum()
             if source.isSingleVol():
@@ -151,71 +226,6 @@ class Occurrence(object):
                         % (source.getAbbrev(), vol, self._ref))
         else:
             assert False, "invalid reftype in occurrence"
-
-    def getEntry(self):
-        return self._entry
-    def getVolume(self):
-        return self._volume
-    def getRef(self):
-        """
-        Fetch the reference in this occurrence, as a tuple of the reference
-        and the type code.
-        """
-        return (self._ref, self._type)
-    def getOid(self):
-        return self._oid
-    def getAddedDate(self):
-        return self._da
-    def getEditedDate(self):
-        return self._de
-
-    def isRefType(self, reftype):
-        return self._type == refTypes[reftype]
-    def getStartPage(self):
-        if self._type == refTypes['num']:
-            return self._ref
-        elif self._type == refTypes['range']:
-            return self._ref.split('-')[0]
-        else:
-            return None
-    def getEndPage(self):
-        if self._type == refTypes['num']:
-            return self._ref
-        elif self._type == refTypes['range']:
-            return self._ref.split('-')[1]
-        else:
-            return None
-
-    #TODO: error-checking
-    def setRef(self, ref, type):
-        if ref != self._ref or type != self._type:
-            self._ref = ref
-            self._type = type
-            self.dump()
-    def setEntry(self, entry):
-        "NOTE: Can raise DuplicateError, caller must handle this."
-        raiseDupeIfExists(entry.eid, self._volume.getVid(),
-                          self._ref, self._type)
-        self._entry = entry
-        self.dump()
-    def setVolume(self, volume):
-        self._volume = volume
-        self.dump()
-
-    def dump(self):
-        dEdited = datetime.date.today()
-
-        query = '''UPDATE occurrences
-                   SET eid=?, vid=?, ref=?, type=?, dEdited=?, dAdded=?
-                   WHERE oid=?'''
-        d.cursor.execute(query, (self._entry.eid, self._volume.getVid(),
-                self._ref, self._type, dateSerializer(dEdited),
-                dateSerializer(self._da), self._oid))
-        d.checkAutosave()
-
-    def delete(self):
-        d.cursor.execute('DELETE FROM occurrences WHERE oid=?', (self._oid,))
-        d.checkAutosave()
 
     def getOccsOfEntry(self):
         """
@@ -244,14 +254,14 @@ class Occurrence(object):
                 logical result for this operation
         """
 
-        if self._type not in (refTypes['num'], refTypes['range']):
+        if self._reftype not in (refTypes['num'], refTypes['range']):
             return None
 
         # Notice that the ranges can go outside volume validation, but this
         # doesn't do any harm, as the numbers aren't used beyond this SELECT.
         page = self._ref
-        nearRange = self.getVolume().getSource().getNearbyRange()
-        if self._type == refTypes['range']:
+        nearRange = self.volume.getSource().getNearbyRange()
+        if self._reftype == refTypes['range']:
             bottom, top = parseRange(page)
             pageStart = bottom - nearRange
             pageEnd = top + nearRange
@@ -360,17 +370,6 @@ def parseRange(val):
     string is a range.
     """
     return tuple(int(i) for i in val.split('-'))
-
-def raiseDupeIfExists(eid, vid, ref, type):
-    """
-    Raise DuplicateError if an occurrence with the given eid, vid, ref, and
-    type exists. Used when creating or changing the entry of an occurrence.
-    """
-    q = '''SELECT oid FROM occurrences
-           WHERE eid=? AND vid=? AND ref=? AND type=?'''
-    d.cursor.execute(q, (eid, vid, ref, type))
-    if d.cursor.fetchall():
-        raise DuplicateError
 
 def makeOccurrencesFromString(s, entry):
     """
@@ -631,3 +630,15 @@ def rangeUncollapse(first, second):
         second = first[-(place+1)] + second
 
     return int(first), int(second)
+
+
+def _raiseDupeIfExists(eid, vid, ref, type):
+    """
+    Raise DuplicateError if an occurrence with the given eid, vid, ref, and
+    type exists. Used when creating or changing the entry of an occurrence.
+    """
+    q = '''SELECT oid FROM occurrences
+           WHERE eid=? AND vid=? AND ref=? AND type=?'''
+    d.cursor.execute(q, (eid, vid, ref, type))
+    if d.cursor.fetchall():
+        raise DuplicateError

@@ -91,9 +91,10 @@ class UOFTests(utils.DbTestCase):
         assert len(occs[0]) == 1 # occs generated
         assert occs[1] == 0      # number of dupes
         occ = occs[0][0]
-        assert occ.getEntry() == e1
-        assert occ.getRef() == ('42', db.consts.refTypes['num'])
-        assert occ.getVolume() == self.v1
+        assert occ.entry == e1
+        assert occ.ref == '42'
+        assert occ.reftype == db.consts.refTypes['num']
+        assert occ.volume == self.v1
 
     def testMakeOccurrencesFromStringDupe(self):
         e1 = Entry.makeNew("Me, Myself, & I")
@@ -101,7 +102,7 @@ class UOFTests(utils.DbTestCase):
         occs = makeOccurrencesFromString("CB1.42; 44", e1)
         assert len(occs[0]) == 1
         assert occs[1] == 1
-        assert occs[0][0].getRef()[0] == '44'
+        assert occs[0][0].ref == '44'
 
     # For each "raise" statement, hand function some string that fails.
     # Some of these may not fail the way I anticipate owing to earlier
@@ -218,24 +219,27 @@ class OccTests(utils.DbTestCase):
         self.o1 = Occurrence.makeNew(self.e1, self.v1, '25', 0)
 
     def testGetters(self):
-        assert self.o1.getEntry() == self.e1
-        assert self.o1.getVolume() == self.v1
-        assert self.o1.getRef() == ('25', 0)
+        assert self.o1.entry == self.e1
+        assert self.o1.volume == self.v1
+        assert self.o1.ref == '25'
+        assert self.o1.reftype == 0
 
     def testAssociatedEntry(self):
-        self.o1.setEntry(self.e2)
-        oNew = Occurrence(self.o1.getOid())
-        assert oNew.getEntry() == self.e2
+        self.o1.entry = self.e2
+        oNew = Occurrence(self.o1.oid)
+        assert oNew.entry == self.e2
 
     def testAssociatedRef(self):
-        self.o1.setRef('25-27', 1)
-        oNew = Occurrence(self.o1.getOid())
-        assert oNew.getRef() == ('25-27', 1)
+        self.o1.ref = '25-27'
+        self.o1.reftype = 1
+        oNew = Occurrence(self.o1.oid)
+        assert oNew.ref == '25-27'
+        assert oNew.reftype == 1
 
     def testAssociatedVolume(self):
-        self.o1.setVolume(self.v2)
-        oNew = Occurrence(self.o1.getOid())
-        assert oNew.getVolume() == self.v2
+        self.o1.volume = self.v2
+        oNew = Occurrence(self.o1.oid)
+        assert oNew.volume == self.v2
 
     def testFetchForEntry(self):
         occs = fetchForEntry(self.e1)
@@ -246,8 +250,8 @@ class OccTests(utils.DbTestCase):
         assert len(occs) == 0
 
     def testDate(self):
-        assert self.o1.getAddedDate() == date.today()
-        assert self.o1.getEditedDate() == date.today()
+        assert self.o1.dateAdded == date.today()
+        assert self.o1.dateAdded == date.today()
 
     def testDuplicate(self):
         with self.assertRaises(db.occurrences.DuplicateError) as context:
@@ -297,7 +301,7 @@ class OccTests(utils.DbTestCase):
         o3 = Occurrence.makeNew(self.e3, self.v1, '24', 0)
         o4 = Occurrence.makeNew(self.e4, self.v1, '25-28', 0)
         order = [o4, o2, o3]
-        entryOrder = [i.getEntry() for i in order]
+        entryOrder = [i.entry for i in order]
         assert o1.getNearby() == entryOrder
 
     def testGetOccsOfEntry(self):
@@ -327,8 +331,8 @@ class OccTests(utils.DbTestCase):
 
     def testGetStartEndPage(self):
         # number
-        assert self.o1.getStartPage() == self.o1.getRef()[0]
-        assert self.o1.getEndPage() == self.o1.getRef()[0]
+        assert self.o1.getStartPage() == self.o1.ref
+        assert self.o1.getEndPage() == self.o1.ref
 
         # range
         o2 = Occurrence.makeNew(self.e1, self.v2, '22-24', 1)
@@ -356,9 +360,9 @@ class OccTests(utils.DbTestCase):
 
         # manually set dates
         d.cursor.execute('''UPDATE occurrences SET dAdded = '2012-01-01'
-                            WHERE oid=?''', (o1.getOid(),))
+                            WHERE oid=?''', (o1.oid,))
         d.cursor.execute('''UPDATE occurrences SET dEdited = '2012-04-01'
-                          WHERE oid=?''', (o2.getOid(),))
+                          WHERE oid=?''', (o2.oid,))
         # others using today's date, sometime after 2012
 
         assert len(fetchForEntryFiltered(self.e1)) == 4
@@ -375,8 +379,7 @@ class OccTests(utils.DbTestCase):
             fetchForEntryFiltered(self.e1, volume=(1, 4))
         # combined
         assert (fetchForEntryFiltered(
-                    self.e1, source=self.s1, volume=(self.v1.getNum(), 22),
-                    modifiedDate=('2011-01-01', '2013-01-01'))[0].getOid()
-                    == o2.getOid())
+                self.e1, source=self.s1, volume=(self.v1.getNum(), 22),
+                modifiedDate=('2011-01-01', '2013-01-01'))[0].oid == o2.oid)
         # FIXME: for some reason direct equality doesn't work and I'm not sure
         # why: does the date get incorrectly updated for some reason?

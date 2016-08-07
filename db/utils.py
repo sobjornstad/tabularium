@@ -58,20 +58,18 @@ def minMaxDatesOccurrenceEnteredModified():
 
     return dateDeserializer(early), dateDeserializer(late)
 
-# I copied this function from somewhere on the Web, but unfortunately I
-# neglected to keep track of where I got it from...
+# Based on:
+# http://code.activestate.com/recipes/135435-sort-a-string-using-numeric-order/
 def generate_index(str):
     """
-    Splits a string into alpha and numeric elements, which
-    is used as an index for sorting"
+    Split a string into alpha and numeric elements, used as an index for
+    sorting.
     """
-    #
-    # the index is built progressively
-    # using the _append function
-    #
+    # the index is built progressively using the _append function
     index = []
     def _append(fragment, alist=index):
-        if fragment.isdigit(): fragment = int(fragment)
+        if fragment.isdigit():
+            fragment = int(fragment)
         alist.append(fragment)
 
     # initialize loop

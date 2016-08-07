@@ -95,14 +95,14 @@ class DbTests(utils.DbTestCase):
         o1 = db.occurrences.Occurrence.makeNew(e1, v1, '25', 0)
         l = db.occurrences.fetchForEntry(e1)
         assert len(l) == 1
-        assert l[0].getEntry() == e1
+        assert l[0].entry == e1
 
         # test delete
         assert db.entries.Entry(e1eid)
 
         # occurrence that should be deleted
         e1occs = db.occurrences.fetchForEntry(e1)
-        oids = [i.getOid() for i in e1occs]
+        oids = [i.oid for i in e1occs]
         assert db.occurrences.Occurrence(oids[0])
         # occurrence that should NOT be deleted
         o2 = db.occurrences.Occurrence.makeNew(e2, v1, '22', 0)
@@ -114,7 +114,7 @@ class DbTests(utils.DbTestCase):
         d.cursor.execute('SELECT oid FROM occurrences WHERE oid=?', (oids[0],))
         with self.assertRaises(IndexError):
             d.cursor.fetchall()[0]
-        assert db.occurrences.Occurrence(o2.getOid())
+        assert db.occurrences.Occurrence(o2.oid)
 
     def testAdvancedFindFeatures(self):
         # globbing

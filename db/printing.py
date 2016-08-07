@@ -117,17 +117,17 @@ def getFormattedEntriesList(entries, callback=None):
         occs.sort()
         occList = []
         for occ in occs:
-            vol = occ.getVolume()
+            vol = occ.volume
             sourceAbbrev = '\\textsc{%s}' % mungeLatex(
                 vol.getSource().getAbbrev().lower())
             volNum = vol.getNum()
-            ref = mungeLatex(occ.getRef()[0])
-            if occ.getRef()[1] == refTypes['num']:
+            ref = mungeLatex(occ.ref)
+            if occ.isRefType('num'):
                 occList.append("%s~%s.%s" % (sourceAbbrev, volNum, ref))
-            elif occ.getRef()[1] == refTypes['range']:
+            elif occ.isRefType('range'):
                 occList.append("%s~%s.%s" % (sourceAbbrev, volNum,
                                              ref.replace('-', '--')))
-            else:
+            else: # redirect
                 occList.append("%s~%s: \\emph{see} %s" % (
                     sourceAbbrev, volNum, ref))
 
@@ -186,8 +186,8 @@ def makeSimplification(callback=None):
         """
         if occ.isRefType('range'):
             # pylint: disable=unused-variable
-            start, end = occ.getRef()[0].split('-')
-            key = str(occ).replace(occ.getRef()[0], start)
+            start, end = db.occurrences.parseRange(occ.ref)
+            key = str(occ).replace(occ.ref, start)
             return key
         else:
             return str(occ)
@@ -225,12 +225,12 @@ def makeSimplification(callback=None):
         key = modifiedRangeKey(occGroup)
         occStrs = []
         for occ in occDictionary[key]:
-            txt = '\\item ' + mungeLatex(occ.getEntry().name)
+            txt = '\\item ' + mungeLatex(occ.entry.name)
             if occ.isRefType('range'):
-                txt += ' (--%s)' % occ.getRef()[0].split('-')[1]
+                txt += ' (--%s)' % db.occurrences.parseRange(occ.ref)[1]
             occStrs.append(txt)
 
-        book = occGroup.getVolume().getSource().getAbbrev()
+        book = occGroup.volume.getSource().getAbbrev()
         # get the __str__ repr, but without the book part
         ref = ''.join(key.split(book)[1:]).strip()
         latexStr = "\\theoccset{%s}{%s}\n\\theoccurrences{%s}" % (

@@ -96,12 +96,12 @@ def _mergeOccurrences(occs, curEntry, newEntry,
     in the volume of the occurrence redirectFromOcc.
     """
     for occ in occs:
-        if occ.getRef() == (newEntry.name, db.consts.refTypes['redir']):
+        if occ.ref == newEntry.name and occ.isRefType('redir'):
             # this is a redirect to the entry we're moving it to; ignore it
             occ.delete()
             continue
         try:
-            occ.setEntry(newEntry)
+            occ.entry = newEntry
         except db.occurrences.DuplicateError:
             # a comparable one is there already
             occ.delete()
@@ -110,5 +110,5 @@ def _mergeOccurrences(occs, curEntry, newEntry,
         assert redirectFromOcc is not None, \
             "leaveRedirect requires redirectFromOcc to be specified"
         db.occurrences.Occurrence.makeNew(
-            curEntry, redirectFromOcc.getVolume(), newEntry.name,
+            curEntry, redirectFromOcc.volume, newEntry.name,
             db.consts.refTypes['redir'])

@@ -496,13 +496,13 @@ class MainWindow(QMainWindow):
         occ = self._fetchCurrentOccurrence()
         if occ is None:
             return
-        vol = occ.getVolume()
+        vol = occ.volume
         source = vol.getSource()
         # the added and edited dates
-        daStr = "Entered %s<br>" % occ.getAddedDate()
-        deStr = "Modified %s<br>" % occ.getEditedDate()
+        daStr = "Entered %s<br>" % occ.dateAdded
+        deStr = "Modified %s<br>" % occ.dateAdded
         # during diary time...
-        diaryVolume = db.volumes.findDateInDiary(occ.getAddedDate())
+        diaryVolume = db.volumes.findDateInDiary(occ.dateAdded)
 
         # format
         s = "<center>"
@@ -1045,7 +1045,7 @@ class MainWindow(QMainWindow):
         "Edit the volume/reference number of an occurrence."
         self.saveSelections()
         occ = self._fetchCurrentOccurrence()
-        entry = occ.getEntry()
+        entry = occ.entry
         dialog = ui.editoccurrence.EditOccurrenceWindow(self, entry, occ)
         if dialog.exec_():
             self.updateAndRestoreSelections()
@@ -1084,9 +1084,8 @@ class MainWindow(QMainWindow):
         qString = "Do you really want to delete the occurrence '%s'?" % (
             str(occ))
         if len(occ.getOccsOfEntry()) == 1:
-            entry = occ.getEntry()
             qString += " (The entry '%s' will be deleted too.)" % (
-                entry.name)
+                occ.entry.name)
         r = ui.utils.questionBox(qString, "Delete entry?")
         if r:
             occ.delete()
@@ -1099,8 +1098,7 @@ class MainWindow(QMainWindow):
         assert occ is not None, "Follow redirect called with no occ selected!"
         assert occ.isRefType('redir'), \
                 "Follow redirect called with a non-redirect occurrence!"
-        ref = occ.getRef()[0]
-        self._changeSearch(ref)
+        self._changeSearch(occ.ref)
 
 
     ## Inspect menu
@@ -1112,7 +1110,7 @@ class MainWindow(QMainWindow):
     def onSourceNotes(self):
         "Open the notes for the source of the currently selected occurrence."
         occ = self._fetchCurrentOccurrence()
-        volume = occ.getVolume()
+        volume = occ.volume
         source = volume.getSource()
         nb = ui.editnotes.NotesBrowser(self, jumpToSource=source,
                                        jumpToVolume=volume)
@@ -1124,7 +1122,7 @@ class MainWindow(QMainWindow):
         occurrence was entered.
         """
         occ = self._fetchCurrentOccurrence()
-        diaryVolume = db.volumes.findDateInDiary(occ.getAddedDate())
+        diaryVolume = db.volumes.findDateInDiary(occ.dateAdded)
         source = diaryVolume.getSource()
         nb = ui.editnotes.NotesBrowser(self, jumpToSource=source,
                                        jumpToVolume=diaryVolume)
@@ -1285,7 +1283,7 @@ class MainWindow(QMainWindow):
 
         if occSelected:
             occ = self._fetchCurrentOccurrence()
-            diary = db.volumes.findDateInDiary(occ.getAddedDate()) is not None
+            diary = db.volumes.findDateInDiary(occ.dateAdded) is not None
             sf.actionDiary_notes.setEnabled(diary)
         else:
             sf.actionDiary_notes.setEnabled(False)
