@@ -59,7 +59,7 @@ class Entry(object):
         return not self.__eq__(other)
     def __lt__(self, other):
         "Sort by sort key."
-        return self._sk.lower() < other._sk.lower()
+        return self._sortKey.lower() < other._sortKey.lower()
     def __hash__(self):
         return self._eid
 

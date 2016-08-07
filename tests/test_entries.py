@@ -42,6 +42,9 @@ class DbTests(utils.DbTestCase):
         assert e1.dateAdded == date.today()
         assert e1.dateEdited == date.today()
 
+        # sorting
+        assert e1 < e2
+
     def testFind(self):
         e1Name = "Maudi (Maudlin)"
         e2Name = "Katerina (Maudlin)"
