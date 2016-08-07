@@ -4,7 +4,7 @@
 # and line 11 is outright invalid.
 
 Alfonzo	P 2.4
-Greta	P 1.{7, 10}	                            
+Greta	P 1.7; 10	                            
 Knuth, Donald	P 2.16-8
 Margareta	P 1.see Greta
 Maud	P 1.6 | P 2.5

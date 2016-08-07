@@ -42,9 +42,6 @@ class SourceTests(utils.DbTestCase):
             s3 = Source.makeNew('Chronic Books', (10,100), (44,80), 25, 'CH',
                     sourceTypes['book'])
         with self.assertRaises(InvalidNameError):
-            s3 = Source.makeNew('Chronic {Books}', (10,100), (44,80), 25, 'CI',
-                    sourceTypes['book'])
-        with self.assertRaises(InvalidNameError):
             s3 = Source.makeNew('Chronic|Books', (10,100), (44,80), 25, 'CJ',
                     sourceTypes['book'])
         with self.assertRaises(InvalidNameError):

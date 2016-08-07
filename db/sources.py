@@ -17,7 +17,7 @@ class DuplicateError(Exception):
 class InvalidNameError(Exception):
     def __init__(self, name, what):
         self.msg = "The %s %s is invalid: a source %s cannot contain the " \
-                   "characters '{', '}' or '|'." % (what, name, what)
+                   "character '|'." % (what, name, what)
     def __str__(self):
         return self.msg
 class InvalidRangeError(Exception):
@@ -88,9 +88,9 @@ class Source(object):
             raise InvalidRangeError('volume')
         if pageval[0] > pageval[1]:
             raise InvalidRangeError('page')
-        if '{' in name or '}' in name or '|' in name:
+        if '|' in name:
             raise InvalidNameError(name, 'name')
-        if '{' in abbrev or '}' in abbrev or '|' in abbrev:
+        if '|' in abbrev:
             raise InvalidNameError(abbrev, 'abbreviation')
         if stype == db.consts.sourceTypes['diary']:
             d.cursor.execute("SELECT name FROM sources WHERE stype = ?",

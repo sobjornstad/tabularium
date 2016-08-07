@@ -22,11 +22,10 @@ class DuplicateError(Exception):
     def __str__(self):
         return self.text
 class NonexistentSourceError(Exception):
-    def __init__(self, sourceName):
-        self.sourceName = sourceName
+    def __init__(self, text):
+        self.text = text
     def __str__(self):
-        return "The abbreviation or source name %s does not exist." % (
-                self.sourceName)
+        return self.text
 class NonexistentVolumeError(Exception):
     def __init__(self, sourceName, volName):
         self.volName = volName
@@ -387,15 +386,13 @@ def makeOccurrencesFromString(s, entry):
             [1] The number of duplicates specified by /s/ that were skipped.
 
     Raises:
-        All exceptions raised by parseUnifiedFormat() are not caught by this
-        function and will be received by the caller so it can provide an
-        appropriate error message.
+        All exceptions raised by parseUnifiedFormat() will bubble up to the
+        caller so it can provide an appropriate error message.
     """
     uofRets = parseUnifiedFormat(s)
     occs = []
     numDupes = 0
-    for i in uofRets:
-        source, vol, ref, refType = i
+    for source, vol, ref, refType in uofRets:
         try:
             occs.append(Occurrence.makeNew(entry, vol, ref, refType))
         except DuplicateError:
@@ -442,68 +439,53 @@ def parseUnifiedFormat(s):
     The Invisible Man 58
     The 160th Book: 45
 
-    The rules:
-    The general format looks like `SOURCE:VOLNUMBER.PAGENUMBER`.
-
-    - There may be spaces or no spaces before or after the colon and period.
+    Rules:
+    - The general format looks like `SOURCE:VOLNUMBER.PAGENUMBER`.
+    - Spaces before and after the colon and period are optional.
     - The volume number and point may be omitted if the source is single-volume
       (or you can write in volume 1, but that's generally silly).
-    - The colon may be omitted entirely so long as the source name does not
-      contain any numbers or colons. If there are numbers or colons in the
-      source name, the parser will be too confused to tell what you mean (even
-      if the volume number has been omitted), and you must use the colon or put
-      the reference in braces.
-    - If the source is not a valid source abbreviation, the parser will try to
-      parse it as a full source name; if there is a conflict, the abbreviation
-      takes precedence.
+    - The colon may be omitted entirely. 
+    - If the source is not a valid source abbreviation, the parser will take it
+      as a full source name; if you happen to have a source with the same name
+      as the abbreviation of a different source, the abbreviation takes
+      precedence.
     
-
     Multiple occurrences can be entered at once:
-
-    CB:{1.56, 5.78}
-    CB {1.56,5 .78,}
-    CB{1.56}
+    CB: 1.56; 78
+    CB 1.56;78
     CB 1.56 | CB 5.78 | CB 12.56
-    CB {1.56, 5.78} | CB 12.56
-    RT 2378 | The Invisible Man {56, 78}
+    CB 1.56; 78 | CB 12.56
+    RT 2378 | The Invisible Man 56; 78
     The 160th Book: 45 | TB2.162
 
     Rules:
-    - To enter multiple page numbers within the same source and volume, OR
-      multiple volumes and page numbers within the same source, place the page
-      or volume and page references in braces, separating them with a comma. A
-      trailing comma inside the braces may optionally be used. (Braces are also
-      legal with a single occurrence.)
-    - To place a literal comma within braces (say, in the name of an entry
-      you're redirecting to), escape it with a backslash: '{see Doe\, Jane}'.
-    - To enter multiple whole sources, or as a more verbose way of entering
-      multiple pages within the same source, place a pipe (|) character between
-      the references, with optional (but suggested for readability) spaces on
-      either side.
+    - To enter multiple page numbers within the same source and volume,
+      separate them with a semicolon.
+    - To enter a literal semicolon (say, in the name of an entry you're
+      redirecting to), escape it with a backslash: 'see first\; second'.
+    - To enter occurrences for multiple sources and volumes, place a
+      pipe (|) character between the references. (Spaces around the pipe are
+      optional.)
 
-    Finally, you may want to enter a range or a redirect. Examples:
+    Finally, you may want to enter a range or a redirect:
     CB 15.45-56
     CB 15.45–6
     CB 15.45--56
     CB 15. see Other Entry
     RT: see Other Entry
+    RT: 25; see Other Entry
     RT see Other. Entry.
 
     Rules:
-    
     - Ranges are specified with '-', '--', or '–' (literal en-dash). There can
-      be spaces at the sides, but not between the dashes of the double dash. A
-      "collapsed" range, where you leave out the first digit(s) in the second
-      half because they're identical to the first digit(s) in the first half, is
-      also valid.
+      be spaces at the sides of the dash, but not between the dashes of a
+      double dash. A "collapsed" range, where you leave out the first digit(s)
+      in the second half because they're identical to the first digit(s) in the
+      first half, is also valid.
     - Redirects are specified with the keyword 'see' followed by a space and
       the entry to redirect to.
-
-    And this is valid UOF, though not a very likely/good way of doing things...
-    CB{15.26--7,2    . 18, 4.see    Other Entry} |The 2nd Book of    : 45
     ----------
     """
-
     # Step 1: Recurse for each pipe-separated section, if any.
     # This step is effectively skipped in the second-level calls.
     uniqueSections = [i.strip() for i in s.split('|')]
@@ -513,242 +495,119 @@ def parseUnifiedFormat(s):
             occurrences = occurrences + parseUnifiedFormat(i)
         return occurrences
 
-    # Step 2: Separate the source and reference(s). This is *ugly*.
-    source, reference = _splitSourceRef(s)
-
-    # Step 3: Separate the individual references within 'reference' into a list
-    #         of references.
-    reference = reference.replace('\\,', '<ESCAPEDCOMMA>')
-    if reference.startswith('{') and reference.endswith('}'):
-        reference = reference[1:-1] # chop out braces
-        refs = reference.split(',')
-        refs = [i.strip() for i in refs if i] # strip and remove empty strings
-    elif '{' in reference:
-        if '}' not in reference:
-            raise InvalidUOFError()
-        outside, inside = re.match(r'(.*){(.*)}', reference).group(1, 2)
-        refs = inside.split(',')
-        refs = [(outside.strip() + i.strip()) for i in refs if i]
+    # Step 2: Find the source and separate it from the references.
+    s = s.strip()
+    for i in db.sources.allSources():
+        # NOTE: in the unlikely case that a source has the same name as the
+        # abbreviation of a different source, the abbreviation is prioritized.
+        if s.startswith(i.getAbbrev()):
+            source = i
+            refPart = s.replace(i.getAbbrev(), '').strip()
+            break
+        elif s.startswith(i.getName()):
+            source = i
+            refPart = s.replace(i.getName(), '').strip()
+            break
     else:
-        # no braces at all, not much to do
-        refs = [reference]
-    refs = [i.replace('<ESCAPEDCOMMA>', ',') for i in refs]
+        raise NonexistentSourceError(
+            "The provided UOF %s does not begin with a valid source name or "
+            "abbreviation." % s)
+    if refPart.startswith(':'):
+        refPart = refPart[1:].strip()
 
-    # Step 4: Find volume, refnum, and range/redir type from each reference.
-    referenceList = []
-    for ref in refs:
-        refSplit = ref.split('.')
-        if len(refSplit) == 1:
-            # single-volume source
-            volume = 1
-            refnum = ref.strip()
-        elif len(refSplit) == 2:
-            volume = refSplit[0].strip()
-            refnum = refSplit[1].strip()
+    # Step 3: Separate volume and reference.
+    if '.' not in refPart:
+        # single-volume source
+        if source.isSingleVol():
+            volnum = 1
+            reference = refPart.strip()
         else:
-            if 'see ' in refSplit[1]:
-                # This was a "see" entry with a period in it.
-                volume = refSplit[0].strip()
-                refnum = '.'.join(refSplit[1:]).strip()
-            elif 'see ' in refSplit[0]:
-                # This was a "see" entry with a period in it, and no volume.
-                volume = 1
-                refnum = '.'.join(refSplit).strip()
-            else:
-                raise InvalidUOFError()
+            raise InvalidUOFError(
+                "The source %s that you specified has multiple volumes, so "
+                "you need to say which volume you want to add to, like "
+                '"%s 2.12".' % (source.getName(), source.getName()))
+    else:
+        # multi-volume source
+        volnum, _, reference = [i.strip() for i in refPart.partition('.')]
         try:
-            volume = int(volume)
+            volnum = int(volnum)
         except ValueError:
-            # Perhaps there are several "sees" and periods in here, and no
-            # source? (Dear user: quit screwing with us.)
-            if 'see ' in volume:
-                # Yep, no volume num was given after all.
-                volume = 1
-                refnum = '.'.join(refSplit)
+            # actually a single-volume source where a redirect contained '.'?
+            if source.isSingleVol():
+                volnum = 1
+                reference = refPart.strip()
             else:
-                raise InvalidUOFError()
+                raise InvalidUOFError(
+                    'It looks like you specified the volume "%s", but '
+                    "volume numbers have to be integers." % volnum)
 
-        # determine entry type and format refnum
+    # Step 4: Split the reference on semicolons to see if there are multiple
+    # targets. Pipe is used as a temporary value because it is illegal in
+    # input here.
+    reference = reference.replace('\\;', '|')
+    refStrings = [i.strip().replace('|', ';') for i in reference.split(';')]
+
+    # Step 5: Parse each target, determine its type, and create a list
+    # of targets.
+    parsedRefs = []
+    for refnum in refStrings:
         if refnum.startswith('see '):
             # redirect
             reftype = refTypes['redir']
-            refnum = re.sub('^see ', '', refnum).strip()
+            refnum = refnum[4:].strip() # remove the 'see '
         elif '--' in refnum or '–' in refnum or '-' in refnum:
-            # range: normalize delimiter
+            # range
             reftype = refTypes['range']
-            if '--' in refnum:
-                refnum = refnum.replace('--', '-')
-            elif '–' in refnum:
-                refnum = refnum.replace('–', '-')
-            # convert both to integers
-            first, second = refnum.split('-')
+            normalizedRefnum = refnum.replace('–', '-').replace('--', '-')
+            first, second = normalizedRefnum.split('-')
             try:
-                first, second = int(first), int(second)
+                first, second = int(first.strip()), int(second.strip())
             except ValueError:
-                raise InvalidUOFError()
-            # "uncollapse" range
-            ret = rangeUncollapse(first, second)
-            if ret is None:
-                # range couldn't be uncollapsed
+                raise InvalidUOFError(
+                    "The provided UOF appears to contain a range of "
+                    "references (%s), but one or both sides of the range "
+                    "are not integers." % refnum)
+            uncollapsed = rangeUncollapse(first, second)
+            if uncollapsed is None:
                 raise InvalidReferenceError('page range')
-            else:
-                first, second = ret
-                refnum = "%i-%i" % (first, second)
+            refnum = "%i-%i" % uncollapsed
         else:
-            # simple number
+            # number
             reftype = refTypes['num']
             try:
                 refnum = int(refnum)
             except ValueError:
-                raise InvalidUOFError()
+                raise InvalidUOFError(
+                    "The provided UOF appears to contain a reference to a "
+                    "single page or location (%s), but that reference is not "
+                    "an integer. (If you were trying to enter a redirect, use "
+                    'the keyword "see" before the entry to redirect to.)'
+                    % refnum)
 
-        referenceList.append((volume, refnum, reftype))
+        # validate the provided reference
+        volume = db.volumes.byNumAndSource(source, volnum)
+        if volume is None:
+            raise NonexistentVolumeError(source.getName(), volnum)
 
-    # Step 5: Fetch source object; raise an error if any references are illegal.
-    for i in referenceList:
-        if(not db.sources.abbrevUsed(source) and
-           not db.sources.sourceExists(source)):
-            raise NonexistentSourceError(source)
-        else:
-            try:
-                sourceObj = db.sources.byAbbrev(source)
-            except IndexError:
-                sourceObj = db.sources.byName(source)
-        volume = i[0]
-        refnum = i[1]
-        reftype = i[2]
-        if not sourceObj.isValidVol(volume):
-            raise InvalidReferenceError('volume', volume, sourceObj)
         if reftype == refTypes['num']:
-            if not sourceObj.isValidPage(refnum):
-                raise InvalidReferenceError('page', refnum, sourceObj)
+            if not source.isValidPage(refnum):
+                raise InvalidReferenceError('page', refnum, source)
         elif reftype == refTypes['range']:
             first, second = [int(i) for i in refnum.split('-')]
             if first >= second:
                 raise InvalidReferenceError('page range')
             for i in (first, second):
-                if not sourceObj.isValidPage(i):
-                    raise InvalidReferenceError('page', i, sourceObj)
+                if not source.isValidPage(i):
+                    raise InvalidReferenceError('page', i, source)
         elif reftype == refTypes['redir']:
-            # I've decided checking whether the target of the redirect exists
-            # is more bother than it's worth -- if we're simply adding entries
-            # in a different order, it would get really irritating. We'll have
-            # a Tool for invalid redirect checks to help balance this out, and
-            # we just have to remember that it's possible the redirect is
-            # invalid when we attempt to follow it.
+            # We don't check if redirects are valid, because we might want
+            # to add them in an order where one is temporarily invalid.
             pass
         else:
             assert False, "unreachable code reached -- invalid refType"
+        parsedRefs.append((source, volume, refnum, reftype))
 
-    # Step 6: Find Volume object and return the tuple.
-    finalReferences = []
-    for i in referenceList:
-        volume = i[0]
-        refnum = i[1]
-        reftype = i[2]
-        volObj = db.volumes.byNumAndSource(sourceObj, volume)
-        if volObj is None:
-            # volume doesn't actually exist
-            raise NonexistentVolumeError(sourceObj.getName(), volume)
-        finalReferences.append((sourceObj, volObj, refnum, reftype))
-    return finalReferences
-
-def _splitSourceRef(s):
-    """
-    Component of the parseUnifiedFormat() routine. Given a working string with
-    no pipes but all other components, return a source and reference part.
-
-    Raises InvalidUOFError if something doesn't match the parser's assumptions
-    (hopefully this means the given string is not in UOF).
-    """
-
-    colonSplits = s.split(':')
-    if len(colonSplits) >= 2:
-        # At least one separating colon was found; split at the *last* colon,
-        # since the source name could contain one or more colons.
-        source = ':'.join(colonSplits[:-1]).strip()
-        reference = colonSplits[-1].strip()
-    elif len(colonSplits) == 1:
-        if not _isColonlessValid(s):
-            #print("dumping str:")
-            #print(s)
-            raise InvalidUOFError()
-        if '{' in s:
-            # We have a brace; take that part out and then check for the
-            # other reference
-            braceSplits = s.split('{')
-            if len(braceSplits) > 2:
-                #print "dumping:"
-                #print braceSplits
-                raise InvalidUOFError()
-
-            # maybe we have a volume number that ended up in the first part
-            volPart = None
-            if braceSplits[0].strip().endswith('.'):
-                try:
-                    volPart = re.match(r'.*?(\d+)\.$', braceSplits[0].strip()).group(1)
-                    #print "my volPart will be: %r" % volPart
-                except AttributeError:
-                    volPart = re.match(r'.*?(\d+)\.$', braceSplits[0])
-                    raise InvalidUOFError()
-                    #print(volPart)
-                    #print "error will be excepted"
-            else:
-                #print "I will not run because my braceSplits[0].strip() is:"
-                #print "-> %r" % braceSplits[0].strip()
-                pass
-
-
-            if volPart:
-                source = braceSplits[0].strip().replace(volPart + '.', '').strip()
-                reference = volPart + ".{" + braceSplits[1].strip()
-            else:
-                source = braceSplits[0].strip()
-                reference = "{" + braceSplits[1].strip()
-        else:
-            # We know the string is valid and has no colon or brace in it;
-            # therefore, there must be no number in the title, and we can
-            # safely split on the first nonnumber-number sequence.
-            result = re.split(r'(\D)(\d)', s)
-            #print "my result was: %r" % result
-            if len(result) == 4:
-                # when space between abbrev and vol num
-                source = ''.join(result[0:2]).strip()
-                reference = ''.join(result[2:5]).strip()
-            elif len(result) == 7 or len(result) == 10:
-                # when no space between; latter with range
-                source = ''.join(result[0:2]).strip()
-                reference = ''.join(result[2:]).strip()
-            elif len(result) == 1:
-                # perhaps this is a single-volume 'see': e.g. 'RT see foobar'
-                newResult = result[0].split(' see ')
-                if len(newResult) > 1:
-                    source = newResult[0]
-                    reference = 'see ' + ' see '.join(newResult[1:]).strip()
-                else:
-                    raise InvalidUOFError()
-            else:
-                raise InvalidUOFError()
-    else:
-        # even splitting an empty string gives a one-element list
-        assert False, "unreachable branch reached"
-
-    # in all paths, these should be strip()ed already
-    return source, reference
-
-def _isColonlessValid(s):
-    """
-    Given a string s that does not have a colon to separate the source and
-    reference, determine whether the string is valid. This is true if it does
-    not have multiple numbers in it that are not separated by volume or range
-    markers, for instance a number in the title *and* the reference. (It's okay
-    if the numbers are in braces.)
-    """
-    sNew = re.sub('{.*}', '', s)
-    if re.match('.*[0-9]+[^.\-–0-9]+[0-9]+', sNew) is not None:
-        return False
-    else:
-        return True
+    return parsedRefs
 
 def rangeUncollapse(first, second):
     """

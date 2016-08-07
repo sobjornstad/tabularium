@@ -27,58 +27,6 @@ class UOFTests(utils.DbTestCase):
         self.v2 = Volume.makeNew(self.cbSource, 2, "",
                                  date(2015, 7, 7), date(2015, 8, 10))
 
-    def testUOFSplitSourceRef(self):
-        """
-        Tests should include all tests from the docstring documenting UOF in the
-        parseUnifiedFormat() function.
-        """
-        testDict = {
-            # mentioned in docstring
-            'CB1.56': ('CB', '1.56'),
-            'CB 1.56': ('CB', '1.56'),
-            'CB: 1.56': ('CB', '1.56'),
-            'CB:1 . 56': ('CB', '1 . 56'),
-            'RT 2378': ('RT', '2378'),
-            'RT 1.2378': ('RT', '1.2378'),
-            'The Invisible Man 58': ('The Invisible Man', '58'),
-            'The 160th Book: 45': ('The 160th Book', '45'),
-            'CB:{1.56, 5.78}': ('CB', '{1.56, 5.78}'),
-            'CB {1.56, 5 .78,}': ('CB', '{1.56, 5 .78,}'),
-            'CB{1.56}': ('CB', '{1.56}'),
-            # other tests, trying my best to break the little sucker
-            'The Invisible Man:234': ('The Invisible Man', '234'),
-            'The Invisible Man: 235': ('The Invisible Man', '235'),
-            'The Invisible Man: 1.235': ('The Invisible Man', '1.235'),
-            'The Invisible Man: {1.235}': ('The Invisible Man', '{1.235}'),
-            'The Invisible Man: 1.{235}': ('The Invisible Man', '1.{235}'),
-            'The Invisible Man: 1.{235,334}': ('The Invisible Man', '1.{235,334}'),
-            'The Invisible Man 588': ('The Invisible Man', '588'),
-            'The Invisible Man {588, 264}': ('The Invisible Man', '{588, 264}'),
-            'The Invisible Man 2.588': ('The Invisible Man', '2.588'),
-            'The Invisible Man 2.{588}': ('The Invisible Man', '2.{588}'),
-            'The Invisible Man 2.{220,588}': ('The Invisible Man', '2.{220,588}'),'The Invisible Man {2.220, 1.588}': ('The Invisible Man', '{2.220, 1.588}'),
-            'CB:3.56': ('CB', '3.56'),
-            'Chrono Book 5.{21,54,16}': ('Chrono Book', '5.{21,54,16}'),
-            'CB 5.15': ('CB', '5.15'),
-            'CB5.58': ('CB', '5.58'),
-            'CB5.{58}': ('CB', '5.{58}'),
-            'CB 5.{58}': ('CB', '5.{58}'),
-            'CB5.{58, 79}': ('CB', '5.{58, 79}'),
-            'CB 5.{58,79}': ('CB', '5.{58,79}'),
-            'CB {5.58}': ('CB', '{5.58}'),
-            'CB{5.58}': ('CB', '{5.58}'),
-            'CB{5.58,6.17,}': ('CB', '{5.58,6.17,}'),
-            'The 121st Valid String {237, 348}': ('The 121st Valid String', '{237, 348}'),
-            'The 122nd Valid String {237}': ('The 122nd Valid String', '{237}'),
-            'The 123rd Valid. String {5.23}': ('The 123rd Valid. String', '{5.23}'),
-            'The 124th Valid: String: {5.23}': ('The 124th Valid: String', '{5.23}'),
-           }
-
-        for i in testDict.keys():
-            assert db.occurrences._splitSourceRef(i) == testDict[i], \
-                    "testDict: %r\nreturned:%r\n\n" % (
-                    testDict[i], db.occurrences._splitSourceRef(i))
-
     def testUOFSuccesses(self):
         testDict = {'CB1.56': 'CB 1.56 (0) == ',
                     'CB 1.56': 'CB 1.56 (0) == ',
@@ -91,12 +39,11 @@ class UOFTests(utils.DbTestCase):
                     'TIM 58': 'TIM 1.58 (0) == ',
                     'The 160th Book: 45': 'T1B 1.45 (0) == ',
                     'T1B: 45': 'T1B 1.45 (0) == ',
-                    'CB:{1.56, 2.78}': 'CB 1.56 (0) == CB 2.78 (0) == ',
-                    'CB {1.56,2 .78,}': 'CB 1.56 (0) == CB 2.78 (0) == ',
-                    'CB{1.56}': 'CB 1.56 (0) == ',
+                    'CB:1.56; 78': 'CB 1.56 (0) == CB 1.78 (0) == ',
+                    'CB:1.56;78': 'CB 1.56 (0) == CB 1.78 (0) == ',
                     'CB 1.56 | CB 2.78 | CB 2.56': 'CB 1.56 (0) == CB 2.78 (0) == CB 2.56 (0) == ',
-                    'CB {1.56, 2.78} | CB 2.56': 'CB 1.56 (0) == CB 2.78 (0) == CB 2.56 (0) == ',
-                    'RT 2378 | The Invisible Man {56, 78}': 'RT 1.2378 (0) == TIM 1.56 (0) == TIM 1.78 (0) == ',
+                    'CB 1.56;78 | CB 2.56': 'CB 1.56 (0) == CB 1.78 (0) == CB 2.56 (0) == ',
+                    'RT 2378 | The Invisible Man 56; 78': 'RT 1.2378 (0) == TIM 1.56 (0) == TIM 1.78 (0) == ',
                     'The 160th Book: 45 | CB1.62': 'T1B 1.45 (0) == CB 1.62 (0) == ',
                     'CB 2.45-56': 'CB 2.45-56 (1) == ',
                     'CB 2.45–6': 'CB 2.45-46 (1) == ',
@@ -105,7 +52,7 @@ class UOFTests(utils.DbTestCase):
                     'RT 1279-89': 'RT 1.1279-1289 (1) == ',
                     'RT1.107-8': 'RT 1.107-108 (1) == ',
                     'RT: see Foobar Entry': 'RT 1.Foobar Entry (2) == ',
-                    'CB{1.26--7,2    . 18, 2.see    Other Entry} |The 160th Book    : 45': 'CB 1.26-27 (1) == CB 2.18 (0) == CB 2.Other Entry (2) == T1B 1.45 (0) == ',
+                    'CB1.26--7; 18; see    Other Entry |The 160th Book    : 45': 'CB 1.26-27 (1) == CB 1.18 (0) == CB 1.Other Entry (2) == T1B 1.45 (0) == ',
                     'CB 2. see Mr. Aoeui': 'CB 2.Mr. Aoeui (2) == ',
                     'RT 1. see foobar': 'RT 1.foobar (2) == ',
                     'RT 1. see Mr. Aoeui': 'RT 1.Mr. Aoeui (2) == ',
@@ -118,12 +65,11 @@ class UOFTests(utils.DbTestCase):
                     'RT see Other. see E. Entry': 'RT 1.Other. see E. Entry (2) == ',
                     'RT see   Other . see   E. Entry': 'RT 1.Other . see   E. Entry (2) == ',
                     'RT: see "21st century classroom"': 'RT 1."21st century classroom" (2) == ',
-                    'RT {see "21st century classroom"}': 'RT 1."21st century classroom" (2) == ',
-                    'Random Thoughts {see "21st century classroom",}': 'RT 1."21st century classroom" (2) == ',
+                    'RT see "21st century classroom"': 'RT 1."21st century classroom" (2) == ',
+                    'Random Thoughts see "21st century classroom"': 'RT 1."21st century classroom" (2) == ',
                     'CB 2.see King, Heather': 'CB 2.King, Heather (2) == ',
-                    'CB 2.{see King\, Heather}': 'CB 2.King, Heather (2) == ',
-                    'CB 2.{35, see King\, Heather}': 'CB 2.35 (0) == CB 2.King, Heather (2) == ',
-                    'CB 2. {see King\, Heather}': 'CB 2.King, Heather (2) == ',
+                    'CB 2.see King\; Heather': 'CB 2.King; Heather (2) == ',
+                    'CB 2.35; see King\; Heather': 'CB 2.35 (0) == CB 2.King; Heather (2) == ',
                    }
 
         for i in testDict.keys():
@@ -152,7 +98,7 @@ class UOFTests(utils.DbTestCase):
     def testMakeOccurrencesFromStringDupe(self):
         e1 = Entry.makeNew("Me, Myself, & I")
         makeOccurrencesFromString("CB1.42", e1)
-        occs = makeOccurrencesFromString("CB1.{42, 44}", e1)
+        occs = makeOccurrencesFromString("CB1.42; 44", e1)
         assert len(occs[0]) == 1
         assert occs[1] == 1
         assert occs[0][0].getRef()[0] == '44'
@@ -162,33 +108,44 @@ class UOFTests(utils.DbTestCase):
     # checks, but all of these are clearly invalid and should trigger some
     # check.
     def testInvalidUOFError(self):
-        # TODO: It would be nice to support more descriptive errors here.
-        def duhWrapper(string):
-            self._testUOFErr(string, InvalidUOFError, "Invalid UOF.")
-        for i in ('CB 2.{46, 48', 'CB:htns.46', 'CB: 2.46.58',
-                 'CB: 2.46--qq', 'CB 2.gc'):
-            duhWrapper(i)
-        duhWrapper('CB: 4.{48{48}}')
-        duhWrapper('Soren 23789 3.78')
-        duhWrapper('')
-        duhWrapper('CB: {2.2')
-        duhWrapper('CB {2.2 {2.6}}')
-        duhWrapper('CB .{6}')
+        self._testUOFErr('CB 8', InvalidUOFError,
+                         "The source Chrono Book that you specified has "
+                         "multiple volumes, so you need to say which volume "
+                         'you want to add to, like "Chrono Book 2.12".')
+        self._testUOFErr('CB soren.53', InvalidUOFError,
+                         'It looks like you specified the volume "soren", '
+                         "but volume numbers have to be integers.")
+        self._testUOFErr('CB 2.13-soren', InvalidUOFError,
+                         "The provided UOF appears to contain a range of "
+                         "references (13-soren), but one or both sides of the "
+                         "range are not integers.")
+        self._testUOFErr('CB 2.soren-23', InvalidUOFError,
+                         "The provided UOF appears to contain a range of "
+                         "references (soren-23), but one or both sides of the "
+                         "range are not integers.")
+        self._testUOFErr('CB 2.soren-greta', InvalidUOFError,
+                         "The provided UOF appears to contain a range of "
+                         "references (soren-greta), but one or both sides of the "
+                         "range are not integers.")
+        self._testUOFErr('CB 2.Maud', InvalidUOFError,
+                         "The provided UOF appears to contain a reference to "
+                         "a single page or location (Maud), but that "
+                         "reference is not an integer. (If you were trying to "
+                         'enter a redirect, use the keyword "see" before the '
+                         "entry to redirect to.)")
 
     def testNonexistentSourceError(self):
         self._testUOFErr('Flibbertygibberty: 2.15', NonexistentSourceError,
-                         "The abbreviation or source name Flibbertygibberty "
-                         "does not exist.")
+                         "The provided UOF Flibbertygibberty: 2.15 "
+                         "does not begin with a valid source name or "
+                         "abbreviation.")
 
     def testInvalidReferenceError(self):
-        self._testUOFErr('CB: 9000.15', InvalidReferenceError,
+        self._testUOFErr('CB: 9000.15', NonexistentVolumeError,
                          "The "
                          'volume 9000'
-                         " does not meet the validation parameters for Chrono "
-                         "Book, which state that "
-                         'volumes'
-                         " must be between "
-                         '1 and 100.')
+                         " in source Chrono Book "
+                         "does not exist.")
         self._testUOFErr('CB: 1.800', InvalidReferenceError,
                          "The "
                          'page 800'
@@ -226,22 +183,6 @@ class UOFTests(utils.DbTestCase):
     def testNonexistentVolumeError(self):
         self._testUOFErr('CB: 4.48', NonexistentVolumeError,
                          "The volume 4 in source Chrono Book does not exist.")
-
-    def testColonlessValid(self):
-        validStrs  =  ('The Invisible Man 588',
-                       'The Invisible Man {588, 264}',
-                       'Chrono Book 5.{21,54,16}',
-                       'The 121st Valid String {237, 348}',
-                       'The 122st Valid String {237}'
-                      )
-        invalidStrs = ('The 120th Invalid String 234',
-                      )
-
-        for i in validStrs:
-            assert db.occurrences._isColonlessValid(i)
-        for i in invalidStrs:
-            assert not db.occurrences._isColonlessValid(i)
-
 
     def _testUOFErr(self, uof, err, msg):
         with self.assertRaises(err) as context:
