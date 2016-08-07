@@ -11,21 +11,21 @@ class SourceTests(utils.DbTestCase):
     def testObject(self):
         s1 = Source.makeNew('Chronic Book', (10,100), (44,80), 25, 'CD',
                 sourceTypes['diary'])
-        assert s1.getName() == 'Chronic Book'
+        assert s1.name == 'Chronic Book'
 
-        s1.setName('Chrono Book')
+        s1.name = 'Chrono Book'
         #s1.setStype(sourceTypes['diary']) # not implemented
-        s1.setAbbrev('CB')
-        s1.setValidVol((1, 100))
-        s1.setValidPage((4, 80))
-        s1.setNearbyRange(2)
+        s1.abbrev = 'CB'
+        s1.volVal = (1, 100)
+        s1.pageVal = (4, 80)
+        s1.nearbyRange = 2
 
-        assert s1.getSid() == 1
-        assert s1.getVolVal() == (1, 100)
-        assert s1.getPageVal() == (4, 80)
-        assert s1.getName() == 'Chrono Book'
-        assert s1.getStype() == sourceTypes['diary']
-        assert s1.getAbbrev() == 'CB'
+        assert s1.sid == 1
+        assert s1.volVal == (1, 100)
+        assert s1.pageVal == (4, 80)
+        assert s1.name == 'Chrono Book'
+        assert s1.sourceType == sourceTypes['diary']
+        assert s1.abbrev == 'CB'
         assert s1.nearbySpread(8) == (6,10)
         assert s1.isValidVol(2)
         assert not s1.isValidVol(5000)
@@ -56,9 +56,10 @@ class SourceTests(utils.DbTestCase):
         o2 = Occurrence.makeNew(e1, v1, '50', 0)
         assert s1.volExists(50)
         with self.assertRaises(TrouncesError) as e:
-            s1.setValidVol((1, 10))
+            s1.volVal = (1, 10)
             assert 'would make 1 volume and 2 occurrences invalid' in e
-        s1.setValidVol((1, 10), overrideTrounce=True)
+        with db.sources.bypassTrounceWarnings(s1):
+            s1.volVal = (1, 10)
         assert not s1.volExists(50)
         assert s1.volExists(5)
 
@@ -68,10 +69,11 @@ class SourceTests(utils.DbTestCase):
         o2 = Occurrence.makeNew(e2, v2, '50', 0)
         assert len(fetchForEntry(e2)) == 2
         with self.assertRaises(TrouncesError) as e:
-            s1.setValidPage((1, 30))
+            s1.pageVal = (1, 30)
             assert 'Changing the page max' in e
             assert 'would make 1 occurrence invalid' in e
-        s1.setValidPage((1, 30), overrideTrounce=True)
+        with db.sources.bypassTrounceWarnings(s1):
+            s1.pageVal = (1, 30)
         assert len(fetchForEntry(e2)) == 1
 
 

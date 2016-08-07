@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
+from contextlib import contextmanager
+import json
+
 import db.database as d
 import db.consts
 import db.volumes
 import db.occurrences
 from db.utils import dateSerializer
-import json
 
 class DuplicateError(Exception):
     def __init__(self, what):
@@ -55,11 +57,14 @@ class Source(object):
     def __init__(self, sid):
         d.cursor.execute('SELECT name, volval, pageval, nearrange, abbrev, '
                 'stype FROM sources WHERE sid=?', (sid,))
-        self._name, self._volval, self._pageval, self._nearrange, \
-                self._abbrev, self._stype = d.cursor.fetchall()[0]
-        self._volval = tuple(json.loads(self._volval))
-        self._pageval = tuple(json.loads(self._pageval))
+        self._name, self._volVal, self._pageVal, self._nearbyRange, \
+                self._abbrev, self._sourceType = d.cursor.fetchall()[0]
+        self._volVal = tuple(json.loads(self._volVal))
+        self._pageVal = tuple(json.loads(self._pageVal))
         self._sid = sid
+        # Turn the following option off only temporarily using the
+        # bypassTrounceWarnings context manager, for safety.
+        self.trounceWarning = True
 
     @classmethod
     def makeNew(cls, name, volval, pageval, nearrange, abbrev, stype):
@@ -114,72 +119,66 @@ class Source(object):
         return sourceObj
 
     def __eq__(self, other):
-        return (self._sid == other._sid and self._name == other._name and
-                self._volval == other._volval and
-                self._pageval == other._pageval and
-                self._nearrange == other._nearrange and
-                self._abbrev == other._abbrev and self._stype == other._stype)
+        return self._sid == other._sid
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def getSid(self):
+    @property
+    def sid(self):
         return self._sid
-    def getName(self):
+
+    @property
+    def name(self):
         return self._name
-    def getNearbyRange(self):
-        return self._nearrange
-    def getAbbrev(self):
-        return self._abbrev
-    def getStype(self):
-        return self._stype
-    def getVolVal(self):
-        return self._volval
-    def getPageVal(self):
-        return self._pageval
-    def isSingleVol(self):
-        return self._volval == (1,1)
-
-    def nearbySpread(self, num):
-        return (num - self._nearrange, num + self._nearrange)
-    def isValidVol(self, num):
-        return self._volval[0] <= num <= self._volval[1]
-    def isValidPage(self, num):
-        return self._pageval[0] <= num <= self._pageval[1]
-    def volExists(self, num):
-        q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
-        d.cursor.execute(q, (self._sid, num))
-        return True if d.cursor.fetchall() else False
-    def getNumVolsRepr(self):
-        "Get a friendly representation of how many volumes are in this source."
-        if self.isSingleVol():
-            return "(single-volume)"
-        else:
-            return len(db.volumes.volumesInSource(self))
-
-    def setName(self, name):
+    @name.setter
+    def name(self, name):
         if self._name != name:
             if sourceExists(name):
                 raise DuplicateError('name')
             self._name = name
-            self.dump()
-    def setValidVol(self, tup, overrideTrounce=False):
-        """
-        Reset the volume validation. 
+            self._flush()
 
-        Arguments:
-            tup - the new volval, (min, max)
-            overrideTrounce - see note under TrouncesOccurrencesError
+    @property
+    def nearbyRange(self):
+        return self._nearbyRange
+    @nearbyRange.setter
+    def nearbyRange(self, r):
+        if self._nearbyRange != r:
+            self._nearbyRange = r
+            self._flush()
+
+    @property
+    def abbrev(self):
+        return self._abbrev
+    @abbrev.setter
+    def abbrev(self, abb):
+        if self._abbrev != abb:
+            if abbrevUsed(abb):
+                raise DuplicateError('abbreviation')
+            self._abbrev = abb
+            self._flush()
+
+    @property
+    def sourceType(self):
+        return self._sourceType
+
+    @property
+    def volVal(self):
+        return self._volVal
+    @volVal.setter
+    def volVal(self, tup):
+        """
+        Reset the volume validation to a new tuple (min, max).
         
         Raises:
             TrouncesOccurrencesError - if changing the validation to the new
                 values would make some occurrences invalid. After presenting
-                appropriate confirmation to the user, this function may be
-                run again with overrideTrounce set to True, which will cause
-                those occurrences to be deleted instead.
-
+                a warning to the user and getting their consent, you can
+                turn this error off and cause an actual change by wrapping in
+                the bypassTrounceWarnings context manager.
         """
-        assert isinstance(tup, tuple) # in case we forget
-        if tup != self._volval:
+        assert len(tup) == 2 and isinstance(tup, tuple)
+        if tup != self._volVal:
             if tup[0] > tup[1]:
                 raise InvalidRangeError('volume')
 
@@ -188,12 +187,7 @@ class Source(object):
             d.cursor.execute(q, (self._sid, tup[0], tup[1]))
             volsAffected = d.cursor.fetchall()
             if volsAffected:
-                if overrideTrounce:
-                    vols = [db.volumes.Volume(volTuple[0])
-                            for volTuple in volsAffected]
-                    for vol in vols:
-                        vol.delete()
-                else:
+                if self.trounceWarning:
                     q = '''SELECT oid FROM occurrences
                            WHERE vid IN (SELECT vid FROM volumes
                                          WHERE sid=?
@@ -203,12 +197,22 @@ class Source(object):
                     occsAffected = d.cursor.fetchall()
                     raise TrouncesError(tup, 'volume', len(volsAffected),
                                         len(occsAffected))
+                else:
+                    vols = [db.volumes.Volume(volTuple[0])
+                            for volTuple in volsAffected]
+                    for vol in vols:
+                        vol.delete()
             else:
-                self._volval = tup
-                self.dump()
-    def setValidPage(self, tup, overrideTrounce=False):
+                self._volVal = tup
+                self._flush()
+
+    @property
+    def pageVal(self):
+        return self._pageVal
+    @pageVal.setter
+    def pageVal(self, tup):
         """
-        Same deal as for setValidVol.
+        Same deal as for setValVol.
         """
         assert isinstance(tup, tuple)
         if tup[0] > tup[1]:
@@ -220,35 +224,44 @@ class Source(object):
         q = '''SELECT oid FROM occurrences
                WHERE vid IN (SELECT vid FROM volumes
                              WHERE sid=?)
-               AND (CAST(ref as integer) < ?
-                    OR CAST(ref as integer) > ?)
-               AND type IN (0,1)'''
+                     AND (CAST(ref as integer) < ?
+                          OR CAST(ref as integer) > ?)
+                     AND type IN (0,1)'''
         vals = (self._sid, tup[0], tup[1])
         d.cursor.execute(q, vals)
         occsAffected = d.cursor.fetchall()
 
         if occsAffected:
-            if overrideTrounce:
+            if self.trounceWarning:
+                raise TrouncesError(tup, 'page', len(occsAffected))
+            else:
                 occs = [db.occurrences.Occurrence(occTuple[0])
                         for occTuple in occsAffected]
                 for occ in occs:
                     occ.delete()
-            else:
-                raise TrouncesError(tup, 'page', len(occsAffected))
+
+        self._pageVal = tup
+        self._flush()
 
 
-
-        self._pageval = tup
-        self.dump()
-    def setNearbyRange(self, r):
-        self._nearrange = r
-        self.dump()
-    def setAbbrev(self, abb):
-        if self._abbrev != abb:
-            if abbrevUsed(abb):
-                raise DuplicateError('abbreviation')
-            self._abbrev = abb
-            self.dump()
+    def isSingleVol(self):
+        return self._volVal == (1,1)
+    def nearbySpread(self, num):
+        return (num - self._nearbyRange, num + self._nearbyRange)
+    def isValidVol(self, num):
+        return self._volVal[0] <= num <= self._volVal[1]
+    def isValidPage(self, num):
+        return self._pageVal[0] <= num <= self._pageVal[1]
+    def volExists(self, num):
+        q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
+        d.cursor.execute(q, (self._sid, num))
+        return True if d.cursor.fetchall() else False
+    def getNumVolsRepr(self):
+        "Get a friendly representation of how many volumes are in this source."
+        if self.isSingleVol():
+            return "(single-volume)"
+        else:
+            return len(db.volumes.volumesInSource(self))
 
     def delete(self):
         """
@@ -284,16 +297,15 @@ class Source(object):
         d.cursor.execute(q, vidList)
         occurrences = [db.occurrences.Occurrence(occTuple[0])
                        for occTuple in d.cursor.fetchall()]
-
         return len(volumes), len(occurrences)
 
-    def dump(self):
+    def _flush(self):
         q = """UPDATE sources SET name=?, volval=?, pageval=?, nearrange=?,
                abbrev=?, stype=?
                WHERE sid=?"""
-        d.cursor.execute(q, (self._name, json.dumps(self._volval),
-                         json.dumps(self._pageval), self._nearrange,
-                         self._abbrev, self._stype, self._sid))
+        d.cursor.execute(q, (self._name, json.dumps(self._volVal),
+                         json.dumps(self._pageVal), self._nearbyRange,
+                         self._abbrev, self._sourceType, self._sid))
         d.checkAutosave()
 
 
@@ -324,7 +336,7 @@ def allSources(includeSingleVolSources=True):
     d.cursor.execute('SELECT sid FROM sources ORDER BY name')
     sources = [Source(sid[0]) for sid in d.cursor.fetchall()]
     if not includeSingleVolSources:
-        sources = [source for source in sources if source.getVolVal() != (1,1)]
+        sources = [source for source in sources if source.volVal != (1,1)]
     return sources
 
 def getDiary():
@@ -341,3 +353,15 @@ def getDiary():
         return Source(fetch[0][0])
     else:
         return None
+
+@contextmanager
+def bypassTrounceWarnings(source):
+    """
+    Turn off warnings that a source modification will result in lots of invalid
+    occurrences being wiped out, for the duration of the context manager.
+    """
+    source.trounceWarning = False
+    try:
+        yield
+    finally:
+        source.trounceWarning = True

@@ -122,7 +122,7 @@ class VolumeManager(QDialog):
     def fillSources(self):
         sources = db.sources.allSources(includeSingleVolSources=False)
         for source in sources:
-            self.form.sourceList.addItem(source.getName())
+            self.form.sourceList.addItem(source.name)
     def fillVolumes(self):
         source = self._currentSource()
         if source:
@@ -187,8 +187,8 @@ class NewVolumeDialog(QDialog):
         self.form.useDateCheck.stateChanged.connect(self.checkUseDates)
 
         # set default options
-        self.form.sourceName.setText(self.source.getName())
-        minVolValid, maxVolValid = self.source.getVolVal()
+        self.form.sourceName.setText(self.source.name)
+        minVolValid, maxVolValid = self.source.volVal
         volSuggestion = db.volumes.findNextOpenVol(self.source)
         self.form.volNumSpin.setMinimum(minVolValid)
         self.form.volNumSpin.setMaximum(maxVolValid)

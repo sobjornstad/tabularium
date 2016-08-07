@@ -508,7 +508,7 @@ class MainWindow(QMainWindow):
         s = "<center>"
         s += "<b>%s</b><br>" % occ # name of occurrence
         if self.inspectOptions['sn']:
-            s += "(<i>%s</i>)<br>" % (source.getName())
+            s += "(<i>%s</i>)<br>" % (source.name)
         if self.inspectOptions['ad']:
             s += daStr # added date
         if self.inspectOptions['ed']:
@@ -687,7 +687,7 @@ class MainWindow(QMainWindow):
         source = self._getSourceComboSelection()
         if source is not None:
             # if check fails, then volume will not be displayed anyway
-            minv, maxv = source.getVolVal()
+            minv, maxv = source.volVal
             # update volume max/min to match volval
             self.form.occurrencesVolumeSpin1.setMinimum(minv)
             self.form.occurrencesVolumeSpin1.setMaximum(maxv)
@@ -705,7 +705,7 @@ class MainWindow(QMainWindow):
         combo.clear()
         combo.addItem(db.consts.noSourceLimitText)
         for i in db.sources.allSources():
-            combo.addItem(i.getName())
+            combo.addItem(i.name)
         # restore old selection if possible
         index = combo.findText(oldSelection)
         if index != -1:
@@ -1135,9 +1135,11 @@ class MainWindow(QMainWindow):
         nb.exec_()
 
     def onManageSources(self):
+        self.saveSelections()
         ms = ui.sourcemanager.SourceManager(self)
         ms.exec_()
         self.updateSourceCombo()
+        self.updateAndRestoreSelections()
 
     def onManageVolumes(self):
         mv = ui.volmanager.VolumeManager(self)

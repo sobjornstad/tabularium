@@ -79,7 +79,7 @@ class UOFTests(utils.DbTestCase):
             for j in reflist:
                 source, vol, ref, rtype = j
                 vals += "%s %s.%s (%i)" % (
-                        source.getAbbrev(), vol.getNum(), str(ref), rtype)
+                        source.abbrev, vol.getNum(), str(ref), rtype)
                 vals += " == "
             assert vals == testDict[i], \
                     "vals was: %r\ntestDict was: %r" % (vals, testDict[i])

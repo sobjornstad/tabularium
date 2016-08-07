@@ -77,10 +77,10 @@ class NotesBrowser(QDialog):
         self.fillNotesWidget()
 
         if jumpToSource and jumpToVolume:
-            sourceName = jumpToSource.getName()
+            sourceName = jumpToSource.name
             # the following is the way we choose to display volume names, and
             # could change in the future
-            volumeName = jumpToSource.getAbbrev() + str(jumpToVolume.getNum())
+            volumeName = jumpToSource.abbrev + str(jumpToVolume.getNum())
             item = self.form.tree.findItems(sourceName, Qt.MatchExactly)[0]
             numChildren = item.childCount()
             if numChildren == 0:
@@ -194,12 +194,12 @@ class NotesBrowser(QDialog):
         """
         sources = db.sources.allSources()
         for source in sources:
-            sourceItem = TreeWidgetItem([source.getName()])
+            sourceItem = TreeWidgetItem([source.name])
             self.form.tree.addTopLevelItem(sourceItem)
             if not source.isSingleVol():
                 volumes = db.volumes.volumesInSource(source)
                 for volume in volumes:
-                    strList = [source.getAbbrev() + str(volume.getNum())]
+                    strList = [source.abbrev + str(volume.getNum())]
                     TreeWidgetItem(sourceItem, strList)
             sourceItem.sortChildren(0, Qt.AscendingOrder)
         self.form.tree.sortByColumn(0, Qt.AscendingOrder)
@@ -221,7 +221,7 @@ class NotesBrowser(QDialog):
         else:
             source = db.sources.byName(selectedItem.parent().text(0))
             # cut off the abbreviation to get the volume number
-            volumeNum = int(selectedItem.text(0).split(source.getAbbrev())[1])
+            volumeNum = int(selectedItem.text(0).split(source.abbrev)[1])
             volume = db.volumes.byNumAndSource(source, volumeNum)
         return volume
 

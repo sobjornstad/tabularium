@@ -30,7 +30,7 @@ class EditOccurrenceWindow(QDialog):
         self.source = self.vol.getSource()
 
         self.form.entryBox.setText(self.entry.name)
-        startValid, endValid = self.source.getVolVal()
+        startValid, endValid = self.source.volVal
         self.form.volumeSpin.setMinimum(startValid)
         self.form.volumeSpin.setMaximum(endValid)
         self.form.volumeSpin.setValue(self.vol.getNum())
@@ -45,7 +45,7 @@ class EditOccurrenceWindow(QDialog):
     def accept(self):
         "Create new occurrences and delete the old ones."
         ref = self.form.referenceBox.text()
-        uof = "%s: %s.%s" % (self.source.getAbbrev(),
+        uof = "%s: %s.%s" % (self.source.abbrev,
                              self.form.volumeSpin.value(), ref)
         if referenceOk(uof):
             _, dupe = db.occurrences.makeOccurrencesFromString(uof, self.entry)

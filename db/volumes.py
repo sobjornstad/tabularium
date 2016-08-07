@@ -63,15 +63,15 @@ class Volume(object):
         """
 
         if source.isSingleVol() and not (creatingDummy and num == 1):
-            raise SingleVolumeError(source.getName())
+            raise SingleVolumeError(source.name)
         if not source.isValidVol(num):
-            raise ValidationError(source.getName(), source.getVolVal())
+            raise ValidationError(source.name, source.volVal)
         if source.volExists(num):
-            raise DuplicateError(source.getName(), num)
+            raise DuplicateError(source.name, num)
 
         q = '''INSERT INTO volumes (vid, sid, num, notes, dopened, dclosed)
                VALUES (null, ?, ?, ?, ?, ?)'''
-        d.cursor.execute(q, (source.getSid(), num, notes,
+        d.cursor.execute(q, (source.sid, num, notes,
                              dateSerializer(dopened),
                              dateSerializer(dclosed)))
         d.checkAutosave()
@@ -137,7 +137,7 @@ class Volume(object):
         q = """UPDATE volumes
                SET sid=?, num=?, notes=?, dopened=?, dclosed=?
                WHERE vid=?"""
-        d.cursor.execute(q, (self._source.getSid(), self._num, self._notes,
+        d.cursor.execute(q, (self._source.sid, self._num, self._notes,
                          dateSerializer(self._dopened),
                          dateSerializer(self._dclosed), self._vid))
         d.checkAutosave()
@@ -149,12 +149,12 @@ def allVolumes():
     return vs
 
 def volumesInSource(source):
-    sid = source.getSid()
+    sid = source.sid
     d.cursor.execute('SELECT vid FROM volumes WHERE sid=?', (sid,))
     return [Volume(vid[0]) for vid in d.cursor.fetchall()]
 
 def byNumAndSource(source, num):
-    sid = source.getSid()
+    sid = source.sid
     q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
     d.cursor.execute(q, (sid, num))
     try:
@@ -163,7 +163,7 @@ def byNumAndSource(source, num):
         return None
 
 def volExists(source, num):
-    sid = source.getSid()
+    sid = source.sid
     q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
     d.cursor.execute(q, (sid, num))
     return True if d.cursor.fetchall() else False
@@ -180,7 +180,7 @@ def findNextDopened(source):
     """
     d.cursor.execute('''SELECT dclosed FROM volumes
                         WHERE num=(SELECT MAX(num) FROM volumes)
-                        AND sid=?''', (source.getSid(),))
+                        AND sid=?''', (source.sid,))
     try:
         return (dateDeserializer(d.cursor.fetchall()[0][0]) +
                 datetime.timedelta(days=1))
@@ -196,7 +196,7 @@ def findNextOpenVol(source):
     if source.isSingleVol():
         return 0
     d.cursor.execute('SELECT MAX(num) FROM volumes WHERE sid=?',
-                     (source.getSid(),))
+                     (source.sid,))
     try:
         return d.cursor.fetchall()[0][0] + 1
     except (IndexError, TypeError):

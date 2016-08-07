@@ -40,15 +40,15 @@ class InvalidReferenceError(Exception):
         self.source = source
     def __str__(self):
         if self.what == 'page':
-            validation = self.source.getPageVal()
+            validation = self.source.pageVal
         elif self.what == 'volume':
-            validation = self.source.getVolVal()
+            validation = self.source.pageVal
         elif self.what == 'page range':
             return "The second number in a range must be larger than the first."
 
         val = "The %s %s does not meet the validation parameters for %s, " \
               "which state that %ss must be between %i and %i." % (
-                      self.what, self.value, self.source.getName(), self.what,
+                      self.what, self.value, self.source.name, self.what,
                       validation[0], validation[1])
         return val
 
@@ -102,7 +102,7 @@ class Occurrence(object):
         """
         def getOccSortKey(occ):
             return "%s/%s/%s/%s" % (
-                occ._volume.getSource().getAbbrev().lower(),
+                occ._volume.getSource().abbrev.lower(),
                 occ._volume.getNum(), occ._ref, occ._entry.sortKey.lower())
         if hasattr(other, '_volume') and hasattr(other, '_ref'):
             return (generate_index(getOccSortKey(self)) <
@@ -209,9 +209,9 @@ class Occurrence(object):
         if self.isRefType('num') or self.isRefType('range'):
             source = self._volume.getSource()
             if source.isSingleVol():
-                return "%s %s" % (source.getAbbrev(), self._ref)
+                return "%s %s" % (source.abbrev, self._ref)
             else:
-                return "%s %s.%s" % (source.getAbbrev(),
+                return "%s %s.%s" % (source.abbrev,
                                      self._volume.getNum(),
                                      self._ref)
         elif self.isRefType('redir'):
@@ -219,11 +219,11 @@ class Occurrence(object):
             vol = self._volume.getNum()
             if source.isSingleVol():
                 return (('%s: see "%s"' if displayFormatting else '%s.see %s')
-                        % (source.getAbbrev(), self._ref))
+                        % (source.abbrev, self._ref))
             else:
                 return (('%s %s: see "%s"' if displayFormatting
                          else '%s%s.see %s')
-                        % (source.getAbbrev(), vol, self._ref))
+                        % (source.abbrev, vol, self._ref))
         else:
             assert False, "invalid reftype in occurrence"
 
@@ -260,7 +260,7 @@ class Occurrence(object):
         # Notice that the ranges can go outside volume validation, but this
         # doesn't do any harm, as the numbers aren't used beyond this SELECT.
         page = self._ref
-        nearRange = self.volume.getSource().getNearbyRange()
+        nearRange = self.volume.getSource().nearbyRange
         if self._reftype == refTypes['range']:
             bottom, top = parseRange(page)
             pageStart = bottom - nearRange
@@ -499,13 +499,13 @@ def parseUnifiedFormat(s):
     for i in db.sources.allSources():
         # NOTE: in the unlikely case that a source has the same name as the
         # abbreviation of a different source, the abbreviation is prioritized.
-        if s.startswith(i.getAbbrev()):
+        if s.startswith(i.abbrev):
             source = i
-            refPart = s.replace(i.getAbbrev(), '').strip()
+            refPart = s.replace(i.abbrev, '').strip()
             break
-        elif s.startswith(i.getName()):
+        elif s.startswith(i.name):
             source = i
-            refPart = s.replace(i.getName(), '').strip()
+            refPart = s.replace(i.name, '').strip()
             break
     else:
         raise NonexistentSourceError(
@@ -524,7 +524,7 @@ def parseUnifiedFormat(s):
             raise InvalidUOFError(
                 "The source %s that you specified has multiple volumes, so "
                 "you need to say which volume you want to add to, like "
-                '"%s 2.12".' % (source.getName(), source.getName()))
+                '"%s 2.12".' % (source.name, source.name))
     else:
         # multi-volume source
         volnum, _, reference = [i.strip() for i in refPart.partition('.')]
@@ -586,7 +586,7 @@ def parseUnifiedFormat(s):
         # validate the provided reference
         volume = db.volumes.byNumAndSource(source, volnum)
         if volume is None:
-            raise NonexistentVolumeError(source.getName(), volnum)
+            raise NonexistentVolumeError(source.name, volnum)
 
         if reftype == refTypes['num']:
             if not source.isValidPage(refnum):

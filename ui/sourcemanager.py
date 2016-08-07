@@ -42,11 +42,11 @@ class SourceTableModel(QAbstractTableModel):
         robj = self.sources[index.row()]
         col = index.column()
         if col == 0:
-            return robj.getName()
+            return robj.name
         elif col == 1:
-            return robj.getAbbrev()
+            return robj.abbrev
         elif col == 2:
-            return db.consts.sourceTypesFriendlyReversed[robj.getStype()]
+            return db.consts.sourceTypesFriendlyReversed[robj.sourceType]
         elif col == 3:
             return robj.getNumVolsRepr()
         else:
@@ -57,11 +57,11 @@ class SourceTableModel(QAbstractTableModel):
         rev = not order == QtCore.Qt.AscendingOrder
 
         if column == 0:
-            key = lambda i: i.getName().lower()
+            key = lambda i: i.name.lower()
         elif column == 1:
-            key = lambda i: i.getAbbrev().lower()
+            key = lambda i: i.abbrev.lower()
         elif column == 2:
-            key = lambda i: db.consts.sourceTypesFriendlyReversed[i.getStype()]
+            key = lambda i: db.consts.sourceTypesFriendlyReversed[i.sourceType]
         elif column == 3:
             key = lambda i: len(db.volumes.volumesInSource(i))
 
@@ -133,7 +133,7 @@ class SourceManager(QDialog):
                 msg += " Are you sure you want to delete this source?"
                 check = "Really delete this source"
 
-            msg = msg % (source.getName(),
+            msg = msg % (source.name,
                          deletedNums[0], "" if deletedNums[0] == 1 else "s",
                          deletedNums[1], "" if deletedNums[1] == 1 else "s")
             cd = ui.utils.ConfirmationDialog(self, msg, check, title)
@@ -180,17 +180,17 @@ class NewSourceDialog(QDialog):
         source = self.source
         self.setWindowTitle("Edit Source")
         self.form.addButton.setText("&Save")
-        self.form.nameBox.setText(source.getName())
-        self.form.abbrevBox.setText(source.getAbbrev())
+        self.form.nameBox.setText(source.name)
+        self.form.abbrevBox.setText(source.abbrev)
         self.form.typeCombo.setCurrentIndex(db.consts.sourceTypesKeys.index(
-            db.consts.sourceTypesFriendlyReversed[source.getStype()]))
+            db.consts.sourceTypesFriendlyReversed[source.sourceType]))
         self.form.typeCombo.setEnabled(False)
         self.form.multVolCheckbox.setChecked(not source.isSingleVol())
-        self.form.valVolStart.setValue(source.getVolVal()[0])
-        self.form.valVolStop.setValue(source.getVolVal()[1])
-        self.form.valRefStart.setValue(source.getPageVal()[0])
-        self.form.valRefStop.setValue(source.getPageVal()[1])
-        self.form.nearbyRange.setValue(source.getNearbyRange())
+        self.form.valVolStart.setValue(source.volVal[0])
+        self.form.valVolStop.setValue(source.volVal[1])
+        self.form.valRefStart.setValue(source.pageVal[0])
+        self.form.valRefStop.setValue(source.pageVal[1])
+        self.form.nearbyRange.setValue(source.nearbyRange)
         self.isEditing = True
 
     def accept(self, overrideTrounce=None):
@@ -214,38 +214,54 @@ class NewSourceDialog(QDialog):
                               "No abbreviation given")
             return
 
+        # Make the changes, if they're valid.
         try:
             if not self.isEditing:
                 db.sources.Source.makeNew(newName, newVolval, newPageval,
                                           newNearrange, newAbbr, newStype)
+                return
             else:
-                self.source.setName(newName)
-                self.source.setValidVol(
-                    newVolval, True if overrideTrounce == 'volume' else False)
-                self.source.setValidPage(
-                    newPageval, True if overrideTrounce == 'page' else False)
-                self.source.setNearbyRange(newNearrange)
-                self.source.setAbbrev(newAbbr)
+                self.source.name = newName
+                self.source.abbrev = newAbbr
+                self.source.nearbyRange = newNearrange
                 # right now, no setting of stype
         except (db.sources.DuplicateError, db.sources.InvalidRangeError,
                 db.sources.InvalidNameError, db.sources.DiaryExistsError) as e:
             ui.utils.errorBox(str(e))
-        except db.sources.TrouncesError as e:
-            if e.whichThing == 'volume':
-                check = "&Really delete these %i volumes and %i " \
-                        "occurrences" % (e.number1, e.number2)
-                title = "Delete invalid volumes and occurrences"
-            elif e.whichThing == 'page':
-                check = "&Really delete these %i occurrences" % (e.number1)
-                title = "Delete invalid occurrences"
+            return
 
-            errStr = (str(e).replace('would', 'will') +
-                      " If you continue, they will be permanently deleted from"
-                      " your database along with any entries that are left"
-                      " without occurrences.")
+        # Volume and page validation changes can result in massive data loss
+        # if they make existing volumes or occurrences invalid, so we have
+        # a fairly complicated warning/confirmation system.
+        # FIXME: plural/singular problem
+        def confirmDialog(check, title):
+            errStr = (
+                str(e).replace('would', 'will') +
+                " If you continue, they will be permanently deleted from"
+                " your database along with any entries that are left"
+                " without occurrences.")
             cd = ui.utils.ConfirmationDialog(self, errStr, check, title)
-            doDelete = cd.exec_()
-            if doDelete:
-                return self.accept(overrideTrounce=e.whichThing)
-        else:
-            super(NewSourceDialog, self).accept()
+            return cd.exec_()
+        try:
+            self.source.volVal = newVolval
+        except db.sources.TrouncesError as e:
+            check = "&Really delete these %i volumes and %i " \
+                    "occurrences" % (e.number1, e.number2)
+            title = "Delete invalid volumes and occurrences"
+            if confirmDialog(check, title):
+                with db.sources.bypassTrounceWarnings(self.source):
+                    self.source.volVal = newVolval
+            else:
+                return
+        try:
+            self.source.pageVal = newPageval
+        except db.sources.TrouncesError as e:
+            check = "&Really delete these %i occurrences" % (e.number1)
+            title = "Delete invalid occurrences"
+            if confirmDialog(check, title):
+                with db.sources.bypassTrounceWarnings(self.source):
+                    self.source.pageVal = newPageval
+            else:
+                return
+
+        super(NewSourceDialog, self).accept()
