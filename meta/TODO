@@ -8,7 +8,6 @@ MAJOR THINGS TO ADD:
 - Database check
 
 REFACTORING:
-- Use nearbySpread in that buggy isNearby
 - Func to get UOF from occurrences
 - SQLite full-text search?
 

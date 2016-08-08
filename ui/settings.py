@@ -26,6 +26,15 @@ from ui.forms.prefs import Ui_Dialog
 
 import db.database as d
 
+dateOrder = ('Jun 1, 2016', '1 Jun 2016', '6/1/16', '1/6/16', '2016-06-01')
+dateOptions = {'Jun 1, 2016' : 'MMM d, yyyy',
+               '1 Jun 2016'  : 'd MMM yyyy',
+               '6/1/16'      : 'M/d/yy',
+               '1/6/16'      : 'd/M/yy',
+               '2016-06-01'  : 'yyyy-MM-dd',
+               }
+dateOptionsReversed = dict((v, k) for k, v in dateOptions.items())
+
 class PreferencesWindow(QDialog):
     """
     Code to save and retrieve preferences in the preference dialog. Requires an
@@ -52,9 +61,19 @@ class PreferencesWindow(QDialog):
         if pw:
             self.form.passwordBox.setText(self.DUMMYPASSWORD)
         self.onPwToggle()
+        self._fillDateCombo()
 
     def onPwToggle(self):
-        self.form.passwordBox.setEnabled(self.form.passwordCheck.isChecked())
+        passwordEnabled = self.form.passwordCheck.isChecked()
+        self.form.passwordBox.setEnabled(passwordEnabled)
+        self.form.passwordlessTpeekCheck.setEnabled(passwordEnabled)
+
+    def _fillDateCombo(self):
+        for i in dateOrder:
+            self.form.dateCombo.addItem(i)
+        curFormat = dateOptionsReversed[self.sh.get('dateFormat')]
+        i = self.form.dateCombo.findText(curFormat)
+        self.form.dateCombo.setCurrentIndex(i)
 
     def accept(self):
         "Save the settings back to the db, if changed."
@@ -69,6 +88,11 @@ class PreferencesWindow(QDialog):
                 self.sh.put('password', newHash)
         else:
             self.sh.put('password', '')
+
+        dateOpt = dateOptions[self.form.dateCombo.currentText()]
+        self.sh.put('dateFormat', dateOpt)
+        self.mw._resetDateFormat(dateOpt)
+
         super(PreferencesWindow, self).accept()
 
     def reject(self):

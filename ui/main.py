@@ -19,7 +19,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, \
         QFileDialog, QLabel
 from PyQt5.QtGui import QCursor
-from PyQt5.QtCore import QObject, Qt
+from PyQt5.QtCore import QObject, Qt, QDateTime
 
 import db.analytics
 import db.consts
@@ -124,6 +124,7 @@ class MainWindow(QMainWindow):
         self.searchForward = []
         self.savedSelections = None
         self.savedTexts = None
+        self.preferredDateFormat = 'd MMM yyyy'
         self.dbLocation = ui.settings.getDbLocation()
         if not self.dbLocation or not self._initDb(self.dbLocation, False):
             self.onNoDB()
@@ -384,6 +385,7 @@ class MainWindow(QMainWindow):
         wrapper(sf.occurrencesAddedDateSpin2.setDate, 'maxDateAdded')
         wrapper(sf.occurrencesEditedDateSpin1.setDate, 'minDateEdited')
         wrapper(sf.occurrencesEditedDateSpin2.setDate, 'maxDateEdited')
+        wrapper(self._resetDateFormat, 'dateFormat')
 
 
     ### Setting, resetting, and filling the data windows ###
@@ -499,8 +501,10 @@ class MainWindow(QMainWindow):
         vol = occ.volume
         source = vol.source
         # the added and edited dates
-        daStr = "Entered %s<br>" % occ.dateAdded
-        deStr = "Modified %s<br>" % occ.dateAdded
+        daStr = "Entered %s<br>" % QDateTime(occ.dateAdded).toString(
+            self.preferredDateFormat)
+        deStr = "Modified %s<br>" % QDateTime(occ.dateAdded).toString(
+            self.preferredDateFormat)
         # during diary time...
         diaryVolume = db.volumes.findDateInDiary(occ.dateAdded)
 
@@ -1439,6 +1443,17 @@ class MainWindow(QMainWindow):
         self.onSourceToggled(False)
         self.onVolumeToggled(False)
         self._resetForOccurrenceFilter()
+
+    def _resetDateFormat(self, fmt):
+        self.preferredDateFormat = fmt
+        for i in (self.form.occurrencesAddedDateSpin1,
+                  self.form.occurrencesAddedDateSpin2,
+                  self.form.occurrencesEditedDateSpin1,
+                  self.form.occurrencesEditedDateSpin2):
+            i.setDisplayFormat(fmt)
+        # if inspect is selected, it may use the old date format
+        self.saveSelections()
+        self.updateAndRestoreSelections()
 
     # Reset functions: since more or less needs to be reset for each, do a
     # sort of cascade.

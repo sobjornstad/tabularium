@@ -448,10 +448,47 @@ If the interface is sluggish, try turning this off.</string>
             <item>
              <layout class="QGridLayout" name="gridLayout">
               <item row="3" column="5" colspan="2">
-               <widget class="QSpinBox" name="occurrencesVolumeSpin2"/>
+               <widget class="QSpinBox" name="occurrencesVolumeSpin2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item row="0" column="5" colspan="2">
                <widget class="QDateEdit" name="occurrencesAddedDateSpin2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="displayFormat">
                  <string>yyyy/MM/dd</string>
                 </property>
@@ -465,6 +502,12 @@ If the interface is sluggish, try turning this off.</string>
               </item>
               <item row="0" column="4">
                <widget class="QLabel" name="label_9">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>15</width>
@@ -481,6 +524,12 @@ If the interface is sluggish, try turning this off.</string>
               </item>
               <item row="1" column="4">
                <widget class="QLabel" name="label_10">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>15</width>
@@ -497,6 +546,12 @@ If the interface is sluggish, try turning this off.</string>
               </item>
               <item row="3" column="4">
                <widget class="QLabel" name="label_11">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>15</width>
@@ -513,6 +568,24 @@ If the interface is sluggish, try turning this off.</string>
               </item>
               <item row="1" column="1" colspan="3">
                <widget class="QDateEdit" name="occurrencesEditedDateSpin1">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="displayFormat">
                  <string>yyyy/MM/dd</string>
                 </property>
@@ -522,10 +595,47 @@ If the interface is sluggish, try turning this off.</string>
                </widget>
               </item>
               <item row="3" column="1" colspan="3">
-               <widget class="QSpinBox" name="occurrencesVolumeSpin1"/>
+               <widget class="QSpinBox" name="occurrencesVolumeSpin1">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item row="1" column="5" colspan="2">
                <widget class="QDateEdit" name="occurrencesEditedDateSpin2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="displayFormat">
                  <string>yyyy/MM/dd</string>
                 </property>
@@ -536,6 +646,24 @@ If the interface is sluggish, try turning this off.</string>
               </item>
               <item row="0" column="1" colspan="3">
                <widget class="QDateEdit" name="occurrencesAddedDateSpin1">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="displayFormat">
                  <string>yyyy/MM/dd</string>
                 </property>

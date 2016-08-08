@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
 
-# user preference...
-DATE_FORMAT = '%Y-%m-%d'
-
 refTypes = {'num': 0, 'range': 1, 'redir': 2}
 
 entryTypes = {

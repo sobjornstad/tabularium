@@ -266,8 +266,7 @@ class Occurrence(object):
             pageStart = bottom - nearRange
             pageEnd = top + nearRange
         else:
-            pageStart = int(page) - nearRange
-            pageEnd = int(page) + nearRange
+            pageStart, pageEnd = self.volume.source.nearbySpread(int(page))
 
         q = """SELECT DISTINCT entries.eid FROM entries
                INNER JOIN occurrences ON occurrences.eid = entries.eid
