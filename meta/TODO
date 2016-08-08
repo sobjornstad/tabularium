@@ -4,12 +4,11 @@ MAJOR THINGS TO ADD:
 - Manual
 - Undo
 - Consistify text
-- User-specified date format
 - Database check
+- Tpeek doesn't respect the password option, and it isn't actually saved anywhere
 
 REFACTORING:
 - Func to get UOF from occurrences
-- SQLite full-text search?
 
 SUGGESTIONS:
 * Multiple-add
@@ -24,6 +23,7 @@ SUGGESTIONS:
 * Limit to *nK* matches -- option next to inc/regex for speed?
 * Make it possible to change source types (e.g., switch to a different diary source)
 * Allow moving using "merge" and merging using "edit"
+* SQLite full-text search?
 
 SUGGESTED TOOLS:
 * Duplicates Tool

@@ -55,7 +55,7 @@
          <string>Add a new entry using the text in the search box.</string>
         </property>
         <property name="text">
-         <string>Add</string>
+         <string>&amp;Add</string>
         </property>
         <property name="autoDefault">
          <bool>true</bool>
@@ -1230,7 +1230,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionNotes">
    <property name="text">
-    <string>&amp;Notes</string>
+    <string>Browse &amp;Notes</string>
    </property>
    <property name="statusTip">
     <string>Open the notes browser to view and edit notes on your sources.</string>
@@ -1335,7 +1335,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionGoForward">
    <property name="text">
-    <string>&amp;Forward</string>
+    <string>Forwar&amp;d</string>
    </property>
    <property name="statusTip">
     <string>Go to the next search in your history (before you went back).</string>
@@ -1346,7 +1346,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionGoSearch">
    <property name="text">
-    <string>&amp;Search</string>
+    <string>&amp;Find</string>
    </property>
    <property name="statusTip">
     <string>Place focus in the search box.</string>
@@ -1410,6 +1410,9 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionAbout_Tabularium">
    <property name="text">
     <string>&amp;About Tabularium</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+F1</string>
    </property>
   </action>
  </widget>

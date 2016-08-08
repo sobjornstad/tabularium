@@ -187,7 +187,7 @@ def makeSimplification(callback=None):
         if occ.isRefType('range'):
             # pylint: disable=unused-variable
             start, end = db.occurrences.parseRange(occ.ref)
-            key = str(occ).replace(occ.ref, start)
+            key = str(occ).replace(occ.ref, str(start))
             return key
         else:
             return str(occ)

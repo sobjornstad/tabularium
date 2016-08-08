@@ -438,8 +438,9 @@ class MainWindow(QMainWindow):
                 # regex in search box is invalid
                 entries = []
         else:
-            entries = db.entries.find(db.entries.percentageWrap(self.search),
-                                      classification,
+            mungedSearch = db.entries.percentageWrap(self.search)
+            mungedSearch = mungedSearch.replace(r'_', r'\_')
+            entries = db.entries.find(mungedSearch, classification,
                                       **self._getOccurrenceFilters())
         return entries
 
@@ -996,8 +997,7 @@ class MainWindow(QMainWindow):
             assert entry is not None, "Must specify entry when using edit=True"
             ae.setEditing()
             ae.resetTitle("Edit Entry '%s'" % entry.name)
-        r = ae.exec_()
-        if r:
+        if ae.exec_():
             self.updateAndRestoreSelections()
 
     def onAddEntryBasedOn(self):
@@ -1019,9 +1019,8 @@ class MainWindow(QMainWindow):
         dialog = ui.mergeentry.MergeEntryDialog(self)
         dialog.setFrom(curEntry)
         dialog.setTitle("Merge '%s' into..." % curEntry.name)
-        if not dialog.exec_():
-            return
-        self.updateAndRestoreSelections()
+        if dialog.exec_():
+            self.updateAndRestoreSelections()
 
     def onDeleteEntry(self):
         "After getting confirmation, delete an entry and its occurrences."
@@ -1043,7 +1042,7 @@ class MainWindow(QMainWindow):
             "Delete entry?")
         if r:
             entry.delete()
-        self.updateAndRestoreSelections()
+            self.updateAndRestoreSelections()
 
 
     ## Occurrences menu
@@ -1506,6 +1505,8 @@ def exceptionHook(exctype, value, tb):
               "how to deal with it properly. This is likely the result "
               "of a bug in the program – sorry about that.\n\n"
               "Things you can try:\n"
+              "* If it looks like what you wanted happened anyway, continue "
+              "working.\n"
               "* Restart Tabularium and try again.\n\n"
               "If problems continue, please contact support and include "
               "an explanation of what you were doing when the error occurred "

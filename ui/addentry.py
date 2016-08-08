@@ -89,14 +89,11 @@ class AddEntryWindow(QDialog):
         Tell the dialog to pass some text through to the add occurrence dialog
         when it is called, so that the user can run an "add entry redirecting
         to" menu choice and have the entry being redirected to automatically
-        placed in the add occurrence dialog when it comes up. In this function,
-        commas are escaped and the redirect is placed in braces to ensure it
-        will work all right with any source/volume combination the user types
-        when it gets to the add occurrence dialog.
+        placed in the add occurrence dialog when it comes up.
         """
         self.putClassification(to)
-        name = to.name.replace(',', '\\,')
-        self.preparedOccurrence = " {see " + name + "}"
+        name = to.name.replace(';', '\\;')
+        self.preparedOccurrence = " see " + name
 
     def setEditing(self):
         """

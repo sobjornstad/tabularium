@@ -2,7 +2,6 @@
 # Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
 
 import datetime
-import re
 
 from db.consts import refTypes
 import db.database as d

@@ -175,13 +175,15 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
         SQLite.OperationalError - if using regex mode and the regex is invalid,
             this error will propagate.
     """
-    if not (search.startswith('%') and search.endswith('%')):
-        # This search is not supposed to be percent-wrapped, but we might
-        # need to escape percents inside it. Note that we require both ends
-        # for it to be considered percent-wrapped: if we want to specify
-        # anything besides a substring search or an exact match, we should use
-        # regexes. This ensures we catch, e.g., "100%", as improperly escaped.
-        search = search.replace(r'%', r'\%')
+    if not regex:
+        if not (search.startswith('%') and search.endswith('%')):
+            # This search is not supposed to be percent-wrapped, but we might
+            # need to escape percents inside it. Note that we require both ends
+            # for it to be considered percent-wrapped: if we want to specify
+            # anything besides a substring search or an exact match, we should
+            # use regexes. This ensures we catch, e.g., "100%", as improperly
+            # escaped.
+            search = search.replace(r'%', r'\%')
 
     if (enteredDate is None and modifiedDate is None
             and source is None and volume is None):
