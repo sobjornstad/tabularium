@@ -15,10 +15,8 @@ Indexes in Tabularium are made up of *sources*, *volumes*, *entries*, and
 ## Sources
 
 The highest-level object in Tabularium is the *source*. A source usually
-represents one book or other work: your diary, Wikipedia, your Rolodex, *War
-and Peace*, and a computer file containing anecdotes you’ve collected could
-all be sources. A source can have multiple volumes, if appropriate for that
-source.
+represents one book or other work, such as your diary, Wikipedia, your Rolodex,
+*War and Peace*, or a computer file containing anecdotes.
 
 Sources have a *name*, used when managing sources; an *abbreviation*, used when
 displaying lists of locations so that they don’t get horribly long; and a
@@ -52,12 +50,11 @@ other options and dialogs. Notes can be used for anything you find convenient.
 
 An *entry* is the basic building block of an index in Tabularium. Entries
 roughly correspond to what are normally called entries and subentries in
-traditional indexes. In Tabularium, an entry is specifically the text
-connected with some reference: *computer program*, *Doe, Jane*, or *\_Alice in
+traditional indexes: *computer program*, *Doe, Jane*, or *\_Alice in
 Wonderland\_, poetry in*, for example.
 
-An entry does not belong to a particular source and can catalog occurrences
-across many different sources.
+An entry does not belong to a particular source and can reference places in
+many different sources.
 
 Entries are listed in the leftmost column of the main window; when you go to
 search your database using the search box, you are searching your entries.
@@ -135,7 +132,7 @@ actions like adding and editing new entries can be taken from the menus.
 
 There are six major sections in the main window.
 
-* **Find area**: At the very top of the window, just under the menu, you can enter a search query. You can also specify whether you want to search *incrementally* (i.e., Tabularium will search as you type, rather than waiting for you to press Enter) and using *regex* (regular expression) searches.
+* **Find area**: At the very top of the window, just under the menus, you can enter a search query. You can also specify whether you want to search *incrementally* (i.e., Tabularium will search as you type, rather than waiting for you to press Enter) and whether you want to search using exact matches or *regex* (regular expression) search.
 * **Entries area**: The entries area to the left lists all the entries in your database that match the current search. When you select an entry, the Occurrences area fills with the occurrences of the selected entry.
 * **Occurrences area**: The occurrences area lists the occurrences of the entry you’ve selected in the Entries area. When you select an occurrence, the Inspect and Nearby areas fill with information about the selected occurrence.
 * **Inspect area**: The Inspect area shows information about the selected occurrence.
@@ -159,19 +156,21 @@ special meaning to many symbols, allowing you to specify very precise criteria
 with just a few characters. Regex searches are case-sensitive. If you are not
 familiar with regular expressions, here are a few useful tricks:
 
-* Use `^` and `$` to match the beginning and end of entry names: `mud$` matches
-  *full of mud* and *mud* but not *muddy*.
 * Use square brackets to specify alternative characters: `[qQzZ]` matches all
   entries containing a Q or a Z.
-* Use `\b` to match the beginning or end of a word: `\bcat\b` matches *cat* and
-  *cat food* but not *dedicate*.
 * Use `.` to match any single character: `[kK].te` matches *Kate* and *kite*.
 * Use `.*` to match any number of characters: `com.*slow` matches *computer,
   slow*. `.*` is implied at the beginning and end of a search unless you use
-  `^` or `$`.
+  `^` or `$` (see below).
 * In fact, you can repeat *anything* an arbitrary number of times with `*`:
   `[Qq]*p*` searches for entries that contain some number of *q*’s and *Q*’s
   (including none at all) followed immediately by any number of *p*’s.
+* Use `|` to specify alternatives: `January|February|March` matches any of the
+  first three months.
+* Use `^` and `$` to match the beginning and end of entry names: `mud$` matches
+  *full of mud* and *mud* but not *muddy*.
+* Use `\b` to match the beginning or end of a word: `\bcat\b` matches *cat* and
+  *cat food* but not *dedicate*.
 
 To search for an *actual* `.` (or any other character that has special meaning
 in a regex), prefix it with a backslash (`\`): `Mr\. Jones` matches *Mr. Jones*
@@ -196,21 +195,17 @@ with the same name as your search.
 
 ## The Entries area
 
-The Entries area begins by displaying all entries in your database and is
-filtered by a number of criteria:
+The Entries area displays all entries that match the criteria in the Find area
+and have their classification checked in the *show entries for* section of the
+limits area. However, any entries that have no occurrences to be displayed
+because of occurrence limits currently selected (*limit occurrences by* in the
+limits area) are not shown.
 
-* Any entries that do not match the criteria in the Find area are removed.
-* Any entries whose classification is not checked in the *show entries for*
-  section of the limits area are removed.
-* Any entries that have no occurrences to be displayed because of occurrence
-  limits currently selected (*limit occurrences by* in the limits area) are
-  removed.
-
-This last criterion could use an example. Suppose we have an entry *Sarah* with
-two occurrences, *A 2.4* and *B 1.32*. If we say we want to see only
-occurrences from the source *C*, then neither of these occurrences are from
-that source, so *Sarah* must be irrelevant to our search and will not be
-displayed in the entries column.
+This limitation could use an example. Suppose we have an entry *Sarah* with two
+occurrences, *A 2.4* and *B 1.32*. If we say we want to see only occurrences
+from the source *C*, then neither of these occurrences are from that source, so
+*Sarah* must be irrelevant to our search and will not be displayed in the
+entries column.
 
 Single-clicking on an entry selects it and fills the Occurrences area with the
 occurrences of that entry. Double-clicking on an entry or pressing Enter opens
@@ -257,14 +252,14 @@ a different occurrence from the list.
 
 ## The Limits area
 
-At the very bottom of the window is the limits area. The limits area
-supplements the search area with additional constraints on what entries and
+At the very bottom of the window is the Limits area. The Limits area
+supplements the Find area with additional constraints on what entries and
 occurrences appear.
 
-There are two sections, the entry limits and the occurrence limits (but as
-described in the section on the Entries area, the occurrence limits can also
-limit what entries appear if they cause an entry to have no matching
-occurrences).
+There are two sections, the entry limits (*Show entries for* section) and the
+occurrence limits (*Limit occurrences by* section). As described in the section
+on the Entries area, the occurrence limits can also limit what entries appear
+if they cause an entry to have no matching occurrences.
 
 The entry limits let you limit the displayed entries by classification; entries
 whose classification is unchecked will not be displayed. You can click the
@@ -308,15 +303,6 @@ wash button doesn’t do what you want.
 
 After clicking Add, you will be asked to specify some occurrences to finish
 adding the entry, as an entry must have at least one occurrence.
-
-There are two other useful shortcuts on the Entry menu, **Add Based On** and
-**Add Redirect To**. **Add Based On** works the same way as **Add**, but the
-name, sort key, and classification boxes are pre-filled with the values of the
-currently selected entry, useful if you want to add several similar entries in
-a row. **Add Redirect To** prompts you for the entry values as normal, but
-pre-fills the occurrences box with `see <the currently selected entry>` – just
-finish by typing the source and/or volume in which to create the redirect and
-press Enter.
 
 ## Adding occurrences
 
@@ -395,9 +381,21 @@ Rules:
   valid.
 * Redirects are specified with the keyword *see* followed by a space and the
   name of the entry to redirect to. Note that, unlike traditional indexes,
-  redirects do require a source (and, if applicable, volume): if you have many
-  sources, two words that are similar enough to be considered the same for
-  indexing purposes in one might be completely different in another.
+  redirects belong to a particular source, since keywords that make sense for
+  one of your sources might not make sense for another one.
+
+
+## Entry addition shortcuts
+
+There are two useful shortcuts on the Entry menu, **Add Based On** and **Add
+Redirect To**. **Add Based On** works the same way as **Add**, but the name,
+sort key, and classification boxes are pre-filled with the values of the
+currently selected entry, useful if you want to add several similar entries in
+a row. **Add Redirect To** prompts you for the entry values as normal, but
+pre-fills the occurrences box with `see <the currently selected entry>` – just
+finish by typing the source and/or volume in which to create the redirect and
+press Enter.
+
 
 ## Editing entries and occurrences
 
@@ -410,7 +408,7 @@ significant, you should delete the old occurrence and create a new one.
 
 Similarly, you can delete the currently selected entry or occurrence with the
 **Delete** function. Deleting an entry will delete all of its occurrences, and
-deleting the last occurrence of an entry will delete the entry.
+deleting the only occurrence of an entry will delete the entry.
 
 ## Merging entries
 
@@ -420,10 +418,11 @@ friend Joe as `Smith, Joe` and the other as `Smith, Joseph`. In this case, you
 can *merge* the two entries, moving the occurrences of one into the other.
 
 Start by selecting the entry you’d like to get rid of. Then choose **Entry →
-Merge Into** and type the name of the entry you want to merge this one into.
-Optionally, you can choose to *Leave a redirect behind*, which will turn the
-selected entry into a redirect to the entry you’re merging into. If you leave
-this box unchecked, the selected entry will be removed altogether.
+Merge Into** and type the name of the entry you want to move the occurrences
+into. Optionally, you can choose to *Leave a redirect behind*, which will turn
+the selected entry into a redirect to the entry you’re merging into. If you
+choose not to leave a redirect, the selected entry will be removed altogether
+after moving its occurrences.
 
 In other cases, you may find that you have two similar entries and have
 distributed the occurrences wrongly between them; maybe you have two friends
@@ -452,9 +451,8 @@ sources, at least one volume.
 
 ## Creating (or editing) sources
 
-Sources are managed from the **Manage Sources** window on the **Sources** menu
-(go figure). When you choose to add or edit a source, your options are as
-follows:
+Sources are managed from **Sources → Manage Sources** (go figure). When you
+choose New or Edit, your options are as follows:
 
 * **Name**: The full name of the source. This is used in the source manager,
   volume manager, source notes browser, and inspect window.
@@ -487,10 +485,10 @@ Volume options:
   through the editor box.
 * **Volume number**: The identifying number of this volume.
 * **Use open/close dates**: If checked, you can indicate when you started and
-  stopped using or taking notes on this particular volume. The dates are shown
-  in the volumes dialog for your reference. Additionally, if this is the diary
-  source, the Inspect window will use these dates to show which diary volume was
-  open at the time an occurrence was entered.
+  stopped using this particular volume. The dates are shown in the volumes
+  dialog for your reference. Additionally, if this is the diary source, the
+  Inspect window will use these dates to show which diary volume was open at
+  the time an occurrence was entered.
 
 You can also click the **Notes...** button here to open the notes browser,
 described next.
@@ -564,19 +562,19 @@ printing options available:
 
 ## The entry classification tool
 
-If you have a lot of entries that are “Unclassified” and would like to give them
-a more descriptive classification, you can use the entry classification tool at
-**Tools → Classify Entries**. The tool is mostly self-explanatory, and
-instructions are provided at the top.
+If you have a lot of entries that are “Unclassified” and would like to give
+them a more descriptive classification, you can use the entry classification
+tool at **Tools → Classify Entries**. The tool is mostly self-explanatory, and
+instructions are provided at the top of the window.
 
 ## The letter distribution tool
 
 If you write some entries out on paper in your sources before transferring them
-into Tabularium, the letter distribution tool (**Tools → Letter Distribution**)
-is quite useful for knowing how much space each initial letter should be
-allocated on paper. It searches through the sort keys of all your entries, finds
-how often each letter of the alphabet is used as the initial character of a sort
-key, and presents you with a table of the results.
+into Tabularium, the letter distribution tool (**Tools → Show Letter
+Distribution**) is quite useful for knowing how much space each initial letter
+should be allocated on paper. It searches through the sort keys of all your
+entries, finds how often each letter of the alphabet is used as the initial
+character of a sort key, and presents you with a table of the results.
 
 ## Preferences
 

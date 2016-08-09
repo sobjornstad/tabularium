@@ -1,16 +1,27 @@
 BUGS:
+- When saving a new source, super isn't called (when you click 'add')
+- Edit -> Prefs causes a KeyError on empty database
+- "Values" label in Add Occurrences window is unhelpful
+- "wash" should work if the sort key field is empty
+- Similarly, if the sort key is empty when clicking add assume it's the same as the name
+- Double-click on source/volume to edit it
+- Reconsider default for valid references? Mama thought 1-1 was stupid
+- Filtering out a single OID doesn't work right for nearby, as there could be another occurrence of the same entry nearby which then causes it to show upx
 
 MAJOR THINGS TO ADD:
-- Manual
 - Undo
 - Consistify text
 - Database check
 - Tpeek doesn't respect the password option, and it isn't actually saved anywhere
+- Passlib is a dependency that I was unaware of, should be included / listed in deps document
+- Limits needs to be shrunk or made collapsible for the benefit of users with smaller screens than me (or for when I'm on Karina!)
+- Help button in UOF?
 
 REFACTORING:
 - Func to get UOF from occurrences
 
 SUGGESTIONS:
+* A more friendly option (tab?) for adding occurrences if you haven't figured out UOF yet
 * Multiple-add
 * Autocomplete in entry boxes
 * "What links here?" -- backwards redirect
