@@ -102,7 +102,7 @@ occurrence is composed of a reference to a source (and volume, if a
 multi-volume source) and a *reference number*. Reference numbers typically
 refer to page numbers if these exist for the source being referenced, but they
 can also point to sequentially numbered entries, paragraphs, or any other
-positive integers that make it easy to find the requested information.
+positive integers that make it easy to find the specified information.
 
 Occurrences, when displayed in the *Occurrences* column of the main window or
 elsewhere in Tabularium, normally take one of the following formats:
@@ -123,9 +123,9 @@ multiple occurrences at the same time, add to a source whose abbreviation you
 do not remember, and so on. UOF is covered fully later.
 
 Rather than pointing to a specific reference number, an occurrence can be a
-*range* of reference numbers (e.g., pages “12-15”) or a *redirect*, which
-specifies another entry that the user should look up (e.g., “*see* Other Name
-For This Thing”).
+*range* of reference numbers (e.g., pages “12-15”) or a *redirect* (sometimes
+called a *blind entry* in traditional indexing), which specifies another entry
+that the user should look up (e.g., “*see* Other Name For This Thing”).
 
 
 # The main window
@@ -252,7 +252,8 @@ You can double-click on an entry in the Nearby area, or choose **Inspect → Jum
 to Nearby Entry**, to search for it. (If you want to go back to where you were
 afterwards, you can choose **Go → Back**.)
 
-You can press **Alt+N** to focus the Nearby area, and the arrow keys to select a difference occurrence from the list.
+You can press **Alt+N** to focus the Nearby area, and the arrow keys to select
+a different occurrence from the list.
 
 ## The Limits area
 
@@ -273,9 +274,9 @@ are displayed.
 
 The occurrence limits let you limit the displayed occurrences by the date they
 were entered or modified and/or the source and volume they come from. Note that
-you must specify a source to be able to specify volume numbers. Unlike with
-entry limits, having *none* of the occurrence limit checkboxes checked means
-that all occurrences are displayed.
+you must specify a source to be able to specify volume numbers. Having *none*
+of the occurrence limit checkboxes checked means that all occurrences are
+displayed (note that this is the opposite of the entry limits).
 
 
 # Adding to and editing your index
@@ -313,7 +314,7 @@ There are two other useful shortcuts on the Entry menu, **Add Based On** and
 name, sort key, and classification boxes are pre-filled with the values of the
 currently selected entry, useful if you want to add several similar entries in
 a row. **Add Redirect To** prompts you for the entry values as normal, but
-pre-fills the occurrences box with `see the_currently_selected_entry` – just
+pre-fills the occurrences box with `see <the currently selected entry>` – just
 finish by typing the source and/or volume in which to create the redirect and
 press Enter.
 
@@ -446,7 +447,7 @@ entry or you’re done looking at it.
 # Adding and editing sources and volumes
 
 So far we’ve been largely ignoring sources and volumes, but you can’t actually
-add any entries until you have at least one source, and for multi-volume
+add any entries until you have at least one source, and, for multi-volume
 sources, at least one volume.
 
 ## Creating (or editing) sources
@@ -521,14 +522,17 @@ fine. If you do manage to screw up the formatting and deleting the problematic
 section doesn’t help, you can use the **Clear Formatting** button to remove all
 HTML and try again.
 
+You can also press `*` to create an unordered list (bullet points) automatically.
+
 
 # Tools
 
 ## Importing and exporting
 
-You can import from and export to *Mindex format*, which is a tab-separated text
-file with three columns, in order: entries, UOF for occurrences for those
-entries, and sort keys. The import and export options are on the **File** menu.
+You can import from and export to *Mindex format*, which is a tab-separated
+text file with three columns, in order: entry names, UOF for occurrences for
+those entries, and sort keys (the sort key is optional if the same as the entry
+name). The import and export options are on the **File** menu.
 
 ## Switching databases
 
