@@ -497,6 +497,11 @@ def parseUnifiedFormat(s):
     for i in db.sources.allSources():
         # NOTE: in the unlikely case that a source has the same name as the
         # abbreviation of a different source, the abbreviation is prioritized.
+        # TODO: The above comment is incorrect, and we need to find a better
+        # of checking this, unfortunately, because it would be really nice if
+        # that worked correctly.
+        # TODO: This could break if a redirect happens to contain the same text
+        # as the source name/abbrev: it should only replace the first occurrence.
         if s.startswith(i.abbrev):
             source = i
             refPart = s.replace(i.abbrev, '').strip()
@@ -556,6 +561,8 @@ def parseUnifiedFormat(s):
             # range
             reftype = refTypes['range']
             normalizedRefnum = refnum.replace('–', '-').replace('--', '-')
+            #TODO: I think the following should be wrapped in a try, it could
+            #potentially wack out with illegal UOF?
             first, second = normalizedRefnum.split('-')
             try:
                 first, second = int(first.strip()), int(second.strip())
