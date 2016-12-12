@@ -115,8 +115,9 @@ class MainWindow(QMainWindow):
 
         # set up statusbar
         self.matchesWidget = QLabel("")
+        self.limitsWidget = QLabel("")
+        self.form.statusBar.addPermanentWidget(self.limitsWidget)
         self.form.statusBar.addPermanentWidget(self.matchesWidget)
-        self.form.statusBar.showMessage("Database loaded.", 1000)
 
         # initialize db and set up searching and entries
         self.search = None
@@ -811,6 +812,13 @@ class MainWindow(QMainWindow):
         if self._initDb(fname):
             return True
 
+    def onSaveDB(self):
+        """
+        Force a save now. Usually not necessary: autosaves take place as edits
+        are made, but crashes could still cause losses.
+        """
+        db.database.forceSave()
+
     def onImportMindex(self):
         self.saveSelections()
         fname = QFileDialog.getOpenFileName(
@@ -1223,6 +1231,7 @@ class MainWindow(QMainWindow):
             lambda: selectFirstAndFocus(sf.nearbyList))
         sf.actionNew_DB.triggered.connect(self.onNewDB)
         sf.actionSwitch_Database.triggered.connect(self.onOpenDB)
+        sf.actionSave_now.triggered.connect(self.onSaveDB)
         sf.actionImport.triggered.connect(self.onImportMindex)
         sf.actionExport.triggered.connect(self.onExportMindex)
         sf.actionMove_to_entry.triggered.connect(self.onMoveToEntry)
