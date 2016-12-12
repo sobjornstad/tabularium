@@ -4,7 +4,7 @@ BUGS:
 - Double-click on source/volume to edit it
 - Reconsider default for valid references? Mama thought 1-1 was stupid. Maybe a warning if you do choose that is the best course.
 - Filtering out a single OID doesn't work right for nearby, as there could be another occurrence of the same entry nearby which then causes it to show up
-- Regex search is not enabled when starting the program even if the checkbox's state is restored to checked
+- Don't jump away from the volume limits box while halfway through editing it (after typing just one number)
 
 MAJOR THINGS TO ADD:
 - Check for LaTeX before allowing the user to print, to avoid wacky errors

@@ -333,7 +333,7 @@ class MainWindow(QMainWindow):
                 return func(val)
             else:
                 return 'NotExecuted'
-        def checkWrapper(obj, key):
+        def checkWrapper(obj, key, blockSignals=True):
             """
             Like wrapper(), but specifically for check boxes, and it is able to
             block signals on the object before making the change, so that we
@@ -341,9 +341,11 @@ class MainWindow(QMainWindow):
             """
             val = sh.get(key)
             if val is not None:
-                oldState = obj.blockSignals(True)
+                if blockSignals:
+                    oldState = obj.blockSignals(True)
                 obj.setChecked(val)
-                obj.blockSignals(oldState)
+                if blockSignals:
+                    obj.blockSignals(oldState)
             else:
                 return 'NotExecuted'
 
@@ -353,8 +355,8 @@ class MainWindow(QMainWindow):
                 'secondarySplitterState')
 
         # checkboxes
-        checkWrapper(sf.incrementalCheckbox, 'incrementalCheck')
-        checkWrapper(sf.regexCheckbox, 'regexCheck')
+        checkWrapper(sf.incrementalCheckbox, 'incrementalCheck', False)
+        checkWrapper(sf.regexCheckbox, 'regexCheck', False)
         # inspection options
         checkWrapper(sf.showInspectCheck, 'showInspectCheck')
         checkWrapper(sf.showSourceNameCheck, 'showSourceNameCheck')
