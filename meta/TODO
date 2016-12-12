@@ -1,5 +1,4 @@
 BUGS:
-- When saving a new source, super isn't called (when you click 'add')
 - Edit -> Prefs causes a KeyError on empty database
 - "Values" label in Add Occurrences window is unhelpful
 - Double-click on source/volume to edit it

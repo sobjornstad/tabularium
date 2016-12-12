@@ -194,6 +194,10 @@ class NewSourceDialog(QDialog):
         self.isEditing = True
 
     def accept(self, overrideTrounce=None):
+        """
+        God, this function has awful control flow. No wonder I forgot to call
+        super() in one of the cases. Work on that.
+        """
         sf = self.form
 
         newName = sf.nameBox.text().strip()
@@ -219,6 +223,7 @@ class NewSourceDialog(QDialog):
             if not self.isEditing:
                 db.sources.Source.makeNew(newName, newVolval, newPageval,
                                           newNearrange, newAbbr, newStype)
+                super(NewSourceDialog, self).accept()
                 return
             else:
                 self.source.name = newName
