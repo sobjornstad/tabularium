@@ -2,8 +2,6 @@ BUGS:
 - When saving a new source, super isn't called (when you click 'add')
 - Edit -> Prefs causes a KeyError on empty database
 - "Values" label in Add Occurrences window is unhelpful
-- "wash" should work if the sort key field is empty
-- Similarly, if the sort key is empty when clicking add assume it's the same as the name
 - Double-click on source/volume to edit it
 - Reconsider default for valid references? Mama thought 1-1 was stupid. Maybe a warning if you do choose that is the best course.
 - Filtering out a single OID doesn't work right for nearby, as there could be another occurrence of the same entry nearby which then causes it to show up

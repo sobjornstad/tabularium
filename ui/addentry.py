@@ -140,6 +140,9 @@ class AddEntryWindow(QDialog):
         function and the transformation.
         """
         nameEntered = self.form.sortKeyBox.text()
+        if not nameEntered:
+            # presumably user meant for the sort key to be the same
+            nameEntered = self.form.nameBox.text()
         sk = db.entries.sortKeyTransform(nameEntered)
         self.form.sortKeyBox.setText(sk)
 
@@ -161,6 +164,9 @@ class AddEntryWindow(QDialog):
         """
         newName = self.form.nameBox.text().strip()
         newSk = self.form.sortKeyBox.text().strip()
+        if not newSk:
+            # presumably user meant for the sort key to be the same
+            newSk = newName
         classif = self._getSelectedClassif()
 
         if self.isEditing:
