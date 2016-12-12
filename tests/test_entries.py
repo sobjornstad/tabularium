@@ -157,6 +157,12 @@ class DbTests(utils.DbTestCase):
         assert t("'45") == "45"
         assert t("#sometimeswe") == "sometimeswe"
         assert t("/quit") == "quit"
+        assert t('St. Olaf') == "Saint Olaf"
+
+        # Tricky things that have thrown or could throw us
         # we don't escape this hash because it's in the middle
         assert t("_The End of the #Tests_") == "End of the #Tests"
-
+        # not "e We Adore"
+        assert t('"Thee We Adore"') == "Thee We Adore"
+        # not "Saintats" (to be sure we didn't screw up '.' in our regex)
+        assert t('Stats') == "Stats"

@@ -247,13 +247,30 @@ def sortKeyTransform(e):
     Perform some automatic transformations on an entry name string, which are
     common issues requiring the specification of a sort key. Returns a string
     to serve as the key.
+
+    This could get a lot smarter; for instance, "and" and "of" at the beginning
+    of a subentry would ideally be sliced out, and marks of punctuation should
+    generally be removed. Indeed, these rules should generally be applied after
+    each comma (but this could fail now and again, since we don't rigidly
+    separate inversions from subentries in our index model). This also raises
+    the question of how badly we should mangle the sort key and people's
+    expectations of how things sort on computers to match what would seem to be
+    the most sensible index sort. The Principle of Least Astonishment applies,
+    but once in a while surprise might be better in the long run.
+
+    Also, should spaces be removed, not presumably when washing but through a
+    property access method when retrieving the sort key? Letter-by-letter
+    alphabetization is presumably our goal.
     """
-
-    e = re.sub(r'\"(.*?)\"', r'\1', e)     # quotations
-    e = re.sub(r'_(.*?)_', r'\1', e)       # underlines/"italics"
-    e = re.sub(r'^[tT]he *(.*)', r'\1', e) # "the"
-    e = re.sub(r"^'(.*)", r'\1', e)        # apostrophes
-    e = re.sub(r"^#(.*)", r'\1', e)        # hashes
-    e = re.sub(r"^/(.*)", r'\1', e)        # slashes
-
+    transforms = (
+        (r'\"(.*?)\"', r'\1'),       # quotations
+        (r'_(.*?)_', r'\1'),         # underlines/"italics"
+        (r"^'(.*)", r'\1'),          # apostrophes
+        (r"^#(.*)", r'\1'),          # hashes
+        (r"^/(.*)", r'\1'),          # slashes
+        (r'^[tT]he +(.*)', r'\1'),   # initial "the" is ignored
+        (r'^St\.(.*)', r'Saint\1'),  # 'St.' sorts as 'Saint'
+        )
+    for match, repl in transforms:
+        e = re.sub(match, repl, e)
     return e

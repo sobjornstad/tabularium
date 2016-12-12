@@ -1,5 +1,4 @@
 BUGS:
-- "The" can be stripped by wash when it's only *part* of the initial word (e.g., 'thee'")
 - When saving a new source, super isn't called (when you click 'add')
 - Edit -> Prefs causes a KeyError on empty database
 - "Values" label in Add Occurrences window is unhelpful
