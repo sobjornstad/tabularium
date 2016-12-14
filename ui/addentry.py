@@ -57,14 +57,17 @@ class AddEntryWindow(QDialog):
         self.form.setupUi(self)
         self.mw = parent
 
-        self.oldName = None # the value of the name field one keystroke ago
+        self.skManual = False # whether user has manually changed sk
         self.preparedOccurrence = None # see .putRedirect()
         self.beforeEditingName = None # see .setEditing()
         self.isEditing = False # see .setEditing()
         self.initializeSortKeyCheck()
 
-        self.form.nameBox.textChanged.connect(self.maybeUpdateSortKey)
+        self.form.nameBox.textEdited.connect(self.maybeUpdateSortKey)
+        self.form.sortKeyBox.textEdited.connect(self.sortKeyManuallyChanged)
         self.form.unclassifiedButton.setChecked(True)
+        self.form.autoButton.setChecked(True)
+        self.form.autoButton.clicked.connect(self.onAuto)
 
         sf = self.form
         self.allRadios = (sf.ordinaryButton, sf.personButton,
@@ -72,8 +75,6 @@ class AddEntryWindow(QDialog):
                           sf.titleButton, sf.unclassifiedButton)
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
-        self.form.copyButton.clicked.connect(self.onCopy)
-        self.form.washButton.clicked.connect(self.wash)
 
     def putClassification(self, entry):
         """
@@ -116,39 +117,50 @@ class AddEntryWindow(QDialog):
         Get the stored value of the name/sort key into sync. See
         maybeUpdateSortKey().
         """
-        self.oldName = value
         self.form.nameBox.setText(value)
         self.form.sortKeyBox.setText(skValue if skValue else value)
 
     def maybeUpdateSortKey(self):
         """
-        If name (self.oldName) was previously equivalent to the sort key,
-        update the sort key to match, so that user doesn't have to fill in the
-        sort key unless it's actually different than the name. Changing the
-        sort key will thus break the autofill link.
+        If the sort key has not been manually edited, update the sort key to
+        match, so that user doesn't have to fill in the sort key unless it's
+        actually different than the name. Changing the sort key will break the
+        autofill link.
         """
-        currentSort = self.form.sortKeyBox.text()
-        newName = self.form.nameBox.text()
-        if self.oldName == currentSort:
-            self.form.sortKeyBox.setText(newName)
-        self.oldName = newName # update oldName regardless
+        if not self.skManual:
+            self._autoSortKey()
 
-    def wash(self):
+    def sortKeyManuallyChanged(self):
+        """
+        If the user manually changes the sort key text, deactivate automatic
+        sort key generation.
+        """
+        self.form.autoButton.setChecked(False)
+        self.onAuto()
+
+    def onAuto(self):
+        if self.form.autoButton.isChecked():
+            self.skManual = False
+            self.form.autoButton.setChecked(True)
+            self._autoSortKey()
+        else:
+            self.skManual = True
+            self.form.autoButton.setChecked(False)
+
+    def _autoSortKey(self):
         """
         Modify the "sort key" textbox to hold a cleaned version of its text.
         See db.entries.sortKeyTransform() for more information about this
         function and the transformation.
         """
+        self.form.sortKeyBox.setText(self.form.nameBox.text())
         nameEntered = self.form.sortKeyBox.text()
         if not nameEntered:
             # presumably user meant for the sort key to be the same
             nameEntered = self.form.nameBox.text()
         sk = db.entries.sortKeyTransform(nameEntered)
         self.form.sortKeyBox.setText(sk)
-
-    def onCopy(self):
-        "Copy the text in the name box to the sort key box."
-        self.form.sortKeyBox.setText(self.form.nameBox.text())
+        self.skManual = False
 
     def accept(self):
         """

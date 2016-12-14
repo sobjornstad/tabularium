@@ -18,9 +18,6 @@
     <layout class="QGridLayout" name="gridLayout_3">
      <item row="0" column="0">
       <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="1" colspan="2">
-        <widget class="QLineEdit" name="nameBox"/>
-       </item>
        <item row="3" column="0" rowspan="2">
         <widget class="QLabel" name="label_3">
          <property name="text">
@@ -183,24 +180,14 @@
          </layout>
         </widget>
        </item>
-       <item row="1" column="3">
-        <widget class="QPushButton" name="washButton">
-         <property name="maximumSize">
-          <size>
-           <width>45</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>Remove sorting distractions (&quot;the&quot;, punctuation, etc.) from the sort key.</string>
-         </property>
-         <property name="text">
-          <string>&amp;Wash</string>
-         </property>
-        </widget>
+       <item row="1" column="1" colspan="2">
+        <widget class="QLineEdit" name="sortKeyBox"/>
        </item>
-       <item row="0" column="3">
-        <widget class="QPushButton" name="copyButton">
+       <item row="0" column="1" colspan="2">
+        <widget class="QLineEdit" name="nameBox"/>
+       </item>
+       <item row="1" column="3">
+        <widget class="QPushButton" name="autoButton">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -214,15 +201,15 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>Replace the sort key with the contents of the &quot;name&quot; box.</string>
+          <string>Automatically set the sort key based on the name.</string>
          </property>
          <property name="text">
-          <string>Co&amp;py</string>
+          <string>&amp;Auto</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
-       </item>
-       <item row="1" column="1" colspan="2">
-        <widget class="QLineEdit" name="sortKeyBox"/>
        </item>
       </layout>
      </item>
@@ -244,7 +231,7 @@
        <item>
         <widget class="QPushButton" name="addButton">
          <property name="text">
-          <string>&amp;Add</string>
+          <string>Ad&amp;d</string>
          </property>
         </widget>
        </item>
