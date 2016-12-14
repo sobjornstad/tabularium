@@ -52,6 +52,45 @@ class Entry(object):
         eid = d.cursor.lastrowid
         return cls(eid)
 
+    @classmethod
+    def multiConstruct(cls, entryData):
+        """
+        A nasty hack to bypass __init__ and not hit the database while
+        constructing many Entries. This is an optimization useful in the case
+        that we do a find() and get 9,000 results; at that point it's very slow
+        to make 9,000 unnecessary database requests to construct all the
+        entries. (We're dealing with searches growing as O(n) either way, but
+        the constant time on a database hit is obviously much, much higher than
+        1/9000th of the time it takes to make a larger request.)
+
+        A cleaner way would be to make *this* the __init__ method and make the
+        version that retrieves the entry from the database by eid be the class
+        method, but since that would make the Entry interface inconsistent with
+        that of every other Tabularium object, we're taking this approach for
+        the time being.
+
+        Arguments:
+            entryData: a list of tuples of (eid, name, sortKey, classification,
+            dateEdited, dateAdded) -- the order of the fields in the database.
+            So with an appropriate query retrieving all the fields, this works:
+            Entry.multiConstruct(d.cursor.fetchall()).
+
+        Return:
+            A list of Entry objects containing the specified content.
+        """
+        constructed = []
+        for eid, name, sortKey, classification, dateEdited, dateAdded \
+                in entryData:
+            entry = cls.__new__(cls)
+            entry._name = name
+            entry._sortKey = sortKey
+            entry._classification = classification
+            entry._dateEdited = dateDeserializer(dateEdited)
+            entry._dateAdded = dateDeserializer(dateAdded)
+            entry._eid = eid
+            constructed.append(entry)
+        return constructed
+
 
     def __eq__(self, other):
         return self._eid == other._eid
@@ -189,11 +228,15 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
             and source is None and volume is None):
         # The last %s is just a fake so that the below code works without
         # modification: nothing will ever be substituted there.
-        query = """SELECT eid FROM entries
+        query = """SELECT eid, name, sortkey, classification,
+                          entries.dEdited, entries.dAdded
+                   FROM entries
                    WHERE name %s ? %s
                          AND classification IN (%s)%s"""
     else:
-        query = """SELECT DISTINCT entries.eid FROM occurrences
+        query = """SELECT DISTINCT entries.eid, name, sortkey, classification,
+                                   entries.dEdited, entries.dAdded
+                   FROM occurrences
                    INNER JOIN entries ON entries.eid = occurrences.eid
                    WHERE name %s ? %s
                          AND classification IN (%s)
@@ -208,7 +251,7 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
 
     d.cursor.execute(query, (search,) + classification + tuple(occQueryParams))
     results = d.cursor.fetchall()
-    return [Entry(r[0]) for r in results]
+    return Entry.multiConstruct(results)
 
 def findOne(search, classification=tuple(entryTypes.values()), regex=False,
             enteredDate=None, modifiedDate=None, source=None, volume=None):
@@ -236,8 +279,10 @@ def allEntries():
     """
     Return a list of all entries in the database.
     """
-    d.cursor.execute('SELECT eid FROM entries')
-    return [Entry(i[0]) for i in d.cursor.fetchall()]
+    d.cursor.execute('''SELECT eid, name, sortkey, classification, dEdited,
+                               dAdded
+                        FROM entries''')
+    return Entry.multiConstruct(d.cursor.fetchall())
 
 def percentageWrap(search):
     return "%" + search.replace(r'%', r'\%') + "%"
