@@ -93,12 +93,12 @@ def letterDistribution():
 
         count = cleanedChars[letter]
         percentage = 100 * float(cleanedChars[letter]) / totalEntries
-        resid = count - avgfreq
+        resid = percentage - avgperc
         color = "color:red;" if resid < 0 else ""
         report.append("<tr><td>%s</td>"
                       "<td align=right>%i&nbsp;</td>"
                       "<td align=right>%.02f%%&nbsp;</td>"
-                      '<td align=right style="%s">%.02f&nbsp;</td>'
+                      '<td align=right style="%s">%.02f%%&nbsp;</td>'
                       % (printLetter, count, percentage, color, resid))
     report.append("</table></html>")
     return '\n'.join(report)
