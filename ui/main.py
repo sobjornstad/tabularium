@@ -422,7 +422,7 @@ class MainWindow(QMainWindow):
         QApplication.processEvents()
         self._resetForEntry()
         entries = self._getEntriesForSearch()
-        fillListWidgetWithEntries(self.form.entriesList, entries)
+        fillListWidgetWithEntries(self.form.entriesList, entries, sort=False)
         self.updateMatchesStatus()
         self.form.statusBar.clearMessage()
         self.form.entriesList.blockSignals(oldBlockSignals)
@@ -1501,10 +1501,18 @@ def selectFirstAndFocus(listWidget):
         listWidget.setCurrentRow(0)
     listWidget.setFocus()
 
-def fillListWidgetWithEntries(widget, entries):
-    entries.sort(key=lambda i: i.sortKey.lower())
-    for i in entries:
-        widget.addItem(i.name)
+def fillListWidgetWithEntries(widget, entries, sort=True):
+    """
+    Fill an arbitrary list widget (entry, occurrence, or nearby) with entries.
+    For speed, sort can be disabled; obviously this is only valid if you know
+    that the items were ordered in the SQL query that pulled them from the
+    database. This should be true for entries.
+    """
+    if sort:
+        widget.addItems(i.name for i
+                        in sorted(entries, key=lambda i: i.sortKey.lower()))
+    else:
+        widget.addItems(i.name for i in entries)
 
 def exceptionHook(exctype, value, tb):
     """

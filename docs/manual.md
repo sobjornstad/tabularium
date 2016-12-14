@@ -288,18 +288,15 @@ have the **Shift** key in their keyboard shortcuts.
 ## Adding an entry
 
 To add an entry, choose **Entry → Add...** or press **Ctrl+A**. You will be
-prompted for the entry name. The sort key will automatically update to be the
-same as the name unless you change it to something different. You can choose a
-classification by clicking the appropriate button or by holding down the Alt
-key and pressing the underlined letter.
+prompted for the entry name. The sort key will be filled in automatically. You
+can choose a classification by clicking the appropriate button or by holding
+down the Alt key and pressing the underlined letter.
 
-The **Copy** button copies the contents of the **Name** box into the **Sort Key** box. This is useful if you change the sort key manually so that it no longer matches the name and you then want to change it back.
-
-The **Wash** button tries to automatically create a sort key from the name. For
-instance, it removes `_`, `"`, and `the` from the beginning. In most cases
-where you need to specify a sort key at all, clicking **Wash** (or pressing
-**Alt+W**) will be enough. However, you can manually change the sort key if the
-wash button doesn’t do what you want.
+The **Auto** button is pressed by default, indicating that Tabularium will try
+to determine the sort key automatically. If it doesn’t do what you want, you
+can manually change the text (which will automatically deselect **Auto**). If
+you later decide you want Tabularium to decide for you again, click **Auto**
+again to reenable the function.
 
 After clicking Add, you will be asked to specify some occurrences to finish
 adding the entry, as an entry must have at least one occurrence.

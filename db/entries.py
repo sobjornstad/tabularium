@@ -133,6 +133,7 @@ class Entry(object):
             self._sortKey = sk
             self.flush()
 
+    #TODO: verify classification is a permitted value
     @property
     def classification(self):
         return self._classification
@@ -213,6 +214,12 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
     Raises:
         SQLite.OperationalError - if using regex mode and the regex is invalid,
             this error will propagate.
+
+    TODO: An additional optimization for sorting would be to make COLLATE nocase
+    an attribute of the column rather than using it here -- some people on SO
+    have said that has improved the sort performance nearly by a factor of 10.
+    I don't think an index would help here, but I know very little about SQL
+    indexes.
     """
     if not regex:
         if not (search.startswith('%') and search.endswith('%')):
@@ -232,7 +239,8 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
                           entries.dEdited, entries.dAdded
                    FROM entries
                    WHERE name %s ? %s
-                         AND classification IN (%s)%s"""
+                         AND classification IN (%s)%s
+                   ORDER BY sortkey COLLATE nocase"""
     else:
         query = """SELECT DISTINCT entries.eid, name, sortkey, classification,
                                    entries.dEdited, entries.dAdded
@@ -240,7 +248,8 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
                    INNER JOIN entries ON entries.eid = occurrences.eid
                    WHERE name %s ? %s
                          AND classification IN (%s)
-                         %s"""
+                         %s
+                   ORDER BY sortkey COLLATE nocase"""
     classifPlaceholders = ','.join('?' * len(classification))
     occQuery, occQueryParams = db.occurrences.occurrenceFilterString(
         enteredDate, modifiedDate, source, volume)
@@ -281,7 +290,8 @@ def allEntries():
     """
     d.cursor.execute('''SELECT eid, name, sortkey, classification, dEdited,
                                dAdded
-                        FROM entries''')
+                        FROM entries
+                        ORDER BY sortkey COLLATE nocase''')
     return Entry.multiConstruct(d.cursor.fetchall())
 
 def percentageWrap(search):
@@ -305,7 +315,9 @@ def sortKeyTransform(e):
 
     Also, should spaces be removed, not presumably when washing but through a
     property access method when retrieving the sort key? Letter-by-letter
-    alphabetization is presumably our goal.
+    alphabetization is presumably our goal. (Actually, this would seem to
+    require an extra column in the database, since sorting is handled at the DB
+    level. Probably not worth it.)
     """
     transforms = (
         (r'\"(.*?)\"', r'\1'),       # quotations
