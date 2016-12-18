@@ -210,6 +210,21 @@ class NewSourceDialog(QDialog):
         newAbbr = sf.abbrevBox.text().strip()
         newStype = db.consts.sourceTypesFriendly[sf.typeCombo.currentText()]
 
+        if newPageval == (1, 1):
+            # User probably ignored this option -- not likely validation values
+            # to choose on purpose!
+            r = ui.utils.questionBox(
+                "You have chosen valid references of 1 to 1. This means you "
+                "will only be able to reference page 1 of%s this source – "
+                "no others. If this is what you intended, you may continue. "
+                "Otherwise, please choose No and select an appropriate range "
+                "(e.g., for a 500-page book, choose 1–500).\n\n"
+                "Do you wish to continue?"
+                % (" volumes of" if newVolval != (1, 1) else ""),
+                "Warning: unusual valid reference numbers")
+            if not r:
+                return
+
         if not newName:
             ui.utils.errorBox("Please enter a name.", "No source name given")
             return

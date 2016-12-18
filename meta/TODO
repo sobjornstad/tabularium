@@ -2,7 +2,6 @@ BUGS:
 - Edit -> Prefs causes a KeyError on empty database
 - "Values" label in Add Occurrences window is unhelpful
 - Double-click on source/volume to edit it
-- Reconsider default for valid references? Mama thought 1-1 was stupid. Maybe a warning if you do choose that is the best course.
 - Filtering out a single OID doesn't work right for nearby, as there could be another occurrence of the same entry nearby which then causes it to show up
 - Don't jump away from the volume limits box while halfway through editing it (after typing just one number)
 - Again experiencing the issue with "Volume without source is not a valid search" on starting Tabularium after having volume and source checked. Commenting out the assertion makes the program start completely normally.
