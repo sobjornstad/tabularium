@@ -355,8 +355,12 @@ def occurrenceFilterString(enteredDate=None, modifiedDate=None,
         query.append(' AND vid IN (%s)' % ','.join('?' * len(vols)))
         for i in vols:
             params.append(i)
-    if (not source) and volume:
-        assert False, "Volume without source is not a valid search"
+
+    #TODO: Commented out because it's causing issues when starting Tabularium
+    #when vol/source were both selected before. As we improve the startup
+    #sequence I think this will cease to be a problem, and we can add it back.
+    #if (not source) and volume:
+        #assert False, "Volume without source is not a valid search"
 
     queryStr = ''.join(query)[5:] # to remove the initial AND
     return queryStr, params

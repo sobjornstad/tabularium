@@ -1,10 +1,10 @@
 BUGS:
+- Don't allow the selection of "multiple volumes" checkbox in create source with only valid 1-1, since that doesn't create a multi-volume source
 - Edit -> Prefs causes a KeyError on empty database
 - "Values" label in Add Occurrences window is unhelpful
 - Double-click on source/volume to edit it
 - Filtering out a single OID doesn't work right for nearby, as there could be another occurrence of the same entry nearby which then causes it to show up
 - Don't jump away from the volume limits box while halfway through editing it (after typing just one number)
-- Again experiencing the issue with "Volume without source is not a valid search" on starting Tabularium after having volume and source checked. Commenting out the assertion makes the program start completely normally.
 
 MAJOR THINGS TO ADD:
 - Check for LaTeX before allowing the user to print, to avoid wacky errors
