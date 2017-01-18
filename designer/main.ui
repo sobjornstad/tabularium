@@ -1455,10 +1455,13 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionShow_in_cabinet">
    <property name="text">
-    <string>Show &amp;Page in Cabinet</string>
+    <string>&amp;Go to Page in Cabinet</string>
    </property>
    <property name="statusTip">
     <string>Try to find a PDF page for the selected occurrence in ~/cabinet/recordsproject.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+G</string>
    </property>
   </action>
  </widget>
