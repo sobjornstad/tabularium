@@ -9,6 +9,7 @@ other functions are started.
 
 import datetime
 import os
+import subprocess
 import sqlite3
 import sys
 import traceback
@@ -1186,6 +1187,23 @@ class MainWindow(QMainWindow):
         ui.utils.reportBox(self, db.analytics.letterDistribution(),
                            "Letter distribution statistics")
 
+    ## Integrations menu
+    def integrationRt(self):
+        search = self.form.searchBox.text()
+        subprocess.Popen('''gnome-terminal -e "bash -c \\"rtgrep %s /home/soren/cabinet/rt-archive.txt /home/soren/random-thoughts.txt ; exec bash\\""''' % search, shell=True)
+
+    def integrationRpfind(self):
+        occ = self._fetchCurrentOccurrence()
+        if not occ:
+            ui.utils.errorBox("Please select an occurrence to locate.")
+            return
+        if occ.isRefType('redir'):
+            ui.utils.errorBox("Only occurrences with page numbers or ranges "
+                              "can be located with this feature.")
+            return
+        uof = occ.getUOFRepresentation().replace(' ', '')
+        subprocess.Popen(["rpfind", uof])
+
     ## Help menu
     def onAbout(self):
         "Show the about dialog."
@@ -1238,6 +1256,8 @@ class MainWindow(QMainWindow):
         sf.actionExport.triggered.connect(self.onExportMindex)
         sf.actionMove_to_entry.triggered.connect(self.onMoveToEntry)
         sf.actionAbout_Tabularium.triggered.connect(self.onAbout)
+        sf.actionShow_in_cabinet.triggered.connect(self.integrationRpfind)
+        sf.actionFind_in_RT.triggered.connect(self.integrationRt)
 
     def checkAllMenus(self):
         """

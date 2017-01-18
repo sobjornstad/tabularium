@@ -958,6 +958,14 @@ If the interface is sluggish, try turning this off.</string>
     <addaction name="actionGoInspect"/>
     <addaction name="actionGoNearby"/>
    </widget>
+   <widget class="QMenu" name="menuIntegrations">
+    <property name="title">
+     <string>Integration&amp;s</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionShow_in_cabinet"/>
+    <addaction name="actionFind_in_RT"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuGo"/>
@@ -966,6 +974,7 @@ If the interface is sluggish, try turning this off.</string>
    <addaction name="menuInspect"/>
    <addaction name="menuSources"/>
    <addaction name="menuTools"/>
+   <addaction name="menuIntegrations"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -1434,6 +1443,22 @@ If the interface is sluggish, try turning this off.</string>
    </property>
    <property name="statusTip">
     <string>Save now. Tabularium saves automatically every minute and on quit.</string>
+   </property>
+  </action>
+  <action name="actionFind_in_RT">
+   <property name="text">
+    <string>Find in &amp;Random Thoughts</string>
+   </property>
+   <property name="statusTip">
+    <string>Call 'rtgrep' on the current search in a new terminal window.</string>
+   </property>
+  </action>
+  <action name="actionShow_in_cabinet">
+   <property name="text">
+    <string>Show &amp;Page in Cabinet</string>
+   </property>
+   <property name="statusTip">
+    <string>Try to find a PDF page for the selected occurrence in ~/cabinet/recordsproject.</string>
    </property>
   </action>
  </widget>
