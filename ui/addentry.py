@@ -120,6 +120,7 @@ class AddEntryWindow(QDialog):
         """
         self.form.nameBox.setText(value)
         self.form.sortKeyBox.setText(skValue if skValue else value)
+        self._autoSortKey()
 
     def maybeUpdateSortKey(self):
         """
