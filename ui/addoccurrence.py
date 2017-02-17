@@ -75,18 +75,18 @@ class AddOccWindow(QDialog):
                 ui.utils.informationBox("%i of the occurrences you added were "
                                         "already in the database." % numDupes,
                                         "Duplicate warning")
-
-            # Save the first source we added to conveniently recall it on the
-            # next add.
-            volume = occs[0].volume
-            source = volume.source
-            if source.isSingleVol():
-                saveSource = source.abbrev + ' '
-            else:
-                saveSource = source.abbrev + str(volume.num) + '.'
-            self.sh.put('lastSourceVolInAddOcc', saveSource)
-            self.sh.sync()
-            return
+            if occs:
+                # Save the first source we added to conveniently recall it on
+                # the next add.
+                volume = occs[0].volume
+                source = volume.source
+                if source.isSingleVol():
+                    saveSource = source.abbrev + ' '
+                else:
+                    saveSource = source.abbrev + str(volume.num) + '.'
+                self.sh.put('lastSourceVolInAddOcc', saveSource)
+                self.sh.sync()
+                return
 
         # if we're still here, there was an exception
         ui.utils.errorBox(error, "UOF parsing error")
