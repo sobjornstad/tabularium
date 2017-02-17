@@ -1061,7 +1061,8 @@ class MainWindow(QMainWindow):
         "Add a new occurrence to the currently selected entry."
         self.saveSelections()
         # Anna-Christina's window
-        ac = ui.addoccurrence.AddOccWindow(self, self._fetchCurrentEntry())
+        ac = ui.addoccurrence.AddOccWindow(self, self._fetchCurrentEntry(),
+                                           self.sh)
         r = ac.exec_()
         if r:
             self.updateAndRestoreSelections()

@@ -56,6 +56,7 @@ class AddEntryWindow(QDialog):
         self.form = ui.forms.newentry.Ui_Dialog()
         self.form.setupUi(self)
         self.mw = parent
+        self.sh = self.mw.sh
 
         self.skManual = False # whether user has manually changed sk
         self.preparedOccurrence = None # see .putRedirect()
@@ -206,7 +207,7 @@ class AddEntryWindow(QDialog):
                 utils.informationBox("Entry already exists; adding "
                                      "occurrences.", "Entry exists")
                 entry = existingEntry
-            ac = ui.addoccurrence.AddOccWindow(self, entry,
+            ac = ui.addoccurrence.AddOccWindow(self, entry, self.sh,
                                                self.preparedOccurrence)
             super(AddEntryWindow, self).accept()
             ac.exec_()

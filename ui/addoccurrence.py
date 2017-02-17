@@ -17,11 +17,13 @@ class AddOccWindow(QDialog):
     is read-only), and may also start with some text already placed in the box
     (for instance, when adding a redirect entry).
     """
-    def __init__(self, parent, entry, preparedOccurrence=None):
+    def __init__(self, parent, entry, sh, preparedOccurrence=None):
         """
         Arguments:
             parent: The usual.
             entry: The entry to add occurrences to.
+            settingsHandler: a SettingsHandler instance which we can use to
+                save the last-used source and volume for convenience.
             preparedOccurrence (optional): Text to put in the occurrences box.
         """
 
@@ -30,11 +32,19 @@ class AddOccWindow(QDialog):
         self.form.setupUi(self)
         self.parent = parent # may be mw or entry dialog
         self.entry = entry
+        self.sh = sh
 
         self.form.entryBox.setText(self.entry.name)
         if preparedOccurrence:
+            # If we have a prepared occurrence, use that as the default.
             self.form.valueBox.setText(preparedOccurrence)
             self.form.valueBox.setCursorPosition(0)
+        else:
+            # Otherwise, grab the last source/vol we used and autofill the
+            # beginning with that.
+            sv = self.sh.get('lastSourceVolInAddOcc')
+            if sv is not None:
+                self.form.valueBox.setText(sv)
 
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
@@ -47,7 +57,7 @@ class AddOccWindow(QDialog):
         """
         toParse = self.form.valueBox.text()
         try:
-            _, numDupes = db.occurrences.makeOccurrencesFromString(
+            occs, numDupes = db.occurrences.makeOccurrencesFromString(
                 toParse, self.entry)
         except db.occurrences.InvalidUOFError:
             error = "The occurrence string is invalid – please check your " \
@@ -65,6 +75,17 @@ class AddOccWindow(QDialog):
                 ui.utils.informationBox("%i of the occurrences you added were "
                                         "already in the database." % numDupes,
                                         "Duplicate warning")
+
+            # Save the first source we added to conveniently recall it on the
+            # next add.
+            volume = occs[0].volume
+            source = volume.source
+            if source.isSingleVol():
+                saveSource = source.abbrev + ' '
+            else:
+                saveSource = source.abbrev + str(volume.num) + '.'
+            self.sh.put('lastSourceVolInAddOcc', saveSource)
+            self.sh.sync()
             return
 
         # if we're still here, there was an exception

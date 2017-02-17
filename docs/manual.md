@@ -292,11 +292,11 @@ prompted for the entry name. The sort key will be filled in automatically. You
 can choose a classification by clicking the appropriate button or by holding
 down the Alt key and pressing the underlined letter.
 
-The **Auto** button is pressed by default, indicating that Tabularium will try
+The **Auto** option is selected by default, indicating that Tabularium will try
 to determine the sort key automatically. If it doesn’t do what you want, you
-can manually change the text (which will automatically deselect **Auto**). If
-you later decide you want Tabularium to decide for you again, click **Auto**
-again to reenable the function.
+can manually change the text (which will deselect **Auto**). If you later
+decide you want Tabularium to decide for you again, click **Auto** again to
+reenable the function.
 
 After clicking Add, you will be asked to specify some occurrences to finish
 adding the entry, as an entry must have at least one occurrence.
@@ -312,10 +312,8 @@ Occurrences are specified in *Unified Occurrence Format* (UOF) in the
 for each part of the occurrence would be, but it is a great deal easier to use
 when entering a large number of occurrences.
 
-If you are adding a large number of entries or occurrences to the same source
-at once, it may be useful to copy the source (and volume, if applicable) part
-to the clipboard (e.g., `CB 2.`) so you can paste it every time you add
-occurrences.
+The source that you most recently used will be autofilled to make it easier to
+add a lot of entries with the same source.
 
 ### UOF
 

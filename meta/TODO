@@ -5,8 +5,10 @@ BUGS:
 - Double-click on source/volume to edit it
 - Filtering out a single OID doesn't work right for nearby, as there could be another occurrence of the same entry nearby which then causes it to show up
 - Don't jump away from the volume limits box while halfway through editing it (after typing just one number)
+- When creating an "ADD" request from the Find box, auto sort key wash doesn't trigger until turning off and on "auto" or editing the text
 
 MAJOR THINGS TO ADD:
+- Store DB version in the database to allow upgrades in future
 - Check for LaTeX before allowing the user to print, to avoid wacky errors
 - Copy text of entry/occ/etc. option?
 - Implement status bar notification of limits, and correct sizing and saving of size of newly splittered limits pane
