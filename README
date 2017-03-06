@@ -1,0 +1,32 @@
+Tabularium is a Qt application for maintaining personal indexes, the successor
+to the RPPAS (Records Project Paper Augmentation System).
+
+It is currently in alpha; it should work, but there are some rough edges. If
+you spot a bug that isn't listed in meta/TODO in the source code, please feel
+free to report it. However, I cannot guarantee support for the software in its
+current state.
+
+There is no upgrade procedure from RPPAS, but if you were previously using
+RPPAS and have a database from there, email me a copy
+(`contact@sorenbjornstad.com`) and I can manually convert it for you.
+
+See `docs/manual.md` for details on how to use Tabularium; I haven't gotten
+around to making a quick start wizard for new users, so you'll likely need to
+take a look at it to figure out what to do.
+
+
+Installation
+============
+
+There are no builds available currently; you'll need to install from source.
+You will need Python 3, Qt 5, pyuic5, and pyrcc5 (available in any good package
+repository), and the Python module passlib (available through pip3). You'll
+also want unittest and nosetests if you'd like to run the automated test suite.
+
+Before running Tabularium, you need to build the UI from the XML descriptions.
+This can be done by running `designer/makeForms.sh`. After that, you should be
+set to start Tabularium by running `./tabularium`.
+
+If you'd like Tabularium to be available system-wide, you can place the entire
+directory anywhere convenient and then create a symlink to the `tabularium`
+executable in `/usr/bin/`.
