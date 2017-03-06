@@ -36,3 +36,5 @@ fi
 
 echo "Updating resources..."
 pyrcc5 resources/resources.qrc -o ui/forms/resources_rc.py
+# hack because file is generated with wrong import syntax
+sed -ie 's/^import resources_rc$/from . import resources_rc/' ui/forms/about.py
