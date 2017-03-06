@@ -5,6 +5,7 @@ BUGS:
 - Double-click on source/volume to edit it
 - Filtering out a single OID doesn't work right for nearby, as there could be another occurrence of the same entry nearby which then causes it to show up
 - Don't jump away from the volume limits box while halfway through editing it (after typing just one number)
+- I think the RP integration ^G doesn't work with single-digit entries since I have leading zeroes in my RP cabinet
 
 MAJOR THINGS TO ADD:
 - Store DB version in the database to allow upgrades in future
