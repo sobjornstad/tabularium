@@ -114,7 +114,7 @@
      <item>
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>Tabularium is a free and open-source application for managing large personal indexes. It is licensed under the &lt;a href=&quot;http://www.gnu.org/licenses/agpl-3.0.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;GNU GPL3&lt;/span&gt;&lt;/a&gt;.
+        <string>Tabularium is a free and open-source application for managing large personal indexes. It is licensed under the &lt;a href=&quot;http://www.gnu.org/licenses/gpl-3.0.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;GNU GPL3&lt;/span&gt;&lt;/a&gt;.
 
 &lt;br&gt;&lt;br&gt;Tabularium is written in Python 3 and uses PyQt 5 for its user interface.
 
