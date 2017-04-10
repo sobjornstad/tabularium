@@ -59,10 +59,8 @@ class AddOccWindow(QDialog):
         try:
             occs, numDupes = db.occurrences.makeOccurrencesFromString(
                 toParse, self.entry)
-        except db.occurrences.InvalidUOFError:
-            error = "The occurrence string is invalid – please check your " \
-                    "syntax and try again."
-            #raise
+        except db.occurrences.InvalidUOFError as e:
+            error = "%s" % e
         except db.occurrences.NonexistentSourceError as e:
             error = "%s" % e
         except db.occurrences.NonexistentVolumeError as e:
