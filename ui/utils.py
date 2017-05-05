@@ -9,7 +9,11 @@ These functions primarily create various kinds of simple dialog boxes.
 
 import os
 
-from PyQt5.QtWidgets import QDialog, QMessageBox, QInputDialog, QLineEdit
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox, QInputDialog, \
+        QLineEdit
+from PyQt5.QtGui import QCursor
+
 import ui.forms.confirmationwindow
 import ui.forms.report
 
@@ -191,3 +195,16 @@ def reportBox(parent, text, title):
     """
     rd = ReportDialog(parent, text, title)
     return rd.exec_()
+
+
+def longProcess(mw, statusmsg, func, *args, **kwargs):
+    #"Loading Names and Faces, this may take a moment...")
+    try:
+        QApplication.processEvents()
+        QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
+        mw.form.statusBar.showMessage(statusmsg)
+        QApplication.processEvents()
+        func(*args, **kwargs)
+    finally:
+        QApplication.restoreOverrideCursor()
+        mw.form.statusBar.clearMessage()

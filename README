@@ -20,8 +20,9 @@ Installation
 
 There are no builds available currently; you'll need to install from source.
 You will need Python 3, Qt 5, pyuic5, and pyrcc5 (available in any good package
-repository), and the Python module passlib (available through pip3). You'll
-also want unittest and nosetests if you'd like to run the automated test suite.
+repository), and the Python modules passlib and python-magic (available through
+pip3). You'll also want unittest and nosetests if you'd like to run the
+automated test suite.
 
 Before running Tabularium, you need to build the UI from the XML descriptions.
 This can be done by running `designer/makeForms.sh`. After that, you should be

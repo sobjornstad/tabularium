@@ -77,7 +77,7 @@ def makeDatabase(fname):
     connection = sqlite.connect(fname)
     cursor = connection.cursor()
     cursor.execute('CREATE TABLE occurrences (oid INTEGER PRIMARY KEY, eid INTEGER, vid INTEGER, ref TEXT, type INTEGER, dEdited TEXT, dAdded TEXT)')
-    cursor.execute('CREATE TABLE entries (eid INTEGER PRIMARY KEY, name TEXT, sortkey TEXT, classification INTEGER, dEdited TEXT, dAdded TEXT)')
+    cursor.execute('CREATE TABLE entries (eid INTEGER PRIMARY KEY, name TEXT, sortkey TEXT, classification INTEGER, dEdited TEXT, dAdded TEXT, picture BLOB)')
     cursor.execute('CREATE TABLE sources (sid INTEGER PRIMARY KEY, name TEXT, volval TEXT, pageval TEXT, nearrange INTEGER, abbrev TEXT, stype INTEGER)')
     cursor.execute('CREATE TABLE volumes (vid INTEGER PRIMARY KEY, sid INTEGER, num INTEGER, notes TEXT, dopened TEXT, dclosed TEXT)')
     cursor.execute('CREATE TABLE conf (conf TEXT)')

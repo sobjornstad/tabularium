@@ -3,6 +3,7 @@
 
 import datetime
 import re
+import sqlite3
 
 import db.database as d
 import db.occurrences
@@ -151,6 +152,43 @@ class Entry(object):
     def dateEdited(self):
         return self._dateEdited
 
+    # To avoid filling up the computer's memory if requesting a bunch of
+    # entries, images are fetched from the DB on request rather than being
+    # stored in the object with other attributes. Note that this means, for
+    # optimal performance, you should get the value of 'obj.image' only once in
+    # the caller.
+    @property
+    def image(self):
+        d.cursor.execute('SELECT picture FROM entries WHERE eid=?', (self._eid,))
+        image = d.cursor.fetchall()[0][0]
+        return image
+    @image.setter
+    def image(self, content):
+        """
+        Set database column to an image. May be set to None (to delete the
+        image), or a filename to read from, or raw data.
+        """
+        if content is None:
+            d.cursor.execute('UPDATE entries SET picture=null WHERE eid=?',
+                             (self._eid,))
+        elif isinstance(content, str):
+            path = content
+            with open(path, 'rb') as thefile:
+                d.cursor.execute(
+                    'UPDATE entries SET picture=? WHERE eid=?',
+                     (sqlite3.Binary(thefile.read()), self._eid))
+        else:
+            # raw data
+            d.cursor.execute('UPDATE entries SET picture=? WHERE eid=?',
+                             (sqlite3.Binary(content), self._eid))
+        d.checkAutosave()
+    def writeImage(self, filehandle):
+        image = self.image
+        if image is None:
+            return False
+        else:
+            filehandle.write(image)
+            return True
 
     def delete(self):
         d.cursor.execute('DELETE FROM occurrences WHERE eid=?', (self._eid,))
@@ -283,6 +321,31 @@ def findOne(search, classification=tuple(entryTypes.values()), regex=False,
         return None
     else:
         raise MultipleResultsUnexpectedError()
+
+def nonRedirectTopLevelPeople():
+    """
+    Return a list of all entries marked as 'person' that have at least one
+    non-redirect occurrence and are the "top-level" entry (i.e., without
+    additional subentries). This is a rough attempt that could use tweaking
+    later; in particular, it fails if there is no top-level entry by simply
+    including all of the entries.
+    """
+    q = """SELECT DISTINCT entries.eid, name, sortkey, classification,
+                  entries.dEdited, entries.dAdded
+           FROM occurrences
+           INNER JOIN entries ON entries.eid = occurrences.eid
+           WHERE classification = ?
+                 AND occurrences.type != ?
+           ORDER BY sortkey COLLATE nocase"""
+    d.cursor.execute(q, (db.consts.entryTypes['person'],
+                         db.consts.refTypes['redir']))
+    entries = db.entries.Entry.multiConstruct(d.cursor.fetchall())
+    cleanedEntries = []
+    for i in entries:
+        if (not cleanedEntries
+                or not i.name.startswith(cleanedEntries[-1].name)):
+            cleanedEntries.append(i)
+    return cleanedEntries
 
 def allEntries():
     """

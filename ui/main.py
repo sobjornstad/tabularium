@@ -38,6 +38,7 @@ import ui.addoccurrence
 import ui.editnotes
 import ui.editoccurrence
 import ui.mergeentry
+import ui.names2faces
 import ui.opendatabase
 import ui.settings
 import ui.sourcemanager
@@ -1210,6 +1211,8 @@ class MainWindow(QMainWindow):
         "Show the about dialog."
         ui.about.AboutWindow(self, APPLICATION_VERSION).exec_()
 
+    def onNames2Faces(self):
+        ui.names2faces.FacesWindow(self).exec_()
 
     ### Menu implementation ###
     def _setupMenus(self):
@@ -1259,6 +1262,7 @@ class MainWindow(QMainWindow):
         sf.actionAbout_Tabularium.triggered.connect(self.onAbout)
         sf.actionShow_in_cabinet.triggered.connect(self.integrationRpfind)
         sf.actionFind_in_RT.triggered.connect(self.integrationRt)
+        sf.actionSearch_Faces.triggered.connect(self.onNames2Faces)
 
     def checkAllMenus(self):
         """

@@ -937,6 +937,7 @@ If the interface is sluggish, try turning this off.</string>
     </property>
     <addaction name="actionClassify_Entries"/>
     <addaction name="actionLetter_Distribution_Check"/>
+    <addaction name="actionSearch_Faces"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -1462,6 +1463,11 @@ If the interface is sluggish, try turning this off.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+G</string>
+   </property>
+  </action>
+  <action name="actionSearch_Faces">
+   <property name="text">
+    <string>Search Faces...</string>
    </property>
   </action>
  </widget>
