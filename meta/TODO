@@ -1,4 +1,6 @@
 BUGS:
+- Editing an entry with a nonstandard sort key seems to revert to the default sort key
+- Merge entry needs to preserve pictures
 - Don't allow the selection of "multiple volumes" checkbox in create source with only valid 1-1, since that doesn't create a multi-volume source
 - Edit -> Prefs causes a KeyError on empty database
 - "Values" label in Add Occurrences window is unhelpful
@@ -8,6 +10,7 @@ BUGS:
 - I think the RP integration ^G doesn't work with single-digit entries since I have leading zeroes in my RP cabinet
 
 MAJOR THINGS TO ADD:
+- Shoot a warning out if we try to add occurrences to an entry that currently only has redirects
 - Store DB version in the database to allow upgrades in future
 - Check for LaTeX before allowing the user to print, to avoid wacky errors
 - Copy text of entry/occ/etc. option?

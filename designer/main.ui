@@ -136,6 +136,9 @@ If the interface is sluggish, try turning this off.</string>
                 <height>0</height>
                </size>
               </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
               <property name="textElideMode">
                <enum>Qt::ElideRight</enum>
               </property>
@@ -168,6 +171,9 @@ If the interface is sluggish, try turning this off.</string>
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -229,6 +235,9 @@ If the interface is sluggish, try turning this off.</string>
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="alternatingRowColors">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
@@ -1261,6 +1270,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Classify Entries...</string>
    </property>
+   <property name="statusTip">
+    <string>Add classifications to your unclassified entries.</string>
+   </property>
   </action>
   <action name="actionInvalid_Redirect_Check">
    <property name="text">
@@ -1333,6 +1345,9 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionLetter_Distribution_Check">
    <property name="text">
     <string>Show &amp;Letter Distribution</string>
+   </property>
+   <property name="statusTip">
+    <string>Show the frequency that entries begin with certain letters.</string>
    </property>
   </action>
   <action name="actionTabulate_Relations">
@@ -1468,6 +1483,9 @@ If the interface is sluggish, try turning this off.</string>
   <action name="actionSearch_Faces">
    <property name="text">
     <string>Search Faces...</string>
+   </property>
+   <property name="statusTip">
+    <string>View and add pictures of the people in your database.</string>
    </property>
   </action>
  </widget>
