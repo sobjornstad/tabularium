@@ -1192,7 +1192,7 @@ class MainWindow(QMainWindow):
     ## Integrations menu
     def integrationRt(self):
         search = self.form.searchBox.text()
-        subprocess.Popen('''gnome-terminal -e "bash -c \\"rtgrep %s /home/soren/cabinet/rt-archive.txt /home/soren/random-thoughts.txt ; exec bash\\""''' % search, shell=True)
+        subprocess.Popen('''gnome-terminal -e "bash -c \\"rtgrep %s /home/soren/random-thoughts.txt ; exec bash\\""''' % search, shell=True)
 
     def integrationRpfind(self):
         occ = self._fetchCurrentOccurrence()
