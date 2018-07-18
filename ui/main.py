@@ -769,10 +769,15 @@ class MainWindow(QMainWindow):
 
         el = self.form.entriesList
         ol = self.form.occurrencesList
-        # try for an exact match on the former text
-        result = el.findItems(self.savedTexts[0], Qt.MatchExactly)
-        if result:
-            el.setCurrentItem(result[0])
+        # try for an exact match on the former text; there will be one match or
+        # nothing since entry names have to be unique
+        matches = el.findItems(self.savedTexts[0], Qt.MatchExactly)
+        if matches:
+            el.setCurrentItem(matches[0])
+            # FIXME: following *should* scroll to the item, but there appears to be some
+            # kind of bug, potentially in Qt for all I know, that makes it
+            # only work on entries near the top?
+            el.scrollToItem(matches[0])
             # Since we've found the exact item, we can also sensibly restore
             # the occurrence selection.
             if self.savedSelections[1] <= ol.count() - 1:
