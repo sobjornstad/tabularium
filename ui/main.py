@@ -127,6 +127,7 @@ class MainWindow(QMainWindow):
         self.searchForward = []
         self.savedSelections = None
         self.savedTexts = None
+        self.entryCache = []
         self.preferredDateFormat = 'd MMM yyyy'
         self.dbLocation = ui.settings.getDbLocation()
         if not self.dbLocation or not self._initDb(self.dbLocation, False):
@@ -424,7 +425,7 @@ class MainWindow(QMainWindow):
         QApplication.processEvents()
         self._resetForEntry()
         entries = self._getEntriesForSearch()
-        fillListWidgetWithEntries(self.form.entriesList, entries, sort=False)
+        self.fillListWidgetWithEntries(self.form.entriesList, entries, sort=False)
         self.updateMatchesStatus()
         self.form.statusBar.clearMessage()
         self.form.entriesList.blockSignals(oldBlockSignals)
@@ -538,9 +539,10 @@ class MainWindow(QMainWindow):
         # fill nearby list
         nearby = occ.getNearby()
         if nearby:
-            fillListWidgetWithEntries(self.form.nearbyList, nearby)
+            self.fillListWidgetWithEntries(self.form.nearbyList, nearby)
         else:
             self.form.nearbyList.addItem("(No entries nearby)")
+
 
     def _getOKClassifications(self):
         """
@@ -559,6 +561,18 @@ class MainWindow(QMainWindow):
         checked = [trans[box] for box in trans.keys() if box.isChecked()]
         return tuple(checked)
 
+    def fillListWidgetWithEntries(self, widget, entries, sort=True):
+        """
+        Fill an arbitrary list widget (entry, occurrence, or nearby) with entries.
+        For speed, sort can be disabled; obviously this is only valid if you know
+        that the items were ordered in the SQL query that pulled them from the
+        database. This should be true for entries.
+        """
+        if sort:
+            entries.sort(key=lambda i: i.sortKey.lower())
+        widget.addItems(i.name for i in entries)
+        if widget is self.form.entriesList:
+            self.entryCache = entries
 
     ### Checkbox / options handling ###
     def onChangeInspectionOptions(self):
@@ -1395,6 +1409,14 @@ class MainWindow(QMainWindow):
         Get an Entry object for the currently selected entry. Return None if
         nothing is selected or the entry was just deleted.
         """
+        # a database hit for changing rows is rather slow, so we cache a
+        # configurable number of them
+        currentRow = self.form.entriesList.currentRow()
+        if currentRow < len(self.entryCache):
+            print("cache hit")
+            return self.entryCache[currentRow]
+
+        print("cache miss")
         try:
             search = self.form.entriesList.currentItem().text()
         except AttributeError:
@@ -1516,19 +1538,6 @@ def selectFirstAndFocus(listWidget):
     if listWidget.currentRow() == -1:
         listWidget.setCurrentRow(0)
     listWidget.setFocus()
-
-def fillListWidgetWithEntries(widget, entries, sort=True):
-    """
-    Fill an arbitrary list widget (entry, occurrence, or nearby) with entries.
-    For speed, sort can be disabled; obviously this is only valid if you know
-    that the items were ordered in the SQL query that pulled them from the
-    database. This should be true for entries.
-    """
-    if sort:
-        widget.addItems(i.name for i
-                        in sorted(entries, key=lambda i: i.sortKey.lower()))
-    else:
-        widget.addItems(i.name for i in entries)
 
 def exceptionHook(exctype, value, tb):
     """
