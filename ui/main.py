@@ -195,7 +195,7 @@ class MainWindow(QMainWindow):
                 return False
 
         # fill entries
-        self.savedTexts = ("", "")
+        self.savedTexts = ["", ""]
         self.savedSelections = (-1, -1)
         self.onChangeSearchOptions()
 
@@ -742,8 +742,10 @@ class MainWindow(QMainWindow):
         el = self.form.entriesList
         ol = self.form.occurrencesList
         self.savedSelections = (el.currentRow(), ol.currentRow())
-        self.savedTexts = (el.currentItem().text() if el.currentItem() else "",
-                           ol.currentItem().text() if ol.currentItem() else "")
+        if el.currentItem():
+            self.savedTexts[0] = el.currentItem().text()
+        if ol.currentItem():
+            self.savedTexts[1] = ol.currentItem().text()
 
     def updateAndRestoreSelections(self):
         """
@@ -751,7 +753,6 @@ class MainWindow(QMainWindow):
         """
         self.fillEntries()
 
-        self.form.statusBar.showMessage("Reloading...")
         el = self.form.entriesList
         ol = self.form.occurrencesList
         # try for an exact match on the former text
@@ -762,18 +763,6 @@ class MainWindow(QMainWindow):
             # the occurrence selection.
             if self.savedSelections[1] <= ol.count() - 1:
                 ol.setCurrentRow(self.savedSelections[1])
-            else:
-                ol.setCurrentRow(ol.count() - 1)
-            ol.setFocus()
-        else:
-            # Maybe the item was removed; try going to that row number, so we
-            # end up next to where we were before.
-            if self.savedSelections[0] <= el.count() - 1:
-                el.setCurrentRow(self.savedSelections[0])
-            else:
-                el.setCurrentRow(self.form.entriesList.count() - 1)
-            el.setFocus()
-        self.form.statusBar.clearMessage()
 
 
     ### Menu callback functions ###
@@ -1372,7 +1361,9 @@ class MainWindow(QMainWindow):
             self.searchStack.append(self.search)
         if not wentForwardBack:
             self.searchForward = []
-        self.fillEntries()
+        self.saveSelections()
+        self.updateAndRestoreSelections()
+        self.form.searchBox.setFocus()
 
     def onAddFromSearch(self):
         "Add an entry typed in the search box."
