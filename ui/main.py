@@ -1347,14 +1347,14 @@ class MainWindow(QMainWindow):
     ### Other actions ###
     def onEntrySelected(self):
         """
-        Fill the occurrences for the current entry. Then, automatically select
-        the first occurrence when selecting an entry, but don't leave the
-        occurrences list focused, so that we can still scroll through the
-        entries list with the arrow keys.
+        Fill the occurrences for the current entry.
+        
+        We used to also automatically fill the occurrences list, but this
+        requires two database hits and as such requires quite a lot of time.
+        To improve performance when rapidly paging or scrolling through items,
+        you now have to click on the entry manually (or hit Alt-O Space).
         """
         self.fillOccurrences()
-        selectFirstAndFocus(self.form.occurrencesList)
-        self.form.entriesList.setFocus()
 
     def onSearch(self, _=None, wentForwardBack=False):
         """
@@ -1413,10 +1413,8 @@ class MainWindow(QMainWindow):
         # configurable number of them
         currentRow = self.form.entriesList.currentRow()
         if currentRow < len(self.entryCache):
-            print("cache hit")
             return self.entryCache[currentRow]
 
-        print("cache miss")
         try:
             search = self.form.entriesList.currentItem().text()
         except AttributeError:
