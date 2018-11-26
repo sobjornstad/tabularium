@@ -1373,7 +1373,7 @@ class MainWindow(QMainWindow):
         possible to use the forward button). The optional argument
         wentForwardBack will disable this behavior.
         """
-        self.search = self.form.searchBox.text()
+        self.search = self.form.searchBox.text().strip()
         isDupe = (len(self.searchStack) != 0
                   and self.search == self.searchStack[-1])
         if not self.searchOptions['incremental'] and not isDupe:

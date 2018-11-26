@@ -1,4 +1,5 @@
 BUGS:
+- An entry with a backslash in its name throws an exception when attempting to edit it
 - Editing an entry with a nonstandard sort key seems to revert to the default sort key
 - Merge entry needs to preserve pictures
 - Don't allow the selection of "multiple volumes" checkbox in create source with only valid 1-1, since that doesn't create a multi-volume source
