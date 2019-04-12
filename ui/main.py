@@ -886,15 +886,16 @@ class MainWindow(QMainWindow):
         # pylint: disable=no-member
         QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
         try:
+            entriesToPrint = self._getEntriesForSearch()
             self.form.statusBar.showMessage("Exporting entries...")
             QApplication.processEvents()
-            db.exporting.exportMindex(fname, progressCallback)
+            db.exporting.exportMindex(fname, entriesToPrint, progressCallback)
         finally:
             QApplication.restoreOverrideCursor()
             self.form.statusBar.clearMessage()
 
         ui.utils.informationBox(
-            "%i entries exported." % len(db.entries.allEntries()),
+            "%i entries exported." % len(entriesToPrint),
             "Export Mindex File")
 
     def onPrintAll(self):

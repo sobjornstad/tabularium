@@ -4,14 +4,15 @@
 import db.entries
 import db.occurrences
 
-def exportMindex(filename, callback=None):
+def exportMindex(filename, entries=None, callback=None):
     """
     Export the main index to a Mindex file; see db.importing for information
     on Mindex format.
 
     Periodically call callback function (if supplied) with a progress message.
     """
-    entries = db.entries.allEntries()
+    if entries is None:
+        entries = db.entries.allEntries()
     entries.sort(key=lambda i: i.sortKey.lower())
 
     lines = []
