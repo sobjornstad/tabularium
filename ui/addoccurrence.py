@@ -73,6 +73,7 @@ class AddOccWindow(QDialog):
                 ui.utils.informationBox("%i of the occurrences you added were "
                                         "already in the database." % numDupes,
                                         "Duplicate warning")
+                return
             if occs:
                 # Save the first source we added to conveniently recall it on
                 # the next add.
