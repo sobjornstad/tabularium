@@ -39,7 +39,6 @@ class FacesWindow(QDialog):
         #TODO: Rather allow the user to add their own options for source
         self.form.findInCombo.addItem("Facebook")
         self.form.findInCombo.addItem("Google")
-        self.form.findInCombo.addItem("Stalkernet")
 
         ui.utils.longProcess(
             self.parent,
@@ -99,29 +98,6 @@ class FacesWindow(QDialog):
         if source == "Facebook":
             base_url = "https://www.facebook.com/search/top/?q=%s"
             url = base_url % entry.name
-        elif source == "Stalkernet":
-            base_url = ("https://www.stolaf.edu/personal/index.cfm?"
-                        "fuseaction=SearchResults&lastname=%s&firstname=%s")
-            try:
-                last, first = (i.strip() for i in entry.name.split(','))
-            except ValueError:
-                last, ok = ui.utils.inputBox(
-                    "Could not automatically determine first and last name. "
-                    "\nLast name (or blank for no last name search):",
-                    "Enter last name")
-                if not ok:
-                    return
-                first, ok = ui.utils.inputBox(
-                    "\nFirst name (or blank for no first name search):",
-                    "Enter first name")
-                if not ok:
-                    return
-
-                if not last:
-                    base_url.replace('&lastname=%s', '')
-                if not first:
-                    base_url.replace('&firstname=%s', '')
-            url = base_url % (last, first)
         elif source == "Google":
             base_url = "https://www.google.com/search?tbm=isch&q=%s"
             url = base_url % entry.name
