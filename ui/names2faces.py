@@ -97,7 +97,7 @@ class FacesWindow(QDialog):
         source = self.form.findInCombo.currentText()
 
         if source == "Facebook":
-            base_url = "https://www.facebook.com/search/str/%s/keywords_top"
+            base_url = "https://www.facebook.com/search/top/?q=%s"
             url = base_url % entry.name
         elif source == "Stalkernet":
             base_url = ("https://www.stolaf.edu/personal/index.cfm?"
