@@ -24,7 +24,8 @@ class AddOccWindow(QDialog):
             entry: The entry to add occurrences to.
             settingsHandler: a SettingsHandler instance which we can use to
                 save the last-used source and volume for convenience.
-            preparedOccurrence (optional): Text to put in the occurrences box.
+            preparedOccurrence (optional): Text to put in the occurrences box
+                after the last-used source/volume.
         """
 
         QDialog.__init__(self)
@@ -35,14 +36,19 @@ class AddOccWindow(QDialog):
         self.sh = sh
 
         self.form.entryBox.setText(self.entry.name)
+        sv = self.sh.get('lastSourceVolInAddOcc')
         if preparedOccurrence:
-            # If we have a prepared occurrence, use that as the default.
-            self.form.valueBox.setText(preparedOccurrence)
-            self.form.valueBox.setCursorPosition(0)
+            # If we have a prepared occurrence, use that as the default,
+            # including the last-used volume but highlighting it since it's the
+            # part we're most likely to want to change. Note that
+            # preparedOccurrence normally already contains a '.', so we don't
+            # need to add one here.
+            occurrenceString = (sv or '') + preparedOccurrence
+            self.form.valueBox.setText(occurrenceString)
+            self.form.valueBox.setSelection(0, len(sv)-1)  # no . at end
         else:
-            # Otherwise, grab the last source/vol we used and autofill the
-            # beginning with that.
-            sv = self.sh.get('lastSourceVolInAddOcc')
+            # Otherwise, autofill the field with the last-used volume and
+            # place the cursor immediately afterwards.
             if sv is not None:
                 self.form.valueBox.setText(sv)
 

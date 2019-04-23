@@ -95,7 +95,7 @@ class AddEntryWindow(QDialog):
         """
         self.putClassification(to)
         name = to.name.replace(';', '\\;')
-        self.preparedOccurrence = " see " + name
+        self.preparedOccurrence = "see " + name
 
     def setEditing(self):
         """
