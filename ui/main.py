@@ -1117,8 +1117,8 @@ class MainWindow(QMainWindow):
             return
 
         if occ.isRefType('num'):
-            occ.ref = "%s-%i" % (occ.ref, int(occ.ref) + 1)
             occ.reftype = db.consts.refTypes['range']
+            occ.ref = "%s-%i" % (occ.ref, int(occ.ref) + 1)
         elif occ.isRefType('range'):
             occ.ref = "%s-%i" % (occ.getStartPage(), int(occ.getEndPage()) + 1)
         self.updateAndRestoreSelections()

@@ -137,9 +137,30 @@ class Occurrence(object):
         return self._ref
     @ref.setter
     def ref(self, ref):
-        if ref != self._ref:
-            self._ref = ref
-            self.flush()
+        if ref == self._ref:
+            return
+
+        source = self.volume.source
+        if self.isRefType('num'):
+            refnum = int(ref)
+            if not self.volume.source.isValidPage(refnum):
+                raise InvalidReferenceError('page', refnum, source)
+        elif self.isRefType('range'):
+            first, second = [int(i) for i in ref.split('-')]
+            if first >= second:
+                raise InvalidReferenceError('page range')
+            for i in (first, second):
+                if not source.isValidPage(i):
+                    raise InvalidReferenceError('page', i, source)
+        elif self.isRefType('redir'):
+            # We don't check if redirects are valid, because we might want
+            # to add them in an order where one is temporarily invalid.
+            pass
+        else:
+            assert False, "unreachable code reached -- invalid refType"
+
+        self._ref = ref
+        self.flush()
 
     @property
     def reftype(self):
@@ -180,7 +201,6 @@ class Occurrence(object):
         else:
             return None
 
-
     def flush(self):
         dEdited = datetime.date.today()
         query = '''UPDATE occurrences
@@ -194,6 +214,15 @@ class Occurrence(object):
     def delete(self):
         d.cursor.execute('DELETE FROM occurrences WHERE oid=?', (self._oid,))
         d.checkAutosave()
+
+    def extend(self, amount=1):
+        """
+        Expand the range (or create a range from a page) by the number of pages
+        specified in /amount/. If amount is positive, the upper bound will be
+        increased; if amount is negative, the lower bound will be decreased.
+        Under no circumstances can an occurrence be extended beyond the page
+        validation specified in its source.
+        """
 
 
     def getUOFRepresentation(self, displayFormatting=False):
