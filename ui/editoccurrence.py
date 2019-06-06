@@ -57,6 +57,7 @@ class EditOccurrenceWindow(QDialog):
             self.occ.delete()
             super(EditOccurrenceWindow, self).accept()
 
+
 def referenceOk(uof):
     """
     Determine if a UOF string (compiled by the program from the user's

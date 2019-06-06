@@ -922,6 +922,8 @@ If the interface is sluggish, try turning this off.</string>
     <addaction name="actionAdd_occ"/>
     <addaction name="separator"/>
     <addaction name="actionEditOcc"/>
+    <addaction name="actionExtendOccurrence"/>
+    <addaction name="actionRetractOccurrence"/>
     <addaction name="actionMove_to_entry"/>
     <addaction name="actionDelete_occ"/>
     <addaction name="separator"/>
@@ -1499,6 +1501,22 @@ If the interface is sluggish, try turning this off.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
+  </property>
+  </action>
+  <action name="actionExtendOccurrence">
+   <property name="text">
+    <string>E&amp;xtend One Page</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt++</string>
+   </property>
+  </action>
+  <action name="actionRetractOccurrence">
+   <property name="text">
+    <string>Re&amp;tract One Page</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+_</string>
    </property>
   </action>
  </widget>

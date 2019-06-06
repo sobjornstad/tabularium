@@ -1086,6 +1086,49 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             self.updateAndRestoreSelections()
 
+    #TODO: Decorator to save/restore selections?
+    def onExtendOccurrence(self):
+        def _validateExtend(occ, change):
+            def _showErr():
+                ui.utils.errorBox(
+                    "Cannot extend beyond the validation parameters "
+                     "of the source %s, which state that pages must be "
+                     "between %i and %i."
+                     % (source.name, *source.pageVal))
+
+            source = occ.volume.source
+            if occ.isRefType('num'):
+                ref = int(occ.ref)
+            elif occ.isRefType('range'):
+                ref = int(occ.getEndPage())
+            else:
+                ui.utils.errorBox("You cannot extend a redirect."
+                                  "Try a single-number or range occurrence.")
+                return False
+
+            if not source.isValidPage(ref + change):
+                _showErr()
+                return False
+            return True
+
+        self.saveSelections()
+        occ = self._fetchCurrentOccurrence()
+        if not _validateExtend(occ, +1):
+            return
+
+        if occ.isRefType('num'):
+            occ.ref = "%s-%i" % (occ.ref, int(occ.ref) + 1)
+            occ.reftype = db.consts.refTypes['range']
+        elif occ.isRefType('range'):
+            occ.ref = "%s-%i" % (occ.getStartPage(), int(occ.getEndPage()) + 1)
+        self.updateAndRestoreSelections()
+
+    def onRetractOccurrence(self):
+        #TODO: Generalize extend and put this one in too
+        #TODO: For here we have to worry about collapsing down to a single though,
+        # maybe it can't be generalized quite so cleanly
+        pass
+
     def onMoveToEntry(self):
         """
         Move an occurrence to a different entry, optionally converting it to
@@ -1251,6 +1294,8 @@ class MainWindow(QMainWindow):
         sf.actionClassify_Entries.triggered.connect(self.onClassify)
         sf.actionEditOcc.triggered.connect(self.onEditOccurrence)
         sf.actionCopyEntryToClipboard.triggered.connect(self.onCopyEntryToClipboard)
+        sf.actionExtendOccurrence.triggered.connect(self.onExtendOccurrence)
+        sf.actionRetractOccurrence.triggered.connect(self.onRetractOccurrence)
         sf.actionLetter_Distribution_Check.triggered.connect(
             self.onLetterDistro)
         sf.actionFollow_redirect.triggered.connect(self.onFollowRedirect)
