@@ -1088,39 +1088,25 @@ class MainWindow(QMainWindow):
 
     #TODO: Decorator to save/restore selections?
     def onExtendOccurrence(self):
-        def _validateExtend(occ, change):
-            def _showErr():
-                ui.utils.errorBox(
-                    "Cannot extend beyond the validation parameters "
-                     "of the source %s, which state that pages must be "
-                     "between %i and %i."
-                     % (source.name, *source.pageVal))
-
-            source = occ.volume.source
-            if occ.isRefType('num'):
-                ref = int(occ.ref)
-            elif occ.isRefType('range'):
-                ref = int(occ.getEndPage())
-            else:
-                ui.utils.errorBox("You cannot extend a redirect."
-                                  "Try a single-number or range occurrence.")
-                return False
-
-            if not source.isValidPage(ref + change):
-                _showErr()
-                return False
-            return True
-
         self.saveSelections()
         occ = self._fetchCurrentOccurrence()
-        if not _validateExtend(occ, +1):
-            return
 
-        if occ.isRefType('num'):
-            occ.reftype = db.consts.refTypes['range']
-            occ.ref = "%s-%i" % (occ.ref, int(occ.ref) + 1)
-        elif occ.isRefType('range'):
-            occ.ref = "%s-%i" % (occ.getStartPage(), int(occ.getEndPage()) + 1)
+        try:
+            if occ.isRefType('num'):
+                oldRefType = occ.reftype
+                occ.reftype = db.consts.refTypes['range']
+                # Yeah, this is why auto-flush is a bad idea!
+                try:
+                    occ.ref = "%s-%i" % (occ.ref, int(occ.ref) + 1)
+                except Exception:
+                    occ.reftype = oldRefType
+                    raise
+            elif occ.isRefType('range'):
+                occ.ref = "%s-%i" % (occ.getStartPage(),
+                                     int(occ.getEndPage()) + 1)
+        except db.occurrences.InvalidReferenceError as e:
+            ui.utils.errorBox(str(e))
+
         self.updateAndRestoreSelections()
 
     def onRetractOccurrence(self):

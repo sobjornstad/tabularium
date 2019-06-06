@@ -140,6 +140,9 @@ class Occurrence(object):
         if ref == self._ref:
             return
 
+        #NOTE: This code is duplicated in the UOF parser.
+        # That needs to be refactored, but autoflush
+        # makes it a challenge; we should change that.
         source = self.volume.source
         if self.isRefType('num'):
             refnum = int(ref)
@@ -626,6 +629,9 @@ def parseUnifiedFormat(s):
         if volume is None:
             raise NonexistentVolumeError(source.name, volnum)
 
+        #NOTE: This code is duplicated on the code for setting the ref property
+        # on the Occurrence class. That needs to be refactored, but autoflush
+        # makes it a challenge; we should change that.
         if reftype == refTypes['num']:
             if not source.isValidPage(refnum):
                 raise InvalidReferenceError('page', refnum, source)
