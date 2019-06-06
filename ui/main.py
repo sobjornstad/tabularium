@@ -1086,34 +1086,23 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             self.updateAndRestoreSelections()
 
-    #TODO: Decorator to save/restore selections?
-    def onExtendOccurrence(self):
+    def _extendRetractOccurrence(self, doRetract=False):
         self.saveSelections()
         occ = self._fetchCurrentOccurrence()
-
         try:
-            if occ.isRefType('num'):
-                oldRefType = occ.reftype
-                occ.reftype = db.consts.refTypes['range']
-                # Yeah, this is why auto-flush is a bad idea!
-                try:
-                    occ.ref = "%s-%i" % (occ.ref, int(occ.ref) + 1)
-                except Exception:
-                    occ.reftype = oldRefType
-                    raise
-            elif occ.isRefType('range'):
-                occ.ref = "%s-%i" % (occ.getStartPage(),
-                                     int(occ.getEndPage()) + 1)
-        except db.occurrences.InvalidReferenceError as e:
+            occ.extend(-1 if doRetract else 1)
+        except (db.occurrences.InvalidReferenceError,
+                db.occurrences.ExtensionError) as e:
             ui.utils.errorBox(str(e))
+        else:
+            self.updateAndRestoreSelections()
 
-        self.updateAndRestoreSelections()
+    #TODO: Decorator to save/restore selections?
+    def onExtendOccurrence(self):
+        self._extendRetractOccurrence(doRetract=False)
 
     def onRetractOccurrence(self):
-        #TODO: Generalize extend and put this one in too
-        #TODO: For here we have to worry about collapsing down to a single though,
-        # maybe it can't be generalized quite so cleanly
-        pass
+        self._extendRetractOccurrence(doRetract=True)
 
     def onMoveToEntry(self):
         """

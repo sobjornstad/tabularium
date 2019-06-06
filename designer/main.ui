@@ -1507,6 +1507,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>E&amp;xtend One Page</string>
    </property>
+   <property name="statusTip">
+    <string>Make this occurrence include one more page (e.g., 5-6 would change to 5-7).</string>
+   </property>
    <property name="shortcut">
     <string>Alt++</string>
    </property>
@@ -1515,8 +1518,11 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>Re&amp;tract One Page</string>
    </property>
+   <property name="statusTip">
+    <string>Make this occurrence include one fewer page (e.g., 5-7 would change to 5-6).</string>
+   </property>
    <property name="shortcut">
-    <string>Alt+_</string>
+    <string>Alt+-</string>
    </property>
   </action>
  </widget>

@@ -50,6 +50,8 @@ class InvalidReferenceError(Exception):
                       self.what, self.value, self.source.name, self.what,
                       validation[0], validation[1])
         return val
+class ExtensionError(Exception):
+    pass
 
 class Occurrence(object):
     """
@@ -226,7 +228,37 @@ class Occurrence(object):
         Under no circumstances can an occurrence be extended beyond the page
         validation specified in its source.
         """
+        assert amount != 0, "Amount argument to extend() must be nonzero"
 
+        if self.isRefType('num'):
+            oldRefType = self.reftype
+            self.reftype = db.consts.refTypes['range']
+            # Yeah, this is why auto-flush is a bad idea!
+            try:
+                self.ref = "%s-%i" % (self.ref, int(self.ref) + amount)
+            except Exception:
+                self.reftype = oldRefType
+                raise
+
+        elif self.isRefType('range'):
+            oldRefType = self.reftype
+            sp = int(self.getStartPage())
+            ep = int(self.getEndPage())
+            if sp == ep + amount:
+                self.reftype = db.consts.refTypes['num']
+                try:
+                    self.ref = sp
+                except Exception:
+                    self.reftype = oldRefType
+                    raise
+            else:
+                self.ref = "%s-%i" % (sp, ep + amount)
+
+        elif self.isRefType('redir'):
+            raise ExtensionError(
+                "You cannot extend or retract a redirect, "
+                "as it has no page numbers to adjust. Try this operation on "
+                "a page or range reference.")
 
     def getUOFRepresentation(self, displayFormatting=False):
         """
