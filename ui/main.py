@@ -8,11 +8,13 @@ other functions are started.
 """
 
 import datetime
+import functools
 import os
 import subprocess
 import sqlite3
 import sys
 import traceback
+from typing import Callable
 
 # for some reason pylint thinks these don't exist, but they work fine
 # pylint: disable=no-name-in-module
@@ -79,6 +81,41 @@ class MwEventFilter(QObject):
             if event.key() in self.actOnKeys and self.mw is not None:
                 self.mw.checkAllMenus()
         return super(MwEventFilter, self).eventFilter(receiver, event)
+
+
+def preserveSelectionsDuring(func: Callable) -> Callable:
+    """
+    Decorator for event handlers and other methods that mutate the database
+    but want to preserve the user's selections as much as possible.
+    Before calling the function, selections are saved;
+    if the handler returns true, the display is updated and selections
+    are restored. (If the handler ended up not doing anything, say because
+    the user canceled the operation, this lets us save a UI update.)
+    """
+    def _useQtActionHack(arg_list):
+        """
+        For actions triggered by menus, Qt always passes an "isChecked" parameter,
+        which is completely useless unless you have a checkable action. Qt is
+        smart and silently discards it if your event handler has no arguments,
+        but shoving the decorator in the way inhibits this action. This hack
+        will silently discard a second boolean parameter if the only argument
+        to the function under decoration is 'self'.
+        """
+        return (
+            func.__code__.co_varnames[:func.__code__.co_argcount] == ('self',)
+            and len(arg_list) == 1
+            and arg_list[0] in (True, False))
+
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        self.saveSelections()
+        if _useQtActionHack(args):
+            retval = func(self)
+        else:
+            retval = func(self, *args, **kwargs)
+        if retval:
+            self.updateAndRestoreSelections()
+    return wrapper
 
 
 # pylint: disable=too-many-public-methods, too-many-instance-attributes
@@ -831,8 +868,8 @@ class MainWindow(QMainWindow):
         """
         db.database.forceSave()
 
+    @preserveSelectionsDuring
     def onImportMindex(self):
-        self.saveSelections()
         fname = QFileDialog.getOpenFileName(
             caption="Import Mindex File",
             filter="Mindex files (*.mindex);;All files (*)")[0]
@@ -867,7 +904,6 @@ class MainWindow(QMainWindow):
                               <div style="margin-left: 24px;">%s<br></div>
                            """ % (linenum, line.replace('\t', ' → '), err))
             ui.utils.reportBox(self, ''.join(msg), "Import Mindex File")
-        self.updateAndRestoreSelections()
 
     def onExportMindex(self):
         def progressCallback(progress):
@@ -996,6 +1032,7 @@ class MainWindow(QMainWindow):
 
 
     ## Entry menu
+    @preserveSelectionsDuring
     def onAddEntry(self, entry=None, redirTo=None, edit=False, text=None):
         """
         Add a new entry. This function is called directly by the standard add
@@ -1003,7 +1040,6 @@ class MainWindow(QMainWindow):
         associated with each menu choice. See the ui.addentry.AddEntryWindow
         class for details on how this works.
         """
-        self.saveSelections()
         ae = ui.addentry.AddEntryWindow(self)
         if entry:
             ae.initializeSortKeyCheck(entry.name, entry.sortKey)
@@ -1018,8 +1054,7 @@ class MainWindow(QMainWindow):
             assert entry is not None, "Must specify entry when using edit=True"
             ae.setEditing()
             ae.resetTitle("Edit Entry '%s'" % entry.name)
-        if ae.exec_():
-            self.updateAndRestoreSelections()
+        return ae.exec_()
 
     def onAddEntryBasedOn(self):
         entry = self._fetchCurrentEntry()
@@ -1033,26 +1068,26 @@ class MainWindow(QMainWindow):
         entry = self._fetchCurrentEntry()
         self.onAddEntry(entry, edit=True)
 
+    @preserveSelectionsDuring
     def onMergeEntry(self):
         "Merge the selected entry with one typed in by the user."
-        self.saveSelections()
         curEntry = self._fetchCurrentEntry()
         dialog = ui.mergeentry.MergeEntryDialog(self)
         dialog.setFrom(curEntry)
         dialog.setTitle("Merge '%s' into..." % curEntry.name)
-        if dialog.exec_():
-            self.updateAndRestoreSelections()
+        return dialog.exec_()
 
+    @preserveSelectionsDuring
     def onDeleteEntry(self):
         "After getting confirmation, delete an entry and its occurrences."
-        # First, we have to make sure we're actually allowed to take this
-        # action, because its keyboard shortcut is "Del", which doesn't use a
-        # Ctrl, Shift, or Alt, which are what trigger the menu checks.
-        if not self._fetchCurrentEntry():
-            return
-
-        self.saveSelections()
         entry = self._fetchCurrentEntry()
+        if not entry:
+            # We have to make sure we're actually allowed to take this
+            # action because its keyboard shortcut is "Del", which doesn't
+            # use a Ctrl, Shift, or Alt, which are what trigger the menu
+            # checks.
+            return False
+
         eName = entry.name
         occsAffected = len(db.occurrences.fetchForEntry(entry))
         # at some point, replace this with undo
@@ -1063,39 +1098,39 @@ class MainWindow(QMainWindow):
             "Delete entry?")
         if r:
             entry.delete()
-            self.updateAndRestoreSelections()
+            return True
+        else:
+            return False
 
 
     ## Occurrences menu
+    @preserveSelectionsDuring
     def onAddOccurrence(self):
         "Add a new occurrence to the currently selected entry."
-        self.saveSelections()
         # Anna-Christina's window
         ac = ui.addoccurrence.AddOccWindow(self, self._fetchCurrentEntry(),
                                            self.sh)
-        r = ac.exec_()
-        if r:
-            self.updateAndRestoreSelections()
+        return ac.exec_()
 
+    @preserveSelectionsDuring
     def onEditOccurrence(self):
         "Edit the volume/reference number of an occurrence."
-        self.saveSelections()
         occ = self._fetchCurrentOccurrence()
         entry = occ.entry
         dialog = ui.editoccurrence.EditOccurrenceWindow(self, entry, occ)
-        if dialog.exec_():
-            self.updateAndRestoreSelections()
+        return dialog.exec_()
 
+    @preserveSelectionsDuring
     def _extendRetractOccurrence(self, doRetract=False):
-        self.saveSelections()
         occ = self._fetchCurrentOccurrence()
         try:
             occ.extend(-1 if doRetract else 1)
         except (db.occurrences.InvalidReferenceError,
                 db.occurrences.ExtensionError) as e:
             ui.utils.errorBox(str(e))
+            return False
         else:
-            self.updateAndRestoreSelections()
+            return True
 
     #TODO: Decorator to save/restore selections?
     def onExtendOccurrence(self):
@@ -1104,12 +1139,12 @@ class MainWindow(QMainWindow):
     def onRetractOccurrence(self):
         self._extendRetractOccurrence(doRetract=True)
 
+    @preserveSelectionsDuring
     def onMoveToEntry(self):
         """
         Move an occurrence to a different entry, optionally converting it to
         a redirect to that entry.
         """
-        self.saveSelections()
         assert self.form.occurrencesList.count() > 0
         if self.form.occurrencesList.count() == 1:
             r = ui.utils.questionBox(
@@ -1124,16 +1159,14 @@ class MainWindow(QMainWindow):
         dialog.setFrom(curEntry)
         dialog.setMoveSingleOccurrence(curOcc)
         dialog.setTitle("Move occurrence '%s' to..." % str(curOcc))
-        if not dialog.exec_():
-            return
-        self.updateAndRestoreSelections()
+        return dialog.exec_()
 
+    @preserveSelectionsDuring
     def onDeleteOccurrence(self):
         """
         Delete the currently selected occurrence, and its entry if this is the
         last occurrence.
         """
-        self.saveSelections()
         occ = self._fetchCurrentOccurrence()
         qString = "Do you really want to delete the occurrence '%s'?" % (
             str(occ))
@@ -1144,7 +1177,9 @@ class MainWindow(QMainWindow):
         if r:
             occ.delete()
             db.entries.deleteOrphaned()
-            self.updateAndRestoreSelections()
+            return True
+        else:
+            return False
 
     def onFollowRedirect(self):
         "Follow a redirect occurrence to the entry it points to."
@@ -1190,12 +1225,11 @@ class MainWindow(QMainWindow):
         nb = ui.editnotes.NotesBrowser(self)
         nb.exec_()
 
+    @preserveSelectionsDuring
     def onManageSources(self):
-        self.saveSelections()
         ms = ui.sourcemanager.SourceManager(self)
         ms.exec_()
         self.updateSourceCombo()
-        self.updateAndRestoreSelections()
 
     def onManageVolumes(self):
         mv = ui.volmanager.VolumeManager(self)
@@ -1556,6 +1590,7 @@ class MainWindow(QMainWindow):
         search = self.form.searchBox.text()
         if len(self.searchStack) == 0 or search != self.searchStack[-1]:
             self.searchStack.append(search)
+
 
 def selectFirstAndFocus(listWidget):
     """
