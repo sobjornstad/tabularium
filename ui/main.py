@@ -1382,6 +1382,8 @@ class MainWindow(QMainWindow):
         sf.actionEditOcc.setEnabled(ifNoOccurrence)
         sf.actionMove_to_entry.setEnabled(ifNoOccurrence)
         sf.actionDelete_occ.setEnabled(ifNoOccurrence)
+        sf.actionExtendOccurrence.setEnabled(ifNoOccurrence)
+        sf.actionRetractOccurrence.setEnabled(ifNoOccurrence)
         curOcc = self._fetchCurrentOccurrence()
         if((ifNoOccurrence) and (curOcc is not None) and
            (curOcc.isRefType('redir'))):
