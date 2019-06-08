@@ -912,6 +912,8 @@ If the interface is sluggish, try turning this off.</string>
     <addaction name="actionEdit"/>
     <addaction name="actionMerge_into"/>
     <addaction name="actionDelete"/>
+    <addaction name="separator"/>
+    <addaction name="actionCopyEntryToClipboard"/>
    </widget>
    <widget class="QMenu" name="menuOccurrence">
     <property name="title">
@@ -1489,6 +1491,14 @@ If the interface is sluggish, try turning this off.</string>
    </property>
    <property name="statusTip">
     <string>View and add pictures of the people in your database.</string>
+   </property>
+  </action>
+  <action name="actionCopyEntryToClipboard">
+   <property name="text">
+    <string>&amp;Copy Text to Clipboard</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
    </property>
   </action>
  </widget>

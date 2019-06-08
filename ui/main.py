@@ -1136,6 +1136,8 @@ class MainWindow(QMainWindow):
                 "Follow redirect called with a non-redirect occurrence!"
         self._changeSearch(occ.ref)
 
+    def onCopyEntryToClipboard(self):
+        QApplication.clipboard().setText(self._fetchCurrentEntry().name)
 
     ## Inspect menu
     def onInspectFollowNearby(self):
@@ -1248,6 +1250,7 @@ class MainWindow(QMainWindow):
         sf.actionPreferences.triggered.connect(self.onPrefs)
         sf.actionClassify_Entries.triggered.connect(self.onClassify)
         sf.actionEditOcc.triggered.connect(self.onEditOccurrence)
+        sf.actionCopyEntryToClipboard.triggered.connect(self.onCopyEntryToClipboard)
         sf.actionLetter_Distribution_Check.triggered.connect(
             self.onLetterDistro)
         sf.actionFollow_redirect.triggered.connect(self.onFollowRedirect)
