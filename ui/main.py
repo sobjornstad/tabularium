@@ -50,7 +50,7 @@ import ui.tools_classification
 
 from ui.forms.main import Ui_MainWindow
 
-APPLICATION_VERSION = "0.1.0"
+APPLICATION_VERSION = "0.2.0"
 
 class MwEventFilter(QObject):
     """
