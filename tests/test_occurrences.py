@@ -230,8 +230,8 @@ class OccTests(utils.DbTestCase):
         assert oNew.entry == self.e2
 
     def testAssociatedRef(self):
-        self.o1.ref = '25-27'
         self.o1.reftype = 1
+        self.o1.ref = '25-27'
         oNew = Occurrence(self.o1.oid)
         assert oNew.ref == '25-27'
         assert oNew.reftype == 1
@@ -362,7 +362,7 @@ class OccTests(utils.DbTestCase):
         d.cursor.execute('''UPDATE occurrences SET dAdded = '2012-01-01'
                             WHERE oid=?''', (o1.oid,))
         d.cursor.execute('''UPDATE occurrences SET dEdited = '2012-04-01'
-                          WHERE oid=?''', (o2.oid,))
+                            WHERE oid=?''', (o2.oid,))
         # others using today's date, sometime after 2012
 
         assert len(fetchForEntryFiltered(self.e1)) == 4
@@ -375,8 +375,6 @@ class OccTests(utils.DbTestCase):
             self.e1, source=self.s1, volume=(2, 2))) == 1
         assert len(fetchForEntryFiltered(
             self.e1, source=self.s1, volume=(1, 2))) == 3
-        with self.assertRaises(AssertionError): # can't search by just volume
-            fetchForEntryFiltered(self.e1, volume=(1, 4))
         # combined
         assert (fetchForEntryFiltered(
                 self.e1, source=self.s1, volume=(self.v1.num, 22),

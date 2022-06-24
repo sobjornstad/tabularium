@@ -1,7 +1,6 @@
 from datetime import date
 import filecmp
-
-from . import utils
+import os
 
 from db.consts import sourceTypes
 from db.entries import Entry
@@ -10,6 +9,9 @@ from db.sources import Source
 from db.volumes import Volume
 import db.volumes
 import db.exporting
+
+from . import utils
+
 
 class ImportTests(utils.DbTestCase):
     def testMindexExport(self):
@@ -30,3 +32,4 @@ class ImportTests(utils.DbTestCase):
         #db.exporting.exportMindex("tests/resources/testExportFile.mindex")
         db.exporting.exportMindex("tmp.mindex")
         filecmp.cmp("tmp.mindex", "tests/resources/testExportFile.mindex")
+        os.remove("tmp.mindex")
