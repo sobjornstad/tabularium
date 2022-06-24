@@ -135,9 +135,9 @@ def getFormattedEntriesList(entries: List[db.entries.Entry],
                 vol.source.abbrev.lower())
             volNum = vol.num
             ref = mungeLatex(occ.ref)
-            if occ.isRefType('num'):
+            if occ.isRefType(db.occurrences.ReferenceType.NUM):
                 occList.append("%s~%s.%s" % (sourceAbbrev, volNum, ref))
-            elif occ.isRefType('range'):
+            elif occ.isRefType(db.occurrences.ReferenceType.RANGE):
                 occList.append("%s~%s.%s" % (sourceAbbrev, volNum,
                                              ref.replace('-', '--')))
             else: # redirect

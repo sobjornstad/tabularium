@@ -111,4 +111,5 @@ def _mergeOccurrences(occs, curEntry, newEntry,
             "leaveRedirect requires redirectFromOcc to be specified"
         db.occurrences.Occurrence.makeNew(
             curEntry, redirectFromOcc.volume, newEntry.name,
-            db.consts.refTypes['redir'])
+            db.occurrences.ReferenceType.REDIRECT
+        )

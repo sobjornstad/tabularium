@@ -9,7 +9,7 @@ import datetime
 from enum import Enum
 import re
 import sqlite3
-from typing import Any, Iterable, List, Optional, Sequence, TextIO, Tuple, Union
+from typing import Any, Iterable, Optional, Sequence, TextIO, Tuple, Union
 
 import db.database as d
 import db.occurrences
@@ -411,7 +411,7 @@ def nonRedirectTopLevelPeople():
                  AND occurrences.type != ?
            ORDER BY sortkey COLLATE nocase"""
     d.cursor.execute(q, (EntryClassification.PERSON.value,
-                         db.consts.refTypes['redir']))
+                         db.occurrences.ReferenceType.REDIRECT.value))
     entries = db.entries.Entry.multiConstruct(d.cursor.fetchall())
     cleanedEntries = []
     for i in entries:

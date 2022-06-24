@@ -4,7 +4,7 @@ import db.database as d
 from db.consts import sourceTypes
 from db.sources import *
 from db.volumes import Volume
-from db.occurrences import Occurrence, fetchForEntry
+from db.occurrences import Occurrence, ReferenceType, fetchForEntry
 from db.entries import Entry
 
 class SourceTests(utils.DbTestCase):
@@ -52,8 +52,8 @@ class SourceTests(utils.DbTestCase):
         v1 = Volume.makeNew(s1, 50, "")
         v2 = Volume.makeNew(s1, 5, "")
         e1 = Entry.makeNew("Kathariana")
-        o1 = Occurrence.makeNew(e1, v1, '25', 0)
-        o2 = Occurrence.makeNew(e1, v1, '50', 0)
+        o1 = Occurrence.makeNew(e1, v1, '25', ReferenceType.NUM)
+        o2 = Occurrence.makeNew(e1, v1, '50', ReferenceType.NUM)
         assert s1.volExists(50)
         with self.assertRaises(TrouncesError) as e:
             s1.volVal = (1, 10)
@@ -65,8 +65,8 @@ class SourceTests(utils.DbTestCase):
 
         v2 = Volume.makeNew(s1, 10, "")
         e2 = Entry.makeNew("Melgreth, Maudia")
-        o1 = Occurrence.makeNew(e2, v2, '25', 0)
-        o2 = Occurrence.makeNew(e2, v2, '50', 0)
+        o1 = Occurrence.makeNew(e2, v2, '25', ReferenceType.NUM)
+        o2 = Occurrence.makeNew(e2, v2, '50', ReferenceType.NUM)
         assert len(fetchForEntry(e2)) == 2
         with self.assertRaises(TrouncesError) as e:
             s1.pageVal = (1, 30)
@@ -82,8 +82,8 @@ class SourceTests(utils.DbTestCase):
                 sourceTypes['diary'])
         v1 = Volume.makeNew(s1, 10, "")
         e1 = Entry.makeNew("foo")
-        o1 = Occurrence.makeNew(e1, v1, '25', 0)
-        o2 = Occurrence.makeNew(e1, v1, '29', 0)
+        o1 = Occurrence.makeNew(e1, v1, '25', ReferenceType.NUM)
+        o2 = Occurrence.makeNew(e1, v1, '29', ReferenceType.NUM)
 
         # these things should survive
         s2 = Source.makeNew('The Chronicles', (1,17), (1,240), 2, 'CC',
@@ -91,8 +91,8 @@ class SourceTests(utils.DbTestCase):
         v1n = Volume.makeNew(s2, 5, "")
         v2n = Volume.makeNew(s2, 2, "")
         e1n = Entry.makeNew("Martha")
-        o1n = Occurrence.makeNew(e1n, v1n, '25', 0)
-        o2n = Occurrence.makeNew(e1n, v1n, '50', 0)
+        o1n = Occurrence.makeNew(e1n, v1n, '25', ReferenceType.NUM)
+        o2n = Occurrence.makeNew(e1n, v1n, '50', ReferenceType.NUM)
 
         assert s1.deletePreview() == (1, 2)
         s1.delete()

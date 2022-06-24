@@ -96,7 +96,8 @@ class DbTests(utils.DbTestCase):
                 sourceTypes['diary'])
         v1 = Volume.makeNew(s1, 1, "This is volume 1.",
                             date(2015, 6, 1), date(2015, 7, 6))
-        o1 = db.occurrences.Occurrence.makeNew(e1, v1, '25', 0)
+        o1 = db.occurrences.Occurrence.makeNew(e1, v1, '25',
+                                               db.occurrences.ReferenceType.NUM)
         l = db.occurrences.fetchForEntry(e1)
         assert len(l) == 1
         assert l[0].entry == e1
@@ -109,7 +110,8 @@ class DbTests(utils.DbTestCase):
         oids = [i.oid for i in e1occs]
         assert db.occurrences.Occurrence(oids[0])
         # occurrence that should NOT be deleted
-        o2 = db.occurrences.Occurrence.makeNew(e2, v1, '22', 0)
+        o2 = db.occurrences.Occurrence.makeNew(e2, v1, '22',
+                                               db.occurrences.ReferenceType.NUM)
 
         e1.delete()
         with self.assertRaises(IndexError):

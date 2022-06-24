@@ -3,6 +3,7 @@
 
 from contextlib import contextmanager
 import json
+from typing import List
 
 import db.database as d
 import db.consts
@@ -329,7 +330,7 @@ def abbrevUsed(name):
     d.cursor.execute(q, (name,))
     return True if d.cursor.fetchall() else False
 
-def allSources(includeSingleVolSources=True):
+def allSources(includeSingleVolSources=True) -> List[Source]:
     """
     Return a list of all sources, sorted by name.
     """

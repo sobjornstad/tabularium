@@ -6,7 +6,7 @@ import db.database as d
 from db.consts import sourceTypes
 from db.volumes import *
 from db.sources import Source
-from db.occurrences import Occurrence, fetchForEntry
+from db.occurrences import Occurrence, ReferenceType, fetchForEntry
 
 class VolumeTests(utils.DbTestCase):
     def testObject(self):
@@ -68,9 +68,9 @@ class VolumeTests(utils.DbTestCase):
         e2Name = "Katerina (Maudlin)"
         e1 = db.entries.Entry.makeNew(e1Name)
         e2 = db.entries.Entry.makeNew(e2Name, "ZKaterina", EntryClassification.TITLE)
-        o1 = Occurrence.makeNew(e1, v1, '25', 0)
-        o2 = Occurrence.makeNew(e2, v1, '25', 0)
-        o3 = Occurrence.makeNew(e2, v2, '25', 0)
+        o1 = Occurrence.makeNew(e1, v1, '25', ReferenceType.NUM)
+        o2 = Occurrence.makeNew(e2, v1, '25', ReferenceType.NUM)
+        o3 = Occurrence.makeNew(e2, v2, '25', ReferenceType.NUM)
 
         v1.delete()
         # this should preserve v2 and e2, since o3 is part of v*2*, as well as

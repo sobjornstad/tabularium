@@ -79,7 +79,7 @@ class UOFTests(utils.DbTestCase):
             for j in reflist:
                 source, vol, ref, rtype = j
                 vals += "%s %s.%s (%i)" % (
-                        source.abbrev, vol.num, str(ref), rtype)
+                        source.abbrev, vol.num, str(ref), rtype.value)
                 vals += " == "
             assert vals == testDict[i], \
                     "vals was: %r\ntestDict was: %r" % (vals, testDict[i])
@@ -93,7 +93,7 @@ class UOFTests(utils.DbTestCase):
         occ = occs[0][0]
         assert occ.entry == e1
         assert occ.ref == '42'
-        assert occ.reftype == db.consts.refTypes['num']
+        assert occ.reftype == ReferenceType.NUM
         assert occ.volume == self.v1
 
     def testMakeOccurrencesFromStringDupe(self):
@@ -207,8 +207,6 @@ class OccTests(utils.DbTestCase):
                                  date(2015, 7, 7), date(2015, 8, 10))
         self.v3 = byNumAndSource(self.s2, 1)
 
-
-
         self.e1 = Entry.makeNew("Kathariana")
         self.e2 = Entry.makeNew("Melgreth, Maudia")
         self.e3 = Entry.makeNew("Vaunder, Salila")
@@ -216,13 +214,13 @@ class OccTests(utils.DbTestCase):
         self.e5 = Entry.makeNew("Elibemereth")
         self.e6 = Entry.makeNew("Whilla, Lianja")
         self.e7 = Entry.makeNew("Kaitlyn Complex")
-        self.o1 = Occurrence.makeNew(self.e1, self.v1, '25', 0)
+        self.o1 = Occurrence.makeNew(self.e1, self.v1, '25', ReferenceType.NUM)
 
     def testGetters(self):
         assert self.o1.entry == self.e1
         assert self.o1.volume == self.v1
         assert self.o1.ref == '25'
-        assert self.o1.reftype == 0
+        assert self.o1.reftype == ReferenceType.NUM
 
     def testAssociatedEntry(self):
         self.o1.entry = self.e2
@@ -230,11 +228,11 @@ class OccTests(utils.DbTestCase):
         assert oNew.entry == self.e2
 
     def testAssociatedRef(self):
-        self.o1.reftype = 1
+        self.o1.reftype = ReferenceType.RANGE
         self.o1.ref = '25-27'
         oNew = Occurrence(self.o1.oid)
         assert oNew.ref == '25-27'
-        assert oNew.reftype == 1
+        assert oNew.reftype == ReferenceType.RANGE
 
     def testAssociatedVolume(self):
         self.o1.volume = self.v2
@@ -255,8 +253,8 @@ class OccTests(utils.DbTestCase):
 
     def testDuplicate(self):
         with self.assertRaises(db.occurrences.DuplicateError) as context:
-            o2 = Occurrence.makeNew(self.e1, self.v1, '25', 0)
-            o3 = Occurrence.makeNew(self.e1, self.v1, '25', 0)
+            o2 = Occurrence.makeNew(self.e1, self.v1, '25', ReferenceType.NUM)
+            o3 = Occurrence.makeNew(self.e1, self.v1, '25', ReferenceType.NUM)
         assert str(context.exception) == "That occurrence already exists."
 
     def testDelete(self):
@@ -269,14 +267,14 @@ class OccTests(utils.DbTestCase):
         o1 = self.o1
 
         # we want this set to appear on query of e1
-        o2 = Occurrence.makeNew(self.e2, self.v1, '26', 0)
-        o3 = Occurrence.makeNew(self.e3, self.v1, '24', 0)
-        o4 = Occurrence.makeNew(self.e4, self.v1, '25-28', 1)
+        o2 = Occurrence.makeNew(self.e2, self.v1, '26', ReferenceType.NUM)
+        o3 = Occurrence.makeNew(self.e3, self.v1, '24', ReferenceType.NUM)
+        o4 = Occurrence.makeNew(self.e4, self.v1, '25-28', ReferenceType.RANGE)
 
         # but these should not, for various reasons
-        o5 = Occurrence.makeNew(self.e5, self.v1, '29', 0) # too far away
-        o6 = Occurrence.makeNew(self.e6, self.v2, '25', 0) # wrong notebook
-        o7 = Occurrence.makeNew(self.e7, self.v1, '25', 2) # wrong reftype
+        o5 = Occurrence.makeNew(self.e5, self.v1, '29', ReferenceType.NUM) # too far away
+        o6 = Occurrence.makeNew(self.e6, self.v2, '25', ReferenceType.NUM) # wrong notebook
+        o7 = Occurrence.makeNew(self.e7, self.v1, '25', ReferenceType.REDIRECT) # wrong reftype
 
         r = o1.getNearby()
         assert len(r) == 3, len(r) # not counting o1 itself
@@ -297,32 +295,32 @@ class OccTests(utils.DbTestCase):
 
     def testSortOrder(self):
         o1 = self.o1
-        o2 = Occurrence.makeNew(self.e2, self.v1, '26', 0)
-        o3 = Occurrence.makeNew(self.e3, self.v1, '24', 0)
-        o4 = Occurrence.makeNew(self.e4, self.v1, '25-28', 0)
+        o2 = Occurrence.makeNew(self.e2, self.v1, '26', ReferenceType.NUM)
+        o3 = Occurrence.makeNew(self.e3, self.v1, '24', ReferenceType.NUM)
+        o4 = Occurrence.makeNew(self.e4, self.v1, '25-28', ReferenceType.NUM)
         order = [o4, o2, o3]
         entryOrder = [i.entry for i in order]
         assert o1.getNearby() == entryOrder
 
     def testGetOccsOfEntry(self):
         # same entry as o1 but different occurrence and pagenum
-        o8 = Occurrence.makeNew(self.e1, self.v1, '27', 0)
+        o8 = Occurrence.makeNew(self.e1, self.v1, '27', ReferenceType.NUM)
         assert (o8.getOccsOfEntry() == [self.o1, o8]
                 or o8.getOccsOfEntry == [o8, self.o1])
         ### test none returns for invalid entries?
 
     def testAllOccurrences(self):
-        o2 = Occurrence.makeNew(self.e1, self.v2, '24', 0)
+        o2 = Occurrence.makeNew(self.e1, self.v2, '24', ReferenceType.NUM)
         assert sorted(allOccurrences()) == [self.o1, o2]
 
     def testRepr(self):
         assert "%r" % self.o1 == "<CD 1.25>"
 
     def testStr(self):
-        o2 = Occurrence.makeNew(self.e1, self.v2, '22-24', 1)
-        o3 = Occurrence.makeNew(self.e1, self.v3, 'Kathariana', 2)
-        o4 = Occurrence.makeNew(self.e1, self.v2, 'Kathariana', 2)
-        o5 = Occurrence.makeNew(self.e1, self.v3, '5', 0)
+        o2 = Occurrence.makeNew(self.e1, self.v2, '22-24', ReferenceType.RANGE)
+        o3 = Occurrence.makeNew(self.e1, self.v3, 'Kathariana', ReferenceType.REDIRECT)
+        o4 = Occurrence.makeNew(self.e1, self.v2, 'Kathariana', ReferenceType.REDIRECT)
+        o5 = Occurrence.makeNew(self.e1, self.v3, '5', ReferenceType.NUM)
         assert str(self.o1) == "CD 1.25"
         assert str(o2) == "CD 2.22-24"
         assert str(o3) == 'TB: see "Kathariana"'
@@ -335,28 +333,26 @@ class OccTests(utils.DbTestCase):
         assert self.o1.getEndPage() == self.o1.ref
 
         # range
-        o2 = Occurrence.makeNew(self.e1, self.v2, '22-24', 1)
+        o2 = Occurrence.makeNew(self.e1, self.v2, '22-24', ReferenceType.RANGE)
         assert o2.getStartPage() == '22'
         assert o2.getEndPage() == '24'
 
         # xref
-        o3 = Occurrence.makeNew(self.e1, self.v3, 'Kathariana', 2)
+        o3 = Occurrence.makeNew(self.e1, self.v3, 'Kathariana', ReferenceType.REDIRECT)
         assert o3.getStartPage() is None
         assert o3.getEndPage() is None
 
     def testIsRefType(self):
-        assert self.o1.isRefType('num')
-        assert not self.o1.isRefType('redir')
-        assert not self.o1.isRefType('range')
-        with self.assertRaises(KeyError):
-            self.o1.isRefType('poo')
+        assert self.o1.isRefType(ReferenceType.NUM)
+        assert not self.o1.isRefType(ReferenceType.RANGE)
+        assert not self.o1.isRefType(ReferenceType.REDIRECT)
 
     def testFetchForEntryFiltered(self):
         # self.o1 = Occurrence.makeNew(self.e1, self.v1, '25', 0)
         o1 = self.o1
-        o2 = Occurrence.makeNew(self.e1, self.v1, '6', 0)
-        o3 = Occurrence.makeNew(self.e1, self.v2, '7', 0)
-        o4 = Occurrence.makeNew(self.e1, self.v3, '8', 0)
+        o2 = Occurrence.makeNew(self.e1, self.v1, '6', ReferenceType.NUM)
+        o3 = Occurrence.makeNew(self.e1, self.v2, '7', ReferenceType.NUM)
+        o4 = Occurrence.makeNew(self.e1, self.v3, '8', ReferenceType.NUM)
 
         # manually set dates
         d.cursor.execute('''UPDATE occurrences SET dAdded = '2012-01-01'
@@ -367,17 +363,17 @@ class OccTests(utils.DbTestCase):
 
         assert len(fetchForEntryFiltered(self.e1)) == 4
         assert len(fetchForEntryFiltered(
-            self.e1, enteredDate=('2011-01-01', '2013-01-01'))) == 1
+            self.e1, enteredDateStr=('2011-01-01', '2013-01-01'))) == 1
         assert len(fetchForEntryFiltered(
-            self.e1, modifiedDate=('2011-01-01', '2013-01-01'))) == 1
+            self.e1, modifiedDateStr=('2011-01-01', '2013-01-01'))) == 1
         assert len(fetchForEntryFiltered(self.e1, source=self.s1)) == 3
         assert len(fetchForEntryFiltered(
-            self.e1, source=self.s1, volume=(2, 2))) == 1
+            self.e1, source=self.s1, volumeRange=(2, 2))) == 1
         assert len(fetchForEntryFiltered(
-            self.e1, source=self.s1, volume=(1, 2))) == 3
+            self.e1, source=self.s1, volumeRange=(1, 2))) == 3
         # combined
         assert (fetchForEntryFiltered(
-                self.e1, source=self.s1, volume=(self.v1.num, 22),
-                modifiedDate=('2011-01-01', '2013-01-01'))[0].oid == o2.oid)
+                self.e1, source=self.s1, volumeRange=(self.v1.num, 22),
+                modifiedDateStr=('2011-01-01', '2013-01-01'))[0].oid == o2.oid)
         # FIXME: for some reason direct equality doesn't work and I'm not sure
         # why: does the date get incorrectly updated for some reason?
