@@ -1189,7 +1189,7 @@ class MainWindow(QMainWindow):
         "Follow a redirect occurrence to the entry it points to."
         occ = self._fetchCurrentOccurrence()
         assert occ is not None, "Follow redirect called with no occ selected!"
-        assert occ.isRefType('redir'), \
+        assert occ.isRefType(db.occurrences.ReferenceType.REDIRECT), \
                 "Follow redirect called with a non-redirect occurrence!"
         self._changeSearch(occ.ref)
 
@@ -1393,7 +1393,7 @@ class MainWindow(QMainWindow):
         sf.actionRetractOccurrence.setEnabled(ifNoOccurrence)
         curOcc = self._fetchCurrentOccurrence()
         if((ifNoOccurrence) and (curOcc is not None) and
-           (curOcc.isRefType('redir'))):
+           (curOcc.isRefType(db.occurrences.ReferenceType.REDIRECT))):
             sf.actionFollow_redirect.setEnabled(True)
         else:
             sf.actionFollow_redirect.setEnabled(False)
