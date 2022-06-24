@@ -1,14 +1,17 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
+"""
+printing.py - functions for printing indexes and simplifications from the DB
+"""
+# Copyright (c) 2015-2022 Soren Bjornstad <contact@sorenbjornstad.com>.
 
 import codecs
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
+from typing import Callable, Dict, List, Optional
 
-from db.consts import refTypes
 import db.entries
 import db.occurrences
 
@@ -19,6 +22,7 @@ class PrintingError(Exception):
     printed directly as an error message to the user.
     """
     def __init__(self, msg):
+        super().__init__()
         self.msg = msg
     def __str__(self):
         return self.msg
@@ -52,8 +56,11 @@ DOC_STARTSTR = """\\documentclass{article}
 
 INDEX_ENDSTR = """\\end{theindex}\\end{document}"""
 
+PrintingProgressCallback = Optional[Callable[[str], None]]
 
-def printEntriesAsIndex(entries=None, callback=None):
+
+def printEntriesAsIndex(entries: List[db.entries.Entry] = None,
+                        callback: PrintingProgressCallback = None) -> None:
     """
     Given a list of Entries, print it as an index, write it to LaTeX, and open
     in the system PDF viewer. If entries is None (default), use all entries in
@@ -64,7 +71,6 @@ def printEntriesAsIndex(entries=None, callback=None):
 
     No return.
     """
-
     if entries is None:
         entries = db.entries.allEntries()
         indexTitle = "Complete Index"
@@ -80,7 +86,14 @@ def printEntriesAsIndex(entries=None, callback=None):
     compileLatex(document)
 
 
-def getFormattedEntriesList(entries, callback=None):
+# pylint: disable=too-many-locals
+# pylint: disable=consider-using-f-string
+def getFormattedEntriesList(entries: List[db.entries.Entry],
+                            callback: PrintingProgressCallback = None):
+    """
+    Retrieve a list of strings of LaTeX code representing the /entries/,
+    calling /callback/ periodically with a progress message.
+    """
     entries.sort(key=lambda i: i.sortKey.lower())
 
     formatted = []
@@ -91,7 +104,7 @@ def getFormattedEntriesList(entries, callback=None):
         if callback and step % 50:
             percent = step * 100 // len(entries)
             if percent > lastPercent:
-                callback("Generating PDF (%i%%)..." % percent)
+                callback(f"Generating PDF ({percent}%)...")
                 lastPercent = percent
 
         # process entry
@@ -171,13 +184,13 @@ SIMPLIFICATION_FOOTER = r"""
 \end{document}
 """
 
-def makeSimplification(callback=None):
+def makeSimplification(callback: PrintingProgressCallback = None):
     """
     Create a "simplification", essentially a reverse index, of all occurrences
     in the database. (In the future we'll make it possible to choose subsets of
     that, just like in the index.)
     """
-    def modifiedRangeKey(occ):
+    def modifiedRangeKey(occ: db.occurrences.Occurrence):
         """
         Return a string representation of provided occurrence that uses only
         its start page if it is a range; if it is a number or redir, return the
@@ -201,7 +214,7 @@ def makeSimplification(callback=None):
     # actual occurrences that go with it.
     if callback:
         callback("Collating occurrences...")
-    occDictionary = {}
+    occDictionary: Dict[str, List[db.occurrences.Occurrence]] = {}
     for occ in allOccs:
         occDictionary[modifiedRangeKey(occ)] = \
                 occDictionary.get(modifiedRangeKey(occ), []) + [occ]
@@ -213,7 +226,7 @@ def makeSimplification(callback=None):
     # sort differently--before the unranged refnums with the same start value.
     # However, in all cases the unranged and ranged values with the same start
     # value will be grouped under the same key, so this makes no difference.
-    sortList = sorted([occDictionary[i][0] for i in occDictionary.keys()])
+    sortList = sorted([i[0] for i in occDictionary.values()])
 
     if callback:
         callback("Formatting output...")
@@ -245,7 +258,7 @@ def makeSimplification(callback=None):
 
 
 ##### COMMON #####
-def mungeLatex(s):
+def mungeLatex(s: str):
     """
     This escapes all special chars listed as catcodes in /The TeXbook/, p.37.
     Note that spacing is not guaranteed correct with things like the tilde
@@ -278,12 +291,11 @@ def mungeLatex(s):
 
     return s
 
-def compileLatex(document):
+def compileLatex(document: str):
     """
-    Given a complete LaTeX source file /document/, write it, call LaTeX on it,
+    Given a complete string of LaTeX source /document/, write it, call LaTeX on it,
     and open the system PDF viewer on the results.
     """
-    # it would be good to delete the tmpdir we used at some point in the future
     tdir = tempfile.mkdtemp()
     oldcwd = os.getcwd()
     os.chdir(tdir)
@@ -293,25 +305,23 @@ def compileLatex(document):
         tfile = os.path.join(tdir, '.'.join([fnamebase, 'tex']))
         with codecs.open(tfile, 'w', 'utf-8') as f:
             f.write(document)
-        FNULL = open(os.devnull, 'w')
-        for i in range(2):
-            r = subprocess.call(['pdflatex', '-interaction=nonstopmode',
-                                 tfile], stdout=FNULL, stderr=FNULL)
+        with open(os.devnull, 'w', encoding='utf-8') as fnull:
+            for _ in range(2):
+                r = subprocess.call(['pdflatex', '-interaction=nonstopmode', tfile],
+                                    stdout=fnull, stderr=fnull)
         if r:
-            raise PrintingError(
-                "Error executing LaTeX! Please run the application in console "
-                "for details on the error to debug.")
+            raise PrintingError("Error executing LaTeX!")
         ofile = os.path.join(tdir, '.'.join([fnamebase, 'pdf']))
         if sys.platform.startswith('linux'):
             subprocess.call(["xdg-open", ofile])
         elif sys.platform == "darwin":
-            os.system("open %s" % ofile)
+            os.system(f"open {ofile}")
         elif sys.platform == "win32":
             os.startfile(ofile)
         else:
             raise PrintingError(
-                "Unable to automatically open the output. Please direct your "
-                "PDF viewer to %s." % ofile)
+                f"Unable to automatically open the output. Please direct your "
+                f"PDF viewer to {ofile}.")
     finally:
-        #TODO: clean up tmpdir?
         os.chdir(oldcwd)
+        shutil.rmtree(tdir)

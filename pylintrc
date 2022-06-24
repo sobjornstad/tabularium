@@ -38,8 +38,7 @@ load-plugins=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-# This doesn't work for Qt imports for some reason.
-disable=no-name-in-module, no-member
+disable=no-else-return,no-else-raise,broad-except
 
 
 [REPORTS]
@@ -78,10 +77,10 @@ comment=no
 [FORMAT]
 
 # Maximum number of characters on a single line.
-max-line-length=79
+max-line-length=88
 
 # Regexp for a line that is allowed to be longer than the limit.
-ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+ignore-long-lines=https?://\S+
 
 # Allow the body of an if to be on the same line as the test if there is no
 # else.
@@ -115,48 +114,48 @@ additional-builtins=
 [BASIC]
 
 # Required attributes for module, separated by a comma
-#required-attributes=
+required-attributes=
 
 # List of builtins function names that should not be used, separated by a comma
-bad-functions=map,filter,apply,input
+bad-functions=
 
 # Regular expression which should only match correct module names
 module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
 
 # Regular expression which should only match correct module level names
-const-rgx=(([A-Z][A-Z0-9_]*)|(__.*__))$
+const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
 
 # Regular expression which should only match correct class names
-class-rgx=[A-Z][a-zA-Z0-9]+$
+class-rgx=[A-Z_][a-zA-Z0-9]+$
 
 # Regular expression which should only match correct function names
-function-rgx=[_a-z][a-zA-Z0-9]{2,30}$
+function-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
 
 # Regular expression which should only match correct method names
-method-rgx=[_a-z][a-zA-Z0-9]{2,30}$|__[a-zA-Z0-9]{2,30}__$
+method-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
 
 # Regular expression which should only match correct instance attribute names
-attr-rgx=[a-z][a-zA-Z0-9]{0,30}$
+attr-rgx=([a-z_][a-zA-Z0-9_]{0,30}|Session)$
 
 # Regular expression which should only match correct argument names
-argument-rgx=[a-z][a-zA-Z0-9]{0,30}$
+argument-rgx=([a-z_][a-zA-Z0-9_]{0,30}|Session)$
 
 # Regular expression which should only match correct variable names
-variable-rgx=[a-z][a-zA-Z0-9]{0,30}$
+variable-rgx=([a-z_][a-zA-Z0-9_]{0,30}|Session)$
 
 # Regular expression which should only match correct attribute names in class
 # bodies
-class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]{2,30}|(__.*__))$
+class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]{1,30}|(__.*__))$
 
 # Regular expression which should only match correct list comprehension /
 # generator expression variable names
-inlinevar-rgx=[a-z][A-Za-z0-9]*$
+inlinevar-rgx=[a-z_][A-Za-z0-9_]*$
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=i,j,k,_
+good-names=i,j,k,ex,Run,_
 
 # Bad variable names which should always be refused, separated by a comma
-bad-names=foo,bar,baz,quux,toto,tutu,tata
+bad-names=foo,bar,baz,toto,tutu,tata
 
 # Regular expression which should only match function or class names that do
 # not require a docstring.
@@ -164,7 +163,7 @@ no-docstring-rgx=__.*__
 
 # Minimum line length for functions/classes that require docstrings, shorter
 # ones are exempt.
-docstring-min-length=4
+docstring-min-length=3
 
 
 [SIMILARITIES]
@@ -264,7 +263,7 @@ max-public-methods=20
 
 # List of interface methods to ignore, separated by a comma. This is used for
 # instance to not check methods defines in Zope's Interface base class.
-#ignore-iface-methods=isImplementedBy,deferred,extends,names,namesAndDescriptions,queryDescriptionFor,getBases,getDescriptionFor,getDoc,getName,getTaggedValue,getTaggedValueTags,isEqualOrExtendedBy,setTaggedValue,isImplementedByInstancesOf,adaptWith,is_implemented_by
+ignore-iface-methods=isImplementedBy,deferred,extends,names,namesAndDescriptions,queryDescriptionFor,getBases,getDescriptionFor,getDoc,getName,getTaggedValue,getTaggedValueTags,isEqualOrExtendedBy,setTaggedValue,isImplementedByInstancesOf,adaptWith,is_implemented_by
 
 # List of method names used to declare (i.e. assign) instance attributes.
 defining-attr-methods=__init__,__new__,setUp
