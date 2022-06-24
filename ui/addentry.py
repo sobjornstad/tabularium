@@ -9,11 +9,11 @@ ones. The developer is referred to the documentation for the AddEntryWindow
 class, which is the entire contents of this module.
 """
 
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QWidget
 
 import ui.addoccurrence
 import ui.forms.newentry
-import ui.utils as utils
+from ui import utils
 import db.entries
 
 class AddEntryWindow(QDialog):
@@ -50,7 +50,7 @@ class AddEntryWindow(QDialog):
     occurrences.
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent: QWidget) -> None:
         QDialog.__init__(self)
         self.form = ui.forms.newentry.Ui_Dialog()
         self.form.setupUi(self)
@@ -76,17 +76,16 @@ class AddEntryWindow(QDialog):
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
 
-    def putClassification(self, entry: db.entries.Entry):
+    def putClassification(self, entry: db.entries.Entry) -> None:
         """
         Called if modifying/basing on an existing entry; finds the
         corresponding entry and determines its classification.
         """
         for i in self.allRadios:
-            # TODO: convert this to use the enum properly
             if entry.classification.interfaceKey == i.property('cKey'):
                 i.setChecked(True)
 
-    def putRedirect(self, to):
+    def putRedirect(self, to: db.entries.Entry) -> None:
         """
         Tell the dialog to pass some text through to the add occurrence dialog
         when it is called, so that the user can run an "add entry redirecting
@@ -97,7 +96,7 @@ class AddEntryWindow(QDialog):
         name = to.name.replace(';', '\\;')
         self.preparedOccurrence = "see " + name
 
-    def setEditing(self):
+    def setEditing(self) -> None:
         """
         Called prior to exec_() to specify that we want to use this dialog to
         edit an entry rather than creating an entirely new one.
@@ -109,18 +108,22 @@ class AddEntryWindow(QDialog):
         self.beforeEditingName = self.form.nameBox.text()
         self.form.addButton.setText("S&ave")
 
-    def resetTitle(self, title):
+    def resetTitle(self, title: str) -> None:
         "Change the title of the window, prior to exec_()."
         self.setWindowTitle(title)
 
-    def initializeSortKeyCheck(self, value="", skValue=""):
+    def initializeSortKeyCheck(self, name: str = "", sortKey: str = ""):
         """
         Get the stored value of the name/sort key into sync. See
         maybeUpdateSortKey().
         """
-        self.form.nameBox.setText(value)
-        self.form.sortKeyBox.setText(skValue if skValue else value)
-        self._autoSortKey()
+        self.form.nameBox.setText(name)
+        self.form.sortKeyBox.setText(sortKey if sortKey else name)
+        if db.entries.sortKeyTransform(name) != sortKey:
+            self.skManual = True
+            self.form.autoButton.setChecked(False)
+        else:
+            self._autoSortKey()
 
     def maybeUpdateSortKey(self):
         """
@@ -141,6 +144,7 @@ class AddEntryWindow(QDialog):
         self.onAuto()
 
     def onAuto(self):
+        "Turn automatic sort key generation on or off based on value of the autoButton."
         if self.form.autoButton.isChecked():
             self.skManual = False
             self.form.autoButton.setChecked(True)
