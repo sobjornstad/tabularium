@@ -166,7 +166,7 @@ class Occurrence:
                 occ.volume.source.abbrev.casefold(),
                 occ.volume.num, occ.ref, occ.entry.sortKey.casefold())
 
-        if hasattr(other, '_volume') and hasattr(other, '_ref'):
+        if hasattr(other, 'volume') and hasattr(other, 'ref'):
             # Although this is a mixed-type list,
             # each corresponding element is always of the same type,
             # so comparison is well-defined here.

@@ -1,11 +1,13 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
-# pylint: disable=too-many-lines
-
 """
+main.py
+
 Implementation of the main window for Tabularium, where searches are done and
 other functions are started.
 """
+
+# Copyright (c) 2015-2022 Soren Bjornstad <contact@sorenbjornstad.com>
+# pylint: disable=too-many-lines
+
 
 import datetime
 import functools
@@ -14,13 +16,12 @@ import subprocess
 import sqlite3
 import sys
 import traceback
-from typing import Callable
+from typing import Callable, Optional
 
 # for some reason pylint thinks these don't exist, but they work fine
 # pylint: disable=no-name-in-module
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, \
-        QFileDialog, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel
 from PyQt5.QtGui import QCursor
 from PyQt5.QtCore import QObject, Qt, QDateTime
 
@@ -66,7 +67,7 @@ class MwEventFilter(QObject):
     def __init__(self):
         self.mw = None
         self.actOnKeys = (16777251, 16777249, 16777248) # ctrl, alt, shift
-        super(MwEventFilter, self).__init__()
+        super().__init__()
 
     def setupFilter(self, mw):
         self.mw = mw
@@ -80,7 +81,7 @@ class MwEventFilter(QObject):
             #print event.key()
             if event.key() in self.actOnKeys and self.mw is not None:
                 self.mw.checkAllMenus()
-        return super(MwEventFilter, self).eventFilter(receiver, event)
+        return super().eventFilter(receiver, event)
 
 
 def preserveSelectionsDuring(func: Callable) -> Callable:
@@ -92,7 +93,7 @@ def preserveSelectionsDuring(func: Callable) -> Callable:
     are restored. (If the handler ended up not doing anything, say because
     the user canceled the operation, this lets us save a UI update.)
     """
-    def _useQtActionHack(arg_list):
+    def _useQtActionHack(argList):
         """
         For actions triggered by menus, Qt always passes an "isChecked" parameter,
         which is completely useless unless you have a checkable action. Qt is
@@ -103,8 +104,8 @@ def preserveSelectionsDuring(func: Callable) -> Callable:
         """
         return (
             func.__code__.co_varnames[:func.__code__.co_argcount] == ('self',)
-            and len(arg_list) == 1
-            and arg_list[0] in (True, False))
+            and len(argList) == 1
+            and argList[0] in (True, False))
 
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -187,11 +188,11 @@ class MainWindow(QMainWindow):
         elif doWhat == 'last':
             r = self._initDb(self.dbLocation)
         else:
-            assert False, "Illegal return from OpenDatabaseWindow: %r" % doWhat
+            assert False, f"Illegal return from OpenDatabaseWindow: {doWhat!r}"
         if not r:
             self.onNoDB()
 
-    def _initDb(self, location, yellOnNonexistence=True):
+    def _initDb(self, location: str, yellOnNonexistence=True) -> bool:
         """
         Load a database and set up the window for the settings of that
         database.
@@ -202,11 +203,12 @@ class MainWindow(QMainWindow):
         trouble than it's worth to set up our own exception handling for this.
         If there's a particularly unlucky race, then we'll just get an uncaught
         exception and no real harm done.
+
+        Return a boolean indicating success.
         """
         if not os.path.exists(location):
             if yellOnNonexistence:
-                ui.utils.warningBox("The database '%s' no longer exists!" %
-                                    location)
+                ui.utils.warningBox(f"The database '{location}' no longer exists!")
             return False
         db.database.connect(location)
         self.dbLocation = location
@@ -249,12 +251,12 @@ class MainWindow(QMainWindow):
         # finally, set up checkboxes etc., and restore state from last run
         self.initialWindowState()
         self.restoreWindowState()
-        self.setWindowTitle("Tabularium – %s" % os.path.basename(location))
+        self.setWindowTitle(f"Tabularium – {os.path.basename(location)}")
         self.onSearch()
         self.form.searchBox.setFocus()
         return True
 
-    def closeEvent(self, event): # pylint: disable=unused-argument
+    def closeEvent(self, _event): # pylint: disable=unused-argument
         "Call quit() for a proper exit on click of the X button, etc."
         self.quit()
 
@@ -386,8 +388,6 @@ class MainWindow(QMainWindow):
                 obj.setChecked(val)
                 if blockSignals:
                     obj.blockSignals(oldState)
-            else:
-                return 'NotExecuted'
 
         # splitters
         wrapper(sf.mainSplitter.restoreState, 'mainSplitterState')
@@ -435,9 +435,9 @@ class MainWindow(QMainWindow):
     def updateMatchesStatus(self):
         "Update the number of entry/occurrence matches in the status bar."
         entryCount = self.form.entriesList.count()
-        entryString = "E: %i" % entryCount
+        entryString = f"E: {entryCount}"
         occCount = self.form.occurrencesList.count()
-        occString = ", O: %i" % occCount
+        occString = f", O: {occCount}"
         self.matchesWidget.setText(
             entryString + ("" if not occCount else occString))
 
@@ -676,7 +676,6 @@ class MainWindow(QMainWindow):
         self.onSearch() # immediately update search based on new options
 
     def onOccurrenceSourceChanged(self):
-        pass
         self.onSourceToggled()
         self._resetForOccurrenceFilter()
 
@@ -823,7 +822,7 @@ class MainWindow(QMainWindow):
 
     ### Menu callback functions ###
     ## File menu
-    def onNewDB(self):
+    def onNewDB(self) -> bool:
         "Get filename for, create, and open a new database."
         # get filename from user
         fname = QFileDialog.getSaveFileName(
@@ -847,8 +846,10 @@ class MainWindow(QMainWindow):
         connection.close()
         if self._initDb(fname):
             return True
+        return False
 
-    def onOpenDB(self):
+
+    def onOpenDB(self) -> bool:
         "Close the current database and open a different one."
         fname = QFileDialog.getOpenFileName(
             caption="Open Tabularium Database",
@@ -860,8 +861,10 @@ class MainWindow(QMainWindow):
             db.database.close()
         if self._initDb(fname):
             return True
+        return False
 
-    def onSaveDB(self):
+    # pylint: disable=no-self-use
+    def onSaveDB(self) -> None:
         """
         Force a save now. Usually not necessary: autosaves take place as edits
         are made, but crashes could still cause losses.
@@ -869,7 +872,8 @@ class MainWindow(QMainWindow):
         db.database.forceSave()
 
     @preserveSelectionsDuring
-    def onImportMindex(self):
+    def onImportMindex(self) -> None:
+        "Import index entries from a Mindex file."
         fname = QFileDialog.getOpenFileName(
             caption="Import Mindex File",
             filter="Mindex files (*.mindex);;All files (*)")[0]
@@ -1113,7 +1117,7 @@ class MainWindow(QMainWindow):
         return ac.exec_()
 
     @preserveSelectionsDuring
-    def onEditOccurrence(self):
+    def onEditOccurrence(self, _selectedItem):
         "Edit the volume/reference number of an occurrence."
         occ = self._fetchCurrentOccurrence()
         entry = occ.entry
@@ -1227,6 +1231,7 @@ class MainWindow(QMainWindow):
 
     @preserveSelectionsDuring
     def onManageSources(self):
+        "Launch source manager."
         ms = ui.sourcemanager.SourceManager(self)
         ms.exec_()
         self.updateSourceCombo()
@@ -1255,14 +1260,16 @@ class MainWindow(QMainWindow):
     ## Integrations menu
     def integrationRt(self):
         search = self.form.searchBox.text()
+        # pylint: disable=line-too-long
         subprocess.Popen('''gnome-terminal -e "bash -c \\"rtgrep %s /home/soren/random-thoughts.txt ; exec bash\\""''' % search, shell=True)
 
-    def integrationRpfind(self):
+    def integrationRpfind(self) -> None:
+        "Launch rpfind on the UOF of the currently selected occurrence."
         occ = self._fetchCurrentOccurrence()
         if not occ:
             ui.utils.errorBox("Please select an occurrence to locate.")
             return
-        if occ.isRefType('redir'):
+        if occ.isRefType(db.occurrences.ReferenceType.REDIRECT):
             ui.utils.errorBox("Only occurrences with page numbers or ranges "
                               "can be located with this feature.")
             return
@@ -1359,7 +1366,7 @@ class MainWindow(QMainWindow):
         only time we *can't* go back is if we've already reached the beginning
         state.
         """
-        somethingOnStack = bool(len([i for i in self.searchStack if len(i)]))
+        somethingOnStack = bool([i for i in self.searchStack if len(i)])
         searchIsEmpty = self.form.searchBox.text() == ""
         self.form.actionGoBack.setEnabled(
             somethingOnStack or not searchIsEmpty)
@@ -1413,7 +1420,7 @@ class MainWindow(QMainWindow):
     def onEntrySelected(self):
         """
         Fill the occurrences for the current entry.
-        
+
         We used to also automatically fill the occurrences list, but this
         requires two database hits and as such requires quite a lot of time.
         To improve performance when rapidly paging or scrolling through items,
@@ -1487,7 +1494,7 @@ class MainWindow(QMainWindow):
         else:
             return db.entries.findOne(search)
 
-    def _fetchCurrentOccurrence(self):
+    def _fetchCurrentOccurrence(self) -> Optional[db.occurrences.Occurrence]:
         """
         Get an Occurrence object for the currently selected occurrence. Return
         None if nothing is selected.
@@ -1497,7 +1504,7 @@ class MainWindow(QMainWindow):
             return None
         return self.currentOccs[row]
 
-    def _changeSearch(self, searchFor):
+    def _changeSearch(self, searchFor: str) -> None:
         """
         Change the text in the search box, rerun search, and select the
         particular item. Used when following redirects.
@@ -1510,16 +1517,17 @@ class MainWindow(QMainWindow):
                                                    Qt.MatchExactly)[0]
         except IndexError:
             ui.utils.warningBox(
-                "The target of this redirect ('%s') is "
-                "not visible in the current view. Most likely the current "
-                "limits exclude the target, and adjusting the limits "
-                "will show the item. Otherwise, the redirect may be "
-                "invalid." % searchFor, "Redirect not found")
+                f"The target of this redirect ('{searchFor}') is "
+                f"not visible in the current view. Most likely the current "
+                f"limits exclude the target, and adjusting the limits "
+                f"will show the item. Otherwise, the redirect may be "
+                f"invalid.",
+                "Redirect not found")
             return
         self.form.entriesList.setCurrentItem(item)
         self.form.entriesList.setFocus()
 
-    def _saveSearchToStack(self):
+    def _saveSearchToStack(self) -> None:
         """
         Fake a focus lost event to save the current search value on the stack
         before going back, so user can go forward to it again. This is only an
@@ -1528,12 +1536,11 @@ class MainWindow(QMainWindow):
         """
         self.searchFocusLost(self.form.searchBox, self.form.searchBox)
 
-    def _setAllEntryCheckboxes(self, state):
+    def _setAllEntryCheckboxes(self, state: bool) -> None:
         """
         Enable/disable all of the entry classification checkboxes
         and rerun the search.
         """
-        assert state in (True, False)
         sf = self.form
         for i in (sf.entriesCommonsCheck, sf.entriesNamesCheck,
                   sf.entriesPlacesCheck, sf.entriesQuotationsCheck,
@@ -1543,7 +1550,7 @@ class MainWindow(QMainWindow):
             i.blockSignals(oldBlockSignals)
         self.fillEntries()
 
-    def _occurrenceFilterHandlers(self):
+    def _occurrenceFilterHandlers(self) -> None:
         """
         To be run after programmatically setting the state of some occurrence
         filters, to make sure that all the spin/calendar/combo boxes are in the
@@ -1568,16 +1575,16 @@ class MainWindow(QMainWindow):
 
     # Reset functions: since more or less needs to be reset for each, do a
     # sort of cascade.
-    def _resetForEntry(self):
+    def _resetForEntry(self) -> None:
         self.form.entriesList.clear()
         self._resetForOccurrence()
-    def _resetForOccurrence(self):
+    def _resetForOccurrence(self) -> None:
         self.form.occurrencesList.clear()
         self._resetForNearby()
-    def _resetForNearby(self):
+    def _resetForNearby(self) -> None:
         self.form.nearbyList.clear()
         self.form.inspectBox.clear()
-    def _resetForOccurrenceFilter(self):
+    def _resetForOccurrenceFilter(self) -> None:
         self.saveSelections()
         self.updateAndRestoreSelections()
 
@@ -1621,7 +1628,6 @@ def exceptionHook(exctype, value, tb):
               "along with the following technical details:\n\n")
     tbText += ''.join(traceback.format_exception(exctype, value, tb))
     ui.utils.reportBox(None, tbText, "Oops!")
-    return
 
 def start():
     """
