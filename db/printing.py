@@ -270,10 +270,10 @@ def mungeLatex(s):
     # not possible to handle single quotation marks correctly, as there's no
     # way to tell if it's an apostrophe or opening single quote. If you want it
     # right with singles, you need to use curlies in the entry.
-    s = re.sub('"(.*?)"', "``\\1''", s)
+    s = re.sub(r'"(.*?)"', r"``\1''", s)
 
     # Attempt italicization, convert to underscore if any left
-    s = re.sub("_(.*)_(.*)", "\\emph{\\1}\\2", s)
+    s = re.sub(r"_(.*)_(.*)", r"\\emph{\1}\2", s)
     s = s.replace('_', '\\textunderscore ')
 
     return s
