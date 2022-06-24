@@ -285,10 +285,10 @@ def find(
     search: str,
     classification: Sequence[EntryClassification] = None,
     regex: bool = False,
-    enteredDate: Optional[datetime.date] = None,
-    modifiedDate: Optional[datetime.date] = None,
+    enteredDateStr: str = None,
+    modifiedDateStr: str = None,
     source: Optional[Source] = None,
-    volume: Optional[Volume] = None
+    volumeRange: Optional[Tuple[int, int]] = None
     ) -> Sequence[Entry]:
     """
     Get a list of Entries matching the given criteria.
@@ -330,8 +330,8 @@ def find(
             # escaped.
             search = search.replace(r'%', r'\%')
 
-    if (enteredDate is None and modifiedDate is None
-            and source is None and volume is None):
+    if (enteredDateStr is None and modifiedDateStr is None
+            and source is None and volumeRange is None):
         # The last %s is a fake so that the below code works without
         # modification: nothing will ever be substituted there.
         query = """SELECT eid, name, sortkey, classification,
@@ -352,7 +352,7 @@ def find(
                    ORDER BY sortkey COLLATE nocase"""
     classifPlaceholders = ','.join('?' * len(classification))
     occQuery, occQueryParams = db.occurrences.occurrenceFilterString(
-        enteredDate, modifiedDate, source, volume)
+        enteredDateStr, modifiedDateStr, source, volumeRange)
     query = query % ('REGEXP' if regex else 'LIKE',
                      "ESCAPE '\\'" if not regex else '',
                      classifPlaceholders,

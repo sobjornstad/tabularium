@@ -7,11 +7,13 @@ Personal Indexer UI utility functions
 These functions primarily create various kinds of simple dialog boxes.
 """
 
+from contextlib import contextmanager
 import os
+from typing import Generator
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox, QInputDialog, \
-        QLineEdit
+        QLineEdit, QWidget
 from PyQt5.QtGui import QCursor
 
 import ui.forms.confirmationwindow
@@ -170,6 +172,34 @@ class ConfirmationDialog(QDialog):
     def onConfirmChecked(self):
         sf = self.form
         sf.acceptButton.setEnabled(sf.confirmationCheck.isChecked())
+
+@contextmanager
+def blockSignals(widget: QWidget) -> Generator[None, None, None]:
+    "Context manager to block all Qt signals on a widget for a period of time."
+    oldBlockSignals = widget.blockSignals(True)
+    try:
+        yield
+    finally:
+        widget.blockSignals(oldBlockSignals)
+
+
+@contextmanager
+def temporaryStatusMessage(bar, text: str) -> Generator[None, None, None]:
+    "Context manager to display a message in the status bar while something processes."
+    bar.showMessage(text)
+    try:
+        yield
+    finally:
+        bar.clearMessage()
+
+@contextmanager
+def hourglass() -> Generator[None, None, None]:
+    "Context manager to display a hourglass cursor while something processes."
+    QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
+    try:
+        yield
+    finally:
+        QApplication.restoreOverrideCursor()
 
 
 # pylint: disable=too-few-public-methods

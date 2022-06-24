@@ -20,9 +20,7 @@ from typing import Callable, Optional
 
 # for some reason pylint thinks these don't exist, but they work fine
 # pylint: disable=no-name-in-module
-from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel
-from PyQt5.QtGui import QCursor
 from PyQt5.QtCore import QObject, Qt, QDateTime
 
 import db.analytics
@@ -337,10 +335,10 @@ class MainWindow(QMainWindow):
             i.setChecked(True)
 
         # connect signals
-        sf.enteredCheck.toggled.connect(self.onEnteredToggled)
-        sf.modifiedCheck.toggled.connect(self.onModifiedToggled)
-        sf.sourceCheck.toggled.connect(self.onSourceToggled)
-        sf.volumeCheck.toggled.connect(self.onVolumeToggled)
+        sf.enteredCheck.toggled.connect(lambda: self.onEnteredToggled(True))
+        sf.modifiedCheck.toggled.connect(lambda: self.onModifiedToggled(True))
+        sf.sourceCheck.toggled.connect(lambda: self.onSourceToggled(True))
+        sf.volumeCheck.toggled.connect(lambda: self.onVolumeToggled(True))
         for i in (sf.occurrencesAddedDateSpin1, sf.occurrencesEditedDateSpin1,
                   sf.occurrencesAddedDateSpin2, sf.occurrencesEditedDateSpin2):
             i.dateChanged.connect(self._resetForOccurrenceFilter)
@@ -432,16 +430,28 @@ class MainWindow(QMainWindow):
 
 
     ### Setting, resetting, and filling the data windows ###
-    def updateMatchesStatus(self):
+    def updateMatchesStatus(self) -> None:
         "Update the number of entry/occurrence matches in the status bar."
         entryCount = self.form.entriesList.count()
         entryString = f"E: {entryCount}"
         occCount = self.form.occurrencesList.count()
         occString = f", O: {occCount}"
-        self.matchesWidget.setText(
-            entryString + ("" if not occCount else occString))
 
-    def fillEntries(self):
+        whatFilters = []
+        # all/none has same effect
+        if len(self._getOKClassifications()) not in (0, 6):
+            whatFilters.append("Entry")
+        if self._getOccurrenceFilters():
+            whatFilters.append("Occurrence")
+        if whatFilters:
+            filterStr = ' and '.join(whatFilters) + ' limits active | '
+        else:
+            filterStr = ""
+
+        self.matchesWidget.setText(
+            filterStr + entryString + ("" if not occCount else occString))
+
+    def fillEntries(self) -> None:
         """
         Fill the Entries list box with all entries that match the current
         search and limit criteria. (Right now limits are ignored.)
@@ -457,15 +467,14 @@ class MainWindow(QMainWindow):
         first occurrence and refocus the entries list while we're typing a
         search.
         """
-        oldBlockSignals = self.form.entriesList.blockSignals(True)
-        self.form.statusBar.showMessage("Searching...")
-        QApplication.processEvents()
-        self._resetForEntry()
-        entries = self._getEntriesForSearch()
-        self.fillListWidgetWithEntries(self.form.entriesList, entries, sort=False)
-        self.updateMatchesStatus()
-        self.form.statusBar.clearMessage()
-        self.form.entriesList.blockSignals(oldBlockSignals)
+        with ui.utils.blockSignals(self.form.entriesList):
+            with ui.utils.temporaryStatusMessage(self.form.statusBar, "Searching..."):
+                QApplication.processEvents()
+                self._resetForEntry()
+                entries = self._getEntriesForSearch()
+                self.fillListWidgetWithEntries(self.form.entriesList, entries,
+                                               sort=False)
+                self.updateMatchesStatus()
 
     def _getEntriesForSearch(self):
         """
@@ -515,20 +524,20 @@ class MainWindow(QMainWindow):
                 'yyyy-MM-dd')
             finish = sf.occurrencesAddedDateSpin2.date().toString(
                 'yyyy-MM-dd')
-            filters['enteredDate'] = (start, finish)
+            filters['enteredDateStr'] = (start, finish)
         if sf.modifiedCheck.isChecked():
             start = sf.occurrencesEditedDateSpin1.date().toString(
                 'yyyy-MM-dd')
             finish = sf.occurrencesEditedDateSpin2.date().toString(
                 'yyyy-MM-dd')
-            filters['modifiedDate'] = (start, finish)
+            filters['modifiedDateStr'] = (start, finish)
         if sf.sourceCheck.isChecked():
             source = self._getSourceComboSelection()
             if source:
                 filters['source'] = source
         if sf.volumeCheck.isChecked():
-            filters['volume'] = (sf.occurrencesVolumeSpin1.value(),
-                                 sf.occurrencesVolumeSpin2.value())
+            filters['volumeRange'] = (sf.occurrencesVolumeSpin1.value(),
+                                      sf.occurrencesVolumeSpin2.value())
         return filters
 
     def fillInspect(self):
@@ -880,16 +889,12 @@ class MainWindow(QMainWindow):
         if not fname:
             return
 
-        QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
-        try:
-            self.form.statusBar.showMessage(
-                "Importing (this may take some time depending on the size "
-                "of the file)...")
-            QApplication.processEvents()
-            numEntries, errors = db.importing.importMindex(fname)
-        finally:
-            QApplication.restoreOverrideCursor()
-            self.form.statusBar.clearMessage()
+        with ui.utils.temporaryStatusMessage(
+            self.form.statusBar,
+            "Importing (this may take some time depending on the size "
+            "of the file)..."):
+            with ui.utils.hourglass():
+                numEntries, errors = db.importing.importMindex(fname)
 
         successMsg = (
             "%i entr%s added or merged with existing entries.<br>"
@@ -924,15 +929,12 @@ class MainWindow(QMainWindow):
             return False
 
         # pylint: disable=no-member
-        QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
-        try:
-            entriesToPrint = self._getEntriesForSearch()
-            self.form.statusBar.showMessage("Exporting entries...")
-            QApplication.processEvents()
-            db.exporting.exportMindex(fname, entriesToPrint, progressCallback)
-        finally:
-            QApplication.restoreOverrideCursor()
-            self.form.statusBar.clearMessage()
+        with ui.utils.temporaryStatusMessage(self.form.statusBar,
+                                             "Exporting entries..."):
+            with ui.utils.hourglass():
+                entriesToPrint = self._getEntriesForSearch()
+                QApplication.processEvents()
+                db.exporting.exportMindex(fname, entriesToPrint, progressCallback)
 
         ui.utils.informationBox(
             "%i entries exported." % len(entriesToPrint),
@@ -958,16 +960,13 @@ class MainWindow(QMainWindow):
             QApplication.processEvents()
 
         # pylint: disable=no-member
-        QApplication.setOverrideCursor(QCursor(QtCore.Qt.WaitCursor))
-        try:
-            self.form.statusBar.showMessage("Printing...")
-            QApplication.processEvents()
-            printFunc(callback=progressCallback, *args, **kwargs)
-        except db.printing.PrintingError as e:
-            ui.utils.errorBox(str(e), "Printing not successful")
-        finally:
-            QApplication.restoreOverrideCursor()
-            self.form.statusBar.clearMessage()
+        with ui.utils.temporaryStatusMessage(self.form.statusBar, "Printing..."):
+            with ui.utils.hourglass():
+                try:
+                    QApplication.processEvents()
+                    printFunc(callback=progressCallback, *args, **kwargs)
+                except db.printing.PrintingError as e:
+                    ui.utils.errorBox(str(e), "Printing not successful")
 
 
     ## Edit menu
@@ -1244,11 +1243,11 @@ class MainWindow(QMainWindow):
     ## Tools menu
     def onClassify(self):
         "Load the entry classification tool."
-        self.form.statusBar.showMessage(
-            "Loading entry classification tool, this may take a moment...")
-        QApplication.processEvents()
-        cw = ui.tools_classification.ClassificationWindow(self)
-        self.form.statusBar.clearMessage()
+        with ui.utils.temporaryStatusMessage(
+                self.form.statusBar,
+                "Loading entry classification tool, this may take a moment..."):
+            QApplication.processEvents()
+            cw = ui.tools_classification.ClassificationWindow(self)
         cw.exec_()
         self.onSearch()
         #self.updateAndRestoreSelections()
@@ -1585,6 +1584,7 @@ class MainWindow(QMainWindow):
         self.form.nearbyList.clear()
         self.form.inspectBox.clear()
     def _resetForOccurrenceFilter(self) -> None:
+        self.updateMatchesStatus()
         self.saveSelections()
         self.updateAndRestoreSelections()
 
@@ -1599,7 +1599,6 @@ class MainWindow(QMainWindow):
         search = self.form.searchBox.text()
         if len(self.searchStack) == 0 or search != self.searchStack[-1]:
             self.searchStack.append(search)
-
 
 def selectFirstAndFocus(listWidget):
     """
