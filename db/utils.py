@@ -1,37 +1,46 @@
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
+"""
+utils.py - miscellaneous helper functions
+"""
+# Copyright (c) 2015-2022 Soren Bjornstad <contact@sorenbjornstad.com>
 
 import datetime
+from typing import List, Optional, Sequence, Tuple, Union
+
 import db.database as d
 
-def dateSerializer(obj):
+
+def serializeDate(obj: Optional[datetime.date]) -> Optional[str]:
     """
     Convert a datetime.date object into an ISO string for database storage.
+    Both input and output are nullable.
     """
-    if hasattr(obj, 'isoformat'):
-        return obj.isoformat()
-    elif obj is None:
+    if obj is None:
         return None
+    elif hasattr(obj, 'isoformat'):
+        return obj.isoformat()
     else:
-        raise TypeError('Object of type %s with value of %s is not ' \
-                'serializable' % (type(obj), repr(obj)))
+        raise TypeError(
+            f"Object of type {type(obj)} with value of {repr(obj)} is not serializable")
 
-def dateDeserializer(yyyymmdd):
+
+def deserializeDate(dateStr: str) -> datetime.date:
     """
     Change a serialized string back into a datetime.date. Or if None was stored,
     return None.
     """
-    try:
-        y, m, d = yyyymmdd.split('-')
-        y, m, d = int(y), int(m), int(d)
-    except AttributeError:
-        if yyyymmdd == None:
-            return None
-    except ValueError:
-        raise
-        assert False, "Invalid date serialized to database!"
-    return datetime.date(y, m, d)
+    if dateStr is None:
+        return None
 
-def minMaxDatesOccurrenceEnteredModified():
+    try:
+        yearStr, monthStr, dayStr = dateStr.split('-')
+        year, month, day = int(yearStr), int(monthStr), int(dayStr)
+    except ValueError as e:
+        raise ValueError( "Invalid date '{dateStr}' serialized to database!") from e
+
+    return datetime.date(year, month, day)
+
+
+def minMaxOccurrenceDates() -> Tuple[datetime.date, datetime.date]:
     """
     Return the earliest and latest Dates used for "entered" or "modified"
     dates for any occurrence.
@@ -41,9 +50,9 @@ def minMaxDatesOccurrenceEnteredModified():
     d.cursor.execute('SELECT MIN(dAdded) FROM occurrences')
     minAdd = d.cursor.fetchall()[0][0]
     if minEdit is None:
-        minEdit = dateSerializer(datetime.date.today())
+        minEdit = serializeDate(datetime.date.today())
     if minAdd is None:
-        minAdd = dateSerializer(datetime.date.today())
+        minAdd = serializeDate(datetime.date.today())
     early = minEdit if minEdit < minAdd else minAdd
 
     d.cursor.execute('SELECT MAX(dEdited) FROM occurrences')
@@ -51,32 +60,34 @@ def minMaxDatesOccurrenceEnteredModified():
     d.cursor.execute('SELECT MAX(dAdded) FROM occurrences')
     maxAdd = d.cursor.fetchall()[0][0]
     if maxEdit is None:
-        maxEdit = dateSerializer(datetime.date.today())
+        maxEdit = serializeDate(datetime.date.today())
     if maxAdd is None:
-        maxAdd = dateSerializer(datetime.date.today())
+        maxAdd = serializeDate(datetime.date.today())
     late = maxEdit if maxEdit > maxAdd else maxAdd
 
-    return dateDeserializer(early), dateDeserializer(late)
+    return deserializeDate(early), deserializeDate(late)
+
 
 # Based on:
 # http://code.activestate.com/recipes/135435-sort-a-string-using-numeric-order/
-def generate_index(str):
+# pylint: disable=invalid-name
+def generate_index(sourceStr: str) -> Sequence[Union[str, int]]:
     """
     Split a string into alpha and numeric elements, used as an index for
     sorting.
     """
     # the index is built progressively using the _append function
-    index = []
-    def _append(fragment, alist=index):
+    index: List[Union[str, int]] = []
+    def _append(fragment, alist=index): # pylint: disable=dangerous-default-value
         if fragment.isdigit():
             fragment = int(fragment)
         alist.append(fragment)
 
     # initialize loop
-    prev_isdigit = str[0].isdigit()
+    prev_isdigit = sourceStr[0].isdigit()
     current_fragment = ''
     # group a string into digit and non-digit parts
-    for char in str:
+    for char in sourceStr:
         curr_isdigit = char.isdigit()
         if curr_isdigit == prev_isdigit:
             current_fragment += char

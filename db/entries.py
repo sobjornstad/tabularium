@@ -9,7 +9,7 @@ import sqlite3
 
 import db.database as d
 import db.occurrences
-from db.utils import dateSerializer, dateDeserializer
+from db.utils import serializeDate, deserializeDate
 from db.consts import entryTypes
 
 
@@ -34,8 +34,8 @@ class Entry:
         d.cursor.execute(q, (eid,))
         self._name, self._sortKey, self._classification, self._dateEdited, \
             self._dateAdded = d.cursor.fetchall()[0]
-        self._dateEdited = dateDeserializer(self._dateEdited)
-        self._dateAdded = dateDeserializer(self._dateAdded)
+        self._dateEdited = deserializeDate(self._dateEdited)
+        self._dateAdded = deserializeDate(self._dateAdded)
         self._eid = eid
 
     @classmethod
@@ -51,7 +51,7 @@ class Entry:
         if nameExists(name):
             return None
 
-        dAdded  = dateSerializer(datetime.date.today())
+        dAdded  = serializeDate(datetime.date.today())
         dEdited = dAdded
 
         q = '''INSERT INTO entries
@@ -95,8 +95,8 @@ class Entry:
             entry._name = name
             entry._sortKey = sortKey
             entry._classification = classification
-            entry._dateEdited = dateDeserializer(dateEdited)
-            entry._dateAdded = dateDeserializer(dateAdded)
+            entry._dateEdited = deserializeDate(dateEdited)
+            entry._dateAdded = deserializeDate(dateAdded)
             entry._eid = eid
             constructed.append(entry)
         return constructed
@@ -211,8 +211,8 @@ class Entry:
                SET name=?, sortkey=?, classification=?, dAdded=?, dEdited=?
                WHERE eid=?'''
         d.cursor.execute(q, (self._name, self._sortKey, self._classification,
-                         dateSerializer(self._dateAdded),
-                         dateSerializer(dEdited), self._eid))
+                         serializeDate(self._dateAdded),
+                         serializeDate(dEdited), self._eid))
         d.checkAutosave()
 
 

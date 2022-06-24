@@ -8,7 +8,7 @@ import db.database as d
 import db.consts
 import db.volumes
 import db.occurrences
-from db.utils import dateSerializer
+from db.utils import serializeDate
 
 class DuplicateError(Exception):
     def __init__(self, what):

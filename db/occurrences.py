@@ -8,7 +8,7 @@ import db.database as d
 import db.entries
 import db.volumes
 import db.sources
-from db.utils import dateSerializer, dateDeserializer, generate_index
+from db.utils import serializeDate, deserializeDate, generate_index
 
 class InvalidUOFError(Exception):
     def __init__(self, text="Invalid UOF."):
@@ -65,13 +65,13 @@ class Occurrence(object):
             self._dateAdded = d.cursor.fetchall()[0]
         self._entry = db.entries.Entry(eid)
         self._volume = db.volumes.Volume(vid)
-        self._dateEdited = dateDeserializer(self._dateEdited)
-        self._dateAdded = dateDeserializer(self._dateAdded)
+        self._dateEdited = deserializeDate(self._dateEdited)
+        self._dateAdded = deserializeDate(self._dateAdded)
         self._oid = oid
 
     @classmethod
     def makeNew(cls, entry, volume, ref, type):
-        dAdded = dateSerializer(datetime.date.today())
+        dAdded = serializeDate(datetime.date.today())
         dEdited = dAdded
         eid = entry.eid
         vid = volume.vid
@@ -212,8 +212,8 @@ class Occurrence(object):
                    SET eid=?, vid=?, ref=?, type=?, dEdited=?, dAdded=?
                    WHERE oid=?'''
         d.cursor.execute(query, (self._entry.eid, self._volume.vid,
-                self._ref, self._reftype, dateSerializer(dEdited),
-                dateSerializer(self._dateAdded), self._oid))
+                self._ref, self._reftype, serializeDate(dEdited),
+                serializeDate(self._dateAdded), self._oid))
         d.checkAutosave()
 
     def delete(self):

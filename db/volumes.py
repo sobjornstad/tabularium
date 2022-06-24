@@ -8,7 +8,7 @@ import db.database as d
 import db.consts
 import db.sources
 import db.entries
-from db.utils import dateSerializer, dateDeserializer
+from db.utils import serializeDate, deserializeDate
 
 class DuplicateError(Exception):
     def __init__(self, sourceName, volNum):
@@ -33,8 +33,8 @@ class Volume(object):
         q = 'SELECT sid, num, notes, dopened, dclosed FROM volumes WHERE vid=?'
         d.cursor.execute(q, (vid,))
         sid, self._num, self._notes, dopened, dclosed = d.cursor.fetchall()[0]
-        self._dateOpened = dateDeserializer(dopened)
-        self._dateClosed = dateDeserializer(dclosed)
+        self._dateOpened = deserializeDate(dopened)
+        self._dateClosed = deserializeDate(dclosed)
         self._source = db.sources.Source(sid)
         self._vid = vid
 
@@ -73,8 +73,8 @@ class Volume(object):
         q = '''INSERT INTO volumes (vid, sid, num, notes, dopened, dclosed)
                VALUES (null, ?, ?, ?, ?, ?)'''
         d.cursor.execute(q, (source.sid, num, notes,
-                             dateSerializer(dopened),
-                             dateSerializer(dclosed)))
+                             serializeDate(dopened),
+                             serializeDate(dclosed)))
         d.checkAutosave()
         vid = d.cursor.lastrowid
         return cls(vid)
@@ -145,8 +145,8 @@ class Volume(object):
                SET sid=?, num=?, notes=?, dopened=?, dclosed=?
                WHERE vid=?"""
         d.cursor.execute(q, (self._source.sid, self._num, self._notes,
-                         dateSerializer(self._dateOpened),
-                         dateSerializer(self._dateClosed), self._vid))
+                         serializeDate(self._dateOpened),
+                         serializeDate(self._dateClosed), self._vid))
         d.checkAutosave()
 
 
@@ -189,7 +189,7 @@ def findNextDateOpened(source):
                         WHERE num=(SELECT MAX(num) FROM volumes)
                         AND sid=?''', (source.sid,))
     try:
-        return (dateDeserializer(d.cursor.fetchall()[0][0]) +
+        return (deserializeDate(d.cursor.fetchall()[0][0]) +
                 datetime.timedelta(days=1))
     except (IndexError, TypeError):
         # unsupported operand types: NoneType and timedelta
@@ -225,7 +225,7 @@ def findDateInDiary(date):
            WHERE sid=(SELECT sid FROM sources WHERE stype=?)
            AND dopened <= ?
            AND dclosed >= ?'''
-    date = dateSerializer(date)
+    date = serializeDate(date)
     vals = (db.consts.sourceTypes['diary'], date, date)
     d.cursor.execute(q, vals)
     fetch = d.cursor.fetchall()
