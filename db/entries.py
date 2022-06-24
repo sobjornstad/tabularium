@@ -1,5 +1,7 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
+"""
+entries.py - entry functions
+"""
+# Copyright (c) 2015-2022 Soren Bjornstad <contact@sorenbjornstad.com>.
 
 import datetime
 import re
@@ -10,18 +12,25 @@ import db.occurrences
 from db.utils import dateSerializer, dateDeserializer
 from db.consts import entryTypes
 
+
 class MultipleResultsUnexpectedError(Exception):
     def __str__(self):
         return ("A find that should not have returned multiple results "
                 "returned multiple results. This is probably due to the "
                 "database being in an inconsistent state.")
 
-class Entry(object):
-    "Represents a single entry in the database."
 
-    def __init__(self, eid):
-        q = 'SELECT name, sortkey, classification, dEdited, dAdded ' \
-                'FROM entries WHERE eid=?'
+class Entry:
+    """
+    An Entry is the fundamental unit of data in Tabularium.
+
+    An Entry has a name and is associated with some set of occurrences,
+    along with some metadata.
+    """
+
+    def __init__(self, eid: int):
+        q = '''SELECT name, sortkey, classification, dEdited, dAdded
+               FROM entries WHERE eid=?'''
         d.cursor.execute(q, (eid,))
         self._name, self._sortKey, self._classification, self._dateEdited, \
             self._dateAdded = d.cursor.fetchall()[0]

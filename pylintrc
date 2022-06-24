@@ -38,7 +38,7 @@ load-plugins=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=no-else-return,no-else-raise,broad-except
+disable=no-else-return,no-else-raise,broad-except,global-statement
 
 
 [REPORTS]
@@ -129,19 +129,19 @@ const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
 class-rgx=[A-Z_][a-zA-Z0-9]+$
 
 # Regular expression which should only match correct function names
-function-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+function-rgx=[a-z][a-zA-Z0-9]{2,30}$
 
 # Regular expression which should only match correct method names
-method-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+method-rgx=[a-z][a-zA-Z0-9]{2,30}$
 
 # Regular expression which should only match correct instance attribute names
 attr-rgx=([a-z_][a-zA-Z0-9_]{0,30}|Session)$
 
 # Regular expression which should only match correct argument names
-argument-rgx=([a-z_][a-zA-Z0-9_]{0,30}|Session)$
+argument-rgx=([a-z][a-zA-Z0-9]{0,30}|Session)$
 
 # Regular expression which should only match correct variable names
-variable-rgx=([a-z_][a-zA-Z0-9_]{0,30}|Session)$
+variable-rgx=([a-z][a-zA-Z0-9]{0,30}|Session)$
 
 # Regular expression which should only match correct attribute names in class
 # bodies
@@ -149,7 +149,7 @@ class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]{1,30}|(__.*__))$
 
 # Regular expression which should only match correct list comprehension /
 # generator expression variable names
-inlinevar-rgx=[a-z_][A-Za-z0-9_]*$
+inlinevar-rgx=[a-z][A-Za-z0-9]*$
 
 # Good variable names which should always be accepted, separated by a comma
 good-names=i,j,k,ex,Run,_
