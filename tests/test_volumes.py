@@ -1,3 +1,4 @@
+from db.entries import EntryClassification
 import tests.utils as utils
 from datetime import date
 
@@ -66,7 +67,7 @@ class VolumeTests(utils.DbTestCase):
         e1Name = "Maudi (Maudlin)"
         e2Name = "Katerina (Maudlin)"
         e1 = db.entries.Entry.makeNew(e1Name)
-        e2 = db.entries.Entry.makeNew(e2Name, "ZKaterina", 5)
+        e2 = db.entries.Entry.makeNew(e2Name, "ZKaterina", EntryClassification.TITLE)
         o1 = Occurrence.makeNew(e1, v1, '25', 0)
         o2 = Occurrence.makeNew(e2, v1, '25', 0)
         o3 = Occurrence.makeNew(e2, v2, '25', 0)

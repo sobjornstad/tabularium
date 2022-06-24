@@ -3,17 +3,18 @@ from datetime import date
 
 import db.database as d
 import db.entries
+from db.entries import EntryClassification as ec
 import db.occurrences
 from db.sources import Source
 from db.volumes import Volume
-from db.consts import sourceTypes, entryTypes
+from db.consts import sourceTypes
 
 class DbTests(utils.DbTestCase):
     def testObject(self):
         e1Name = "Maudi (Maudlin)"
         e2Name = "Katerina (Maudlin)"
         e1 = db.entries.Entry.makeNew(e1Name)
-        e2 = db.entries.Entry.makeNew(e2Name, "ZKaterina", 5)
+        e2 = db.entries.Entry.makeNew(e2Name, "ZKaterina", ec.TITLE)
 
         # nothing else in the db yet, so this is quite clear
         assert e1.eid == 1
@@ -22,8 +23,8 @@ class DbTests(utils.DbTestCase):
         assert e2.name == e2Name
         assert e1.sortKey == e1.name
         assert e2.sortKey == "ZKaterina"
-        assert e1.classification == 0
-        assert e2.classification == 5
+        assert e1.classification == ec.UNCLASSIFIED
+        assert e2.classification == ec.TITLE
 
         newName = "Maudia (Maudlin)"
         e1.name = newName
@@ -31,8 +32,8 @@ class DbTests(utils.DbTestCase):
         assert e1.sortKey == e1Name # not automatically changed
         e1.sortKey = newName
         assert e1.sortKey == e1.name
-        e1.classification = 4
-        assert e1.classification == 4
+        e1.classification = ec.QUOTE
+        assert e1.classification == ec.QUOTE
 
         assert e1 != e2
         anotherE = e1
@@ -122,21 +123,20 @@ class DbTests(utils.DbTestCase):
     def testAdvancedFindFeatures(self):
         # globbing
         e1 = db.entries.Entry.makeNew("Melgreth, Maudia (_Maudlin_)",
-                classification=entryTypes['person'])
+                classification=ec.PERSON)
         e2 = db.entries.Entry.makeNew('"the rational animal"',
-                classification=entryTypes['quote'])
+                classification=ec.QUOTE)
         e3 = db.entries.Entry.makeNew("_The Art of Computer Programming_",
-                classification=entryTypes['title'])
+                classification=ec.TITLE)
 
         assert len(db.entries.find("%t%")) == 3
-        assert len(db.entries.find("%t%", (entryTypes['person'],
-                entryTypes['quote'], entryTypes['title']))) == 3
-        assert len(db.entries.find("%t%", (entryTypes['person'],))) == 1
+        assert len(db.entries.find("%t%", (ec.PERSON, ec.QUOTE, ec.TITLE))) == 3
+        assert len(db.entries.find("%t%", (ec.PERSON,))) == 1
 
         e4 = db.entries.Entry.makeNew("An entry with a % in it",
-                classification=entryTypes['ord'])
+                classification=ec.ORD)
         e5 = db.entries.Entry.makeNew("An entry with a something else in it",
-                classification=entryTypes['ord'])
+                classification=ec.ORD)
         assert len(db.entries.find("An entry with a % in it")) == 1
         assert len(db.entries.find(
             db.entries.percentageWrap("entry with a % in"))) == 1
@@ -147,7 +147,7 @@ class DbTests(utils.DbTestCase):
 
     def testPercentageWrap(self):
         assert db.entries.percentageWrap("foo") == "%foo%"
-        assert db.entries.percentageWrap("f%oo") == "%f\%oo%"
+        assert db.entries.percentageWrap("f%oo") == "%f\\%oo%"
 
     def testSortKeyTransform(self):
         t = db.entries.sortKeyTransform

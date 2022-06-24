@@ -14,7 +14,6 @@ from PyQt5.QtWidgets import QDialog
 import ui.addoccurrence
 import ui.forms.newentry
 import ui.utils as utils
-from db.consts import entryTypes
 import db.entries
 
 class AddEntryWindow(QDialog):
@@ -77,13 +76,14 @@ class AddEntryWindow(QDialog):
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
 
-    def putClassification(self, entry):
+    def putClassification(self, entry: db.entries.Entry):
         """
         Called if modifying/basing on an existing entry; finds the
         corresponding entry and determines its classification.
         """
         for i in self.allRadios:
-            if entryTypes[i.property('cKey')] == entry.classification:
+            # TODO: convert this to use the enum properly
+            if entry.classification.interfaceKey == i.property('cKey'):
                 i.setChecked(True)
 
     def putRedirect(self, to):
@@ -213,7 +213,7 @@ class AddEntryWindow(QDialog):
             super(AddEntryWindow, self).accept()
             ac.exec_()
 
-    def _getSelectedClassif(self):
+    def _getSelectedClassif(self) -> db.entries.EntryClassification:
         """
         Return the classification number for the radio button that is currently
         selected. Radio buttons use the cKey dynamic property to hold the key
@@ -231,5 +231,6 @@ class AddEntryWindow(QDialog):
 
         for i in self.allRadios:
             if i.isChecked():
-                return entryTypes[i.property('cKey')]
+                return {i.interfaceKey: i
+                        for i in db.entries.EntryClassification}[i.property('cKey')]
         assert False, "No radio button selected!"

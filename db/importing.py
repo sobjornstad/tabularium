@@ -9,7 +9,7 @@ Functions for importing data from other file formats into Tabularium.
 """
 
 import db.occurrences
-from db.entries import Entry
+from db.entries import Entry, EntryClassification
 from db.consts import entryTypes
 
 def importMindex(filename):
@@ -75,8 +75,7 @@ def importMindex(filename):
         # create, or find, entry
         existingEntry = db.entries.findOne(entryText.strip())
         if not existingEntry:
-            entry = Entry.makeNew(entryText, sortKey,
-                                  entryTypes['unclassified'])
+            entry = Entry.makeNew(entryText, sortKey, EntryClassification.UNCLASSIFIED)
         else:
             entry = existingEntry
 

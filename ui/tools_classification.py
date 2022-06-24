@@ -40,7 +40,7 @@ class ClassificationWindow(QDialog):
 
     def fillEntries(self):
         "Fill box of entries to classify from the database."
-        entries = db.entries.find('%', (db.consts.entryTypes['unclassified'],))
+        entries = db.entries.find('%', (db.entries.EntryClassification.UNCLASSIFIED,))
         entries.sort(key=lambda i: i.sortKey.lower())
         for i in entries:
             self.form.entryList.addItem(i.name)

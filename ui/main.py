@@ -587,15 +587,15 @@ class MainWindow(QMainWindow):
         classification / entry-limiting check boxes.
         """
         sf = self.form
-        et = db.consts.entryTypes
-        trans = {sf.entriesCommonsCheck: et['ord'],
-                 sf.entriesNamesCheck: et['person'],
-                 sf.entriesPlacesCheck: et['place'],
-                 sf.entriesQuotationsCheck: et['quote'],
-                 sf.entriesTitlesCheck: et['title'],
-                 sf.entriesUnclassifiedCheck: et['unclassified']
+        ec = db.entries.EntryClassification
+        trans = {sf.entriesCommonsCheck: ec.ORD,
+                 sf.entriesNamesCheck: ec.PERSON,
+                 sf.entriesPlacesCheck: ec.PLACE,
+                 sf.entriesQuotationsCheck: ec.QUOTE,
+                 sf.entriesTitlesCheck: ec.TITLE,
+                 sf.entriesUnclassifiedCheck: ec.UNCLASSIFIED
                 }
-        checked = [trans[box] for box in trans.keys() if box.isChecked()]
+        checked = [clf for box, clf in trans.items() if box.isChecked()]
         return tuple(checked)
 
     def fillListWidgetWithEntries(self, widget, entries, sort=True):
@@ -689,7 +689,7 @@ class MainWindow(QMainWindow):
         state = self.form.enteredCheck.isChecked()
         self.form.occurrencesAddedDateSpin1.setEnabled(state)
         self.form.occurrencesAddedDateSpin2.setEnabled(state)
-        mind, maxd = db.utils.minMaxDatesOccurrenceEnteredModified()
+        mind, maxd = db.utils.minMaxOccurrenceDates()
         self.form.occurrencesAddedDateSpin1.setMinimumDate(mind)
         self.form.occurrencesAddedDateSpin1.setMaximumDate(maxd)
         self.form.occurrencesAddedDateSpin2.setMinimumDate(mind)
@@ -704,7 +704,7 @@ class MainWindow(QMainWindow):
         state = self.form.modifiedCheck.isChecked()
         self.form.occurrencesEditedDateSpin1.setEnabled(state)
         self.form.occurrencesEditedDateSpin2.setEnabled(state)
-        mind, maxd = db.utils.minMaxDatesOccurrenceEnteredModified()
+        mind, maxd = db.utils.minMaxOccurrenceDates()
         if mind is None:
             mind = datetime.date.today()
         if maxd is None:

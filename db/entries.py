@@ -3,14 +3,19 @@ entries.py - entry functions
 """
 # Copyright (c) 2015-2022 Soren Bjornstad <contact@sorenbjornstad.com>.
 
+from __future__ import annotations
+
 import datetime
+from enum import Enum
 import re
 import sqlite3
+from typing import Any, Iterable, List, Optional, Sequence, TextIO, Tuple, Union
 
 import db.database as d
 import db.occurrences
+from db.sources import Source
 from db.utils import serializeDate, deserializeDate
-from db.consts import entryTypes
+from db.volumes import Volume
 
 
 class MultipleResultsUnexpectedError(Exception):
@@ -18,6 +23,28 @@ class MultipleResultsUnexpectedError(Exception):
         return ("A find that should not have returned multiple results "
                 "returned multiple results. This is probably due to the "
                 "database being in an inconsistent state.")
+
+
+class EntryClassification(Enum):
+    "The type of thing this entry represents."
+    UNCLASSIFIED = 0
+    ORD = 1
+    PERSON = 2
+    PLACE = 3
+    QUOTE = 4
+    TITLE = 5
+
+    @property
+    def interfaceKey(self) -> str:
+        "Return a key that can be used in the interface."
+        return {
+            EntryClassification.UNCLASSIFIED: "unclassified",
+            EntryClassification.ORD: "ord",
+            EntryClassification.PERSON: "person",
+            EntryClassification.PLACE: "place",
+            EntryClassification.QUOTE: "quote",
+            EntryClassification.TITLE: "title"
+        }[self]
 
 
 class Entry:
@@ -34,12 +61,15 @@ class Entry:
         d.cursor.execute(q, (eid,))
         self._name, self._sortKey, self._classification, self._dateEdited, \
             self._dateAdded = d.cursor.fetchall()[0]
+        self._classification = EntryClassification(self._classification)
         self._dateEdited = deserializeDate(self._dateEdited)
         self._dateAdded = deserializeDate(self._dateAdded)
         self._eid = eid
 
     @classmethod
-    def makeNew(cls, name, sortkey=None, classification=0):
+    def makeNew(cls, name: str, sortkey: Optional[str] = None,
+                classification: EntryClassification = EntryClassification.UNCLASSIFIED
+               ) -> Optional[Entry]:
         """
         Create a new entry record in the database, then create and return an
         Entry object from it. Return None and do not touch the database if an
@@ -55,15 +85,18 @@ class Entry:
         dEdited = dAdded
 
         q = '''INSERT INTO entries
-              (eid, name, sortkey, classification, dAdded, dEdited) 
-              VALUES (null, ?, ?, ?, ?, ?)'''
-        d.cursor.execute(q, (name, sortkey, classification, dAdded, dEdited))
+               (eid, name, sortkey, classification, dAdded, dEdited) 
+               VALUES (null, ?, ?, ?, ?, ?)'''
+        d.cursor.execute(q, (name, sortkey, classification.value, dAdded, dEdited))
         d.checkAutosave()
         eid = d.cursor.lastrowid
         return cls(eid)
 
     @classmethod
-    def multiConstruct(cls, entryData):
+    def multiConstruct(
+        cls,
+        entryData: Iterable[Tuple[int, str, str, EntryClassification, str, str]]
+        ) -> Sequence[Entry]:
         """
         A nasty hack to bypass __init__ and not hit the database while
         constructing many Entries. This is an optimization useful in the case
@@ -89,12 +122,11 @@ class Entry:
             A list of Entry objects containing the specified content.
         """
         constructed = []
-        for eid, name, sortKey, classification, dateEdited, dateAdded \
-                in entryData:
+        for eid, name, sortKey, classification, dateEdited, dateAdded in entryData:
             entry = cls.__new__(cls)
             entry._name = name
             entry._sortKey = sortKey
-            entry._classification = classification
+            entry._classification = EntryClassification(classification)
             entry._dateEdited = deserializeDate(dateEdited)
             entry._dateAdded = deserializeDate(dateAdded)
             entry._eid = eid
@@ -102,26 +134,34 @@ class Entry:
         return constructed
 
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Entry):
+            return NotImplemented
         return self._eid == other._eid
-    def __ne__(self, other):
+
+    def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
-    def __lt__(self, other):
+
+    def __lt__(self, other: Any) -> bool:
         "Sort by sort key."
+        if not isinstance(other, Entry):
+            return NotImplemented
         return self._sortKey.lower() < other._sortKey.lower()
-    def __hash__(self):
+
+    def __hash__(self) -> int:
         return self._eid
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self._name
-    def __repr__(self):
+
+    def __repr__(self) -> str:
         return "<" + self._name + ">"
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
     @name.setter
-    def name(self, n):
+    def name(self, n: str) -> None:
         """
         Change the name of this entry. Note that this does NOT change the sort
         key -- that needs to be done separately!
@@ -131,34 +171,33 @@ class Entry:
             self.flush()
 
     @property
-    def eid(self):
+    def eid(self) -> int:
         return self._eid
 
     @property
-    def sortKey(self):
+    def sortKey(self) -> str:
         return self._sortKey
     @sortKey.setter
-    def sortKey(self, sk):
+    def sortKey(self, sk: str):
         if self._sortKey != sk:
             self._sortKey = sk
             self.flush()
 
-    #TODO: verify classification is a permitted value
     @property
-    def classification(self):
+    def classification(self) -> EntryClassification:
         return self._classification
     @classification.setter
-    def classification(self, clf):
+    def classification(self, clf: EntryClassification) -> None:
         if self._classification != clf:
             self._classification = clf
             self.flush()
 
     @property
-    def dateAdded(self):
+    def dateAdded(self) -> datetime.date:
         return self._dateAdded
 
     @property
-    def dateEdited(self):
+    def dateEdited(self) -> datetime.date:
         return self._dateEdited
 
     # To avoid filling up the computer's memory if requesting a bunch of
@@ -168,11 +207,12 @@ class Entry:
     # the caller.
     @property
     def image(self):
+        "Image associated with a person."
         d.cursor.execute('SELECT picture FROM entries WHERE eid=?', (self._eid,))
         image = d.cursor.fetchall()[0][0]
         return image
     @image.setter
-    def image(self, content):
+    def image(self, content: Union[None, str, bytes]):
         """
         Set database column to an image. May be set to None (to delete the
         image), or a filename to read from, or raw data.
@@ -191,7 +231,9 @@ class Entry:
             d.cursor.execute('UPDATE entries SET picture=? WHERE eid=?',
                              (sqlite3.Binary(content), self._eid))
         d.checkAutosave()
-    def writeImage(self, filehandle):
+
+    def writeImage(self, filehandle: TextIO):
+        "Write an image in the DB to disk so the user can work with it further."
         image = self.image
         if image is None:
             return False
@@ -200,17 +242,19 @@ class Entry:
             return True
 
     def delete(self):
+        "Toast this entry."
         d.cursor.execute('DELETE FROM occurrences WHERE eid=?', (self._eid,))
         d.cursor.execute('DELETE FROM entries WHERE eid=?', (self._eid,))
         d.checkAutosave()
 
     def flush(self):
+        "Write this entry to the database after changes are made."
         dEdited  = datetime.date.today()
 
         q = '''UPDATE entries
                SET name=?, sortkey=?, classification=?, dAdded=?, dEdited=?
                WHERE eid=?'''
-        d.cursor.execute(q, (self._name, self._sortKey, self._classification,
+        d.cursor.execute(q, (self._name, self._sortKey, self._classification.value,
                          serializeDate(self._dateAdded),
                          serializeDate(dEdited), self._eid))
         d.checkAutosave()
@@ -233,22 +277,27 @@ def nameExists(name):
     We should not have entries with duplicate names, so this is a useful
     test. Returns a boolean.
     """
-    if len(find(name)):
-        return True
-    else:
-        return False
+    return bool(find(name))
 
-def find(search, classification=tuple(entryTypes.values()), regex=False,
-         enteredDate=None, modifiedDate=None, source=None, volume=None):
+
+# pylint: disable=too-many-arguments
+def find(
+    search: str,
+    classification: Sequence[EntryClassification] = None,
+    regex: bool = False,
+    enteredDate: Optional[datetime.date] = None,
+    modifiedDate: Optional[datetime.date] = None,
+    source: Optional[Source] = None,
+    volume: Optional[Volume] = None
+    ) -> Sequence[Entry]:
     """
     Get a list of Entries matching the given criteria.
 
     Arguments:
         search - a glob to search for, using either standard SQLite or Python
             regex matching
-        classification (optional, default all values defined in
-            db.consts.entryTypes) - a tuple of allowable values for the entry's
-            classification
+        classification (optional, default all defined values) - a tuple of
+            allowable values for the entry's classification
         regex (optional, default False) - use regex match (see arg /search/)
         enteredDate, modifiedDate, source, volume - occurrence limits: entries
             that do not have any occurrences matching these limits will not be
@@ -256,7 +305,7 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
 
     Return:
         A list of entry objects matching the criteria, or an empty list if
-        there were no matches.
+        there were no matches. The entries will be returned in sorted order.
 
     Raises:
         SQLite.OperationalError - if using regex mode and the regex is invalid,
@@ -268,6 +317,9 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
     I don't think an index would help here, but I know very little about SQL
     indexes.
     """
+    if not classification:
+        classification = tuple(i for i in EntryClassification)
+
     if not regex:
         if not (search.startswith('%') and search.endswith('%')):
             # This search is not supposed to be percent-wrapped, but we might
@@ -280,7 +332,7 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
 
     if (enteredDate is None and modifiedDate is None
             and source is None and volume is None):
-        # The last %s is just a fake so that the below code works without
+        # The last %s is a fake so that the below code works without
         # modification: nothing will ever be substituted there.
         query = """SELECT eid, name, sortkey, classification,
                           entries.dEdited, entries.dAdded
@@ -292,7 +344,8 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
         query = """SELECT DISTINCT entries.eid, name, sortkey, classification,
                                    entries.dEdited, entries.dAdded
                    FROM occurrences
-                   INNER JOIN entries ON entries.eid = occurrences.eid
+                   INNER JOIN entries
+                           ON entries.eid = occurrences.eid
                    WHERE name %s ? %s
                          AND classification IN (%s)
                          %s
@@ -305,14 +358,24 @@ def find(search, classification=tuple(entryTypes.values()), regex=False,
                      classifPlaceholders,
                      'AND ' + occQuery if occQuery else '')
 
-    d.cursor.execute(query, (search,) + classification + tuple(occQueryParams))
+    d.cursor.execute(
+        query,
+        (search,) + tuple(i.value for i in classification) + tuple(occQueryParams))
     results = d.cursor.fetchall()
     return Entry.multiConstruct(results)
 
-def findOne(search, classification=tuple(entryTypes.values()), regex=False,
-            enteredDate=None, modifiedDate=None, source=None, volume=None):
+
+def findOne(
+    search: str,
+    classification: Sequence[EntryClassification] = None,
+    regex: bool = False,
+    enteredDate: Optional[datetime.date] = None,
+    modifiedDate: Optional[datetime.date] = None,
+    source: Optional[Source] = None,
+    volume: Optional[Volume] = None
+    ) -> Optional[Entry]:
     """
-    Interface to find() for when only one result should be possible.
+    Interface to find() for when no more than one result should be possible.
 
     If there is one result, return the result as an Entry object. If there are
     no results, return None.
@@ -331,6 +394,7 @@ def findOne(search, classification=tuple(entryTypes.values()), regex=False,
     else:
         raise MultipleResultsUnexpectedError()
 
+
 def nonRedirectTopLevelPeople():
     """
     Return a list of all entries marked as 'person' that have at least one
@@ -346,7 +410,7 @@ def nonRedirectTopLevelPeople():
            WHERE classification = ?
                  AND occurrences.type != ?
            ORDER BY sortkey COLLATE nocase"""
-    d.cursor.execute(q, (db.consts.entryTypes['person'],
+    d.cursor.execute(q, (EntryClassification.PERSON.value,
                          db.consts.refTypes['redir']))
     entries = db.entries.Entry.multiConstruct(d.cursor.fetchall())
     cleanedEntries = []
