@@ -10,6 +10,7 @@ import db.entries
 import db.consts
 
 class ClassificationWindow(QDialog):
+    "Allow user to quickly classify unclassified entries."
     def __init__(self, parent):
         QDialog.__init__(self)
         self.form = ui.forms.tools_classification.Ui_Dialog()
@@ -17,13 +18,13 @@ class ClassificationWindow(QDialog):
         self.mw = parent
 
         sf = self.form
-        et = db.consts.entryTypes
-        self.buttonToVal = {sf.ordinary: et['ord'],
-                            sf.person: et['person'],
-                            sf.place: et['place'],
-                            sf.quotation: et['quote'],
-                            sf.title: et['title'],
-                            sf.unclassified: et['unclassified']
+        ec = db.entries.EntryClassification
+        self.buttonToVal = {sf.ordinary: ec.ORD,
+                            sf.person: ec.PERSON,
+                            sf.place: ec.PLACE,
+                            sf.quotation: ec.QUOTE,
+                            sf.title: ec.TITLE,
+                            sf.unclassified: ec.UNCLASSIFIED,
                            }
         self.valToButton = {v: k for k, v in self.buttonToVal.items()}
         # pylint: disable=consider-iterating-dictionary
