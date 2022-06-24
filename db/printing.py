@@ -197,7 +197,7 @@ def makeSimplification(callback: PrintingProgressCallback = None):
         original string repr. This allows ranges to be collated under the place
         they start along with non-range entries.
         """
-        if occ.isRefType('range'):
+        if occ.isRefType(db.occurrences.ReferenceType.RANGE):
             # pylint: disable=unused-variable
             start, end = db.occurrences.parseRange(occ.ref)
             key = str(occ).replace(occ.ref, str(start))
@@ -232,14 +232,14 @@ def makeSimplification(callback: PrintingProgressCallback = None):
         callback("Formatting output...")
     latexAccumulator = []
     for occGroup in sortList:
-        if occGroup.isRefType('redir'):
+        if occGroup.isRefType(db.occurrences.ReferenceType.REDIRECT):
             continue # ignore redirects as unhelpful in this view
 
         key = modifiedRangeKey(occGroup)
         occStrs = []
         for occ in occDictionary[key]:
             txt = '\\item ' + mungeLatex(occ.entry.name)
-            if occ.isRefType('range'):
+            if occ.isRefType(db.occurrences.ReferenceType.RANGE):
                 txt += ' (--%s)' % db.occurrences.parseRange(occ.ref)[1]
             occStrs.append(txt)
 

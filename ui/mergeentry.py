@@ -1,18 +1,20 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2016 Soren Bjornstad <contact@sorenbjornstad.com>
-
 """
 Implementation of selection dialog for Entry -> Merge into... menu choice.
 Called from onMergeEntry() in main.
 """
 
-from PyQt5.QtWidgets import QDialog
-from ui.forms.mergeentry import Ui_Dialog
-import ui.utils
+# Copyright (c) 2016-2022 Soren Bjornstad <contact@sorenbjornstad.com>
+
+from typing import Iterable, Optional
+
+from PyQt5.QtWidgets import QDialog, QWidget
 
 import db.consts
 import db.entries
 import db.occurrences
+
+from ui.forms.mergeentry import Ui_Dialog
+import ui.utils
 
 class MergeEntryDialog(QDialog):
     """
@@ -26,30 +28,33 @@ class MergeEntryDialog(QDialog):
     occurrence is being moved. The dialog then asks the user what entry to move
     to and executes the move.
     """
-    def __init__(self, parent):
+    def __init__(self, parent: QWidget) -> None:
         QDialog.__init__(self)
         self.form = Ui_Dialog()
         self.form.setupUi(self)
         self.mw = parent
         self.form.mergeButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
-        self.curEntry = None
-        self.moveOcc = None
+        self.curEntry: Optional[db.entries.Entry] = None
+        self.moveOcc: Optional[db.occurrences.Occurrence] = None
 
-    def setFrom(self, entry):
+    ### Configuration ###
+    def setFrom(self, entry: db.entries.Entry) -> None:
+        "Configure the dialog with an entry from which occurrences will be moved."
         self.curEntry = entry
         self.form.fromBox.setText(entry.name)
         self.form.toBox.setText(entry.name)
         self.form.toBox.selectAll()
         self.form.toBox.setFocus()
 
-    def setTitle(self, title):
+    def setTitle(self, title: str) -> None:
+        "Configure the dialog with a window title."
         self.setWindowTitle(title)
 
-    def setMoveSingleOccurrence(self, occ):
+    def setMoveSingleOccurrence(self, occ: db.occurrences.Occurrence) -> None:
         """
-        Change the dialog so that it moves only one occurrence occ rather than
-        all of an entry's occurrences.
+        Configure the dialog so that it moves only one occurrence rather than
+        (as default) all of an entry's occurrences.
         """
         self.form.fromLabel.setText("M&ove")
         self.form.toLabel.setText("&To")
@@ -58,20 +63,24 @@ class MergeEntryDialog(QDialog):
             "Add a redirect pointing to the To entry to the From entry.")
         self.moveOcc = occ
 
+    ### Event handlers ###
     def accept(self):
         """
         Carry out the move, either of an entry or an occurrence.
         """
+        assert self.curEntry is not None, \
+            "Must call setFrom() before allowing user to use this dialog"
+
         newEntryName = self.form.toBox.text()
         newEntry = db.entries.findOne(newEntryName)
         if not newEntry:
             #TODO: offer a move instead
             ui.utils.errorBox(
-                "You can't merge into the entry '%s', because it does not "
-                "exist." % newEntryName, "Cannot merge entry")
+                f"You can't merge into the entry '{newEntryName}', because it does "
+                f"not exist.")
             return
-        # compare lowercase because the find functions are case-insensitive
-        if newEntryName.lower() == self.curEntry.name.lower():
+        # compare case-insensitive because the find functions are case-insensitive
+        if newEntryName.casefold() == self.curEntry.name.casefold():
             ui.utils.errorBox("You can't merge an entry into itself!",
                               "Cannot merge entry")
             return
@@ -86,17 +95,23 @@ class MergeEntryDialog(QDialog):
         else:
             _mergeOccurrences(occs, self.curEntry, newEntry)
         db.entries.deleteOrphaned()
-        super(MergeEntryDialog, self).accept()
+        super().accept()
 
-def _mergeOccurrences(occs, curEntry, newEntry,
-                      leaveRedirect=False, redirectFromOcc=None):
+
+def _mergeOccurrences(occs: Iterable[db.occurrences.Occurrence],
+                      curEntry: db.entries.Entry,
+                      newEntry: db.entries.Entry,
+                      leaveRedirect=False,
+                      redirectFromOcc: Optional[db.occurrences.Occurrence] = None
+                     ) -> None:
     """
     Move an iterable of occurrences from curEntry to newEntry.
     If leaveRedirect, leave a redirect from curEntry to newEntry, placed
     in the volume of the occurrence redirectFromOcc.
     """
     for occ in occs:
-        if occ.ref == newEntry.name and occ.isRefType('redir'):
+        if (occ.ref == newEntry.name
+                and occ.isRefType(db.occurrences.ReferenceType.REDIRECT)):
             # this is a redirect to the entry we're moving it to; ignore it
             occ.delete()
             continue

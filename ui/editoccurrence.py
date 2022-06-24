@@ -34,7 +34,7 @@ class EditOccurrenceWindow(QDialog):
         self.form.volumeSpin.setMinimum(startValid)
         self.form.volumeSpin.setMaximum(endValid)
         self.form.volumeSpin.setValue(self.vol.num)
-        if self.occ.isRefType('redir'):
+        if self.occ.isRefType(db.occurrences.ReferenceType.REDIRECT):
             self.form.referenceBox.setText("see " + self.occ.ref)
         else:
             self.form.referenceBox.setText(self.occ.ref)
@@ -55,7 +55,7 @@ class EditOccurrenceWindow(QDialog):
                 self.reject()
                 return
             self.occ.delete()
-            super(EditOccurrenceWindow, self).accept()
+            super().accept()
 
 
 def referenceOk(uof):
