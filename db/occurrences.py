@@ -490,17 +490,22 @@ def occurrenceFilterString(enteredDateStr: str = None,
         params.append(modifiedDateStr[0])
         params.append(modifiedDateStr[1])
     if source and volumeRange:
-        vids = []
-        for volnum in range(volumeRange[0], volumeRange[1]+1):
-            vol = db.volumes.byNumAndSource(source, volnum)
-            if vol is not None:
-                vids.append(vol.vid)
-        query.append(f" AND vid IN ({','.join('?' * len(vids))})")
-        params.extend(vids)
+        query.append(''' AND vid IN (
+                            SELECT vid FROM volumes
+                            WHERE volumes.sid = ? AND volumes.num BETWEEN ? AND ?
+                         )''')
+        params.extend([source.sid, str(volumeRange[0]), str(volumeRange[1]+1)])
+        # NOTE: With a large number of volumes, an EXISTS approach may be faster.
+        # I don't notice a difference presently, but might be worth checking later
+        #query.append(''' AND EXISTS(
+        #    SELECT 1 FROM volumes
+        #    WHERE occurrences.vid = volumes.vid
+        #      AND volumes.sid = ?
+        #      AND volumes.num BETWEEN ? AND ?)
+        #''')
     if source and not volumeRange:
-        vols = [i.vid for i in db.volumes.volumesInSource(source)]
-        query.append(f" AND vid IN ({','.join('?' * len(vols))})")
-        params.extend(vols)
+        query.append(" AND vid IN (SELECT vid FROM volumes WHERE volumes.sid = ?)")
+        params.append(source.sid)
 
     #TODO: Commented out because it's causing issues when starting Tabularium
     #when vol/source were both selected before. As we improve the startup
