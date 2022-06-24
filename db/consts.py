@@ -1,16 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
-
-refTypes = {'num': 0, 'range': 1, 'redir': 2}
-
-entryTypes = {
-    'unclassified': 0,
-    'ord': 1,
-    'person': 2,
-    'place': 3,
-    'quote': 4,
-    'title': 5
-    }
+# Copyright (c) 2015-2022 Soren Bjornstad <contact@sorenbjornstad.com>
 
 sourceTypes = {
     'other': 0,

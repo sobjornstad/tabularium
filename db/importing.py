@@ -10,7 +10,6 @@ Functions for importing data from other file formats into Tabularium.
 
 import db.occurrences
 from db.entries import Entry, EntryClassification
-from db.consts import entryTypes
 
 def importMindex(filename):
     """
