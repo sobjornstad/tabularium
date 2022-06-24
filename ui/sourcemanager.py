@@ -1,8 +1,12 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2015-2016 Soren Bjornstad <contact@sorenbjornstad.com>
+"""
+sourcemanager.py - dialog allowing user to edit sources
+"""
 
+# Copyright (c) 2015-2022 Soren Bjornstad <contact@sorenbjornstad.com>
+
+from typing import Optional
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QWidget
 from PyQt5.QtCore import QAbstractTableModel
 import ui.forms.managesources
 import ui.forms.newsource
@@ -16,6 +20,7 @@ import db.volumes
 # pylint: disable=too-many-public-methods
 # (not sure why that counts superclass methods in the first place)
 class SourceTableModel(QAbstractTableModel):
+    "Model storing source details."
     def __init__(self, parent):
         QAbstractTableModel.__init__(self)
         self.parent = parent
@@ -78,7 +83,8 @@ class SourceTableModel(QAbstractTableModel):
 
 
 class SourceManager(QDialog):
-    def __init__(self, parent):
+    "Allow user to edit the list of sources in the database."
+    def __init__(self, parent: QWidget):
         QDialog.__init__(self)
         self.form = ui.forms.managesources.Ui_Dialog()
         self.form.setupUi(self)
@@ -97,24 +103,30 @@ class SourceManager(QDialog):
         self.model.modelReset.connect(self.checkButtonEnablement)
         self.checkButtonEnablement()
 
-    def checkButtonEnablement(self):
+    def checkButtonEnablement(self) -> None:
+        "Enable/disable action buttons based on selection."
         sf = self.form
         for i in (sf.editButton, sf.deleteButton):
             i.setEnabled(self.sm.hasSelection())
 
-    def onNew(self):
+    def onNew(self) -> None:
+        "Create a new source."
         nsd = NewSourceDialog(self)
         r = nsd.exec_()
         if r:
             self.form.sourceTable.model().doUpdate()
-    def onEdit(self):
+
+    def onEdit(self) -> None:
+        "Edit the selected source."
         index = self.form.sourceTable.selectionModel().selectedRows()[0]
         source = self.form.sourceTable.model().sources[index.row()]
         nsd = NewSourceDialog(self, source)
         r = nsd.exec_()
         if r:
             self.form.sourceTable.model().doUpdate()
-    def onDelete(self):
+
+    def onDelete(self) -> None:
+        "Delete the selected source."
         index = self.form.sourceTable.selectionModel().selectedRows()[0]
         source = self.form.sourceTable.model().sources[index.row()]
         deletedNums = source.deletePreview()
@@ -146,7 +158,9 @@ class SourceManager(QDialog):
 
 
 class NewSourceDialog(QDialog):
-    def __init__(self, parent, editSource=None):
+    "Set options for a new or existing source."
+    def __init__(self, parent: QWidget,
+                 editSource: Optional[db.sources.Source] = None) -> None:
         QDialog.__init__(self)
         self.form = ui.forms.newsource.Ui_Dialog()
         self.form.setupUi(self)
@@ -169,14 +183,27 @@ class NewSourceDialog(QDialog):
         self.form.addButton.clicked.connect(self.accept)
 
     def checkVolumeEnable(self):
+        """
+        Enable or disable the volume spinboxes based on the state of the
+        'Multiple volumes' checkbox.
+        """
         sf = self.form
         for i in (sf.valVolStart, sf.valVolStop, sf.valVolLabel):
             i.setEnabled(self.form.multVolCheckbox.isChecked())
         if not self.form.multVolCheckbox.isChecked():
             sf.valVolStart.setValue(1)
+            sf.valVolStop.setMinimum(1)
             sf.valVolStop.setValue(1)
+        else:
+            # It doesn't make sense for a multi-volume source to have only one volume.
+            sf.valVolStop.setMinimum(2)
+            sf.valVolStop.setValue(2)
 
     def fillForEdit(self):
+        """
+        When editing an existing source, populate fields with the source specified
+        in the 'editSource' argument to the constructor.
+        """
         source = self.source
         self.setWindowTitle("Edit Source")
         self.form.addButton.setText("&Save")
@@ -238,7 +265,7 @@ class NewSourceDialog(QDialog):
             if not self.isEditing:
                 db.sources.Source.makeNew(newName, newVolval, newPageval,
                                           newNearrange, newAbbr, newStype)
-                super(NewSourceDialog, self).accept()
+                super().accept()
                 return
             else:
                 self.source.name = newName
@@ -276,7 +303,7 @@ class NewSourceDialog(QDialog):
         try:
             self.source.pageVal = newPageval
         except db.sources.TrouncesError as e:
-            check = "&Really delete these %i occurrences" % (e.number1)
+            check = f"&Really delete these {e.number1} occurrences"
             title = "Delete invalid occurrences"
             if confirmDialog(check, title):
                 with db.sources.bypassTrounceWarnings(self.source):
@@ -284,4 +311,4 @@ class NewSourceDialog(QDialog):
             else:
                 return
 
-        super(NewSourceDialog, self).accept()
+        super().accept()
