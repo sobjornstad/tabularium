@@ -110,7 +110,7 @@ class Occurrence:
         d.cursor.execute(query, (oid,))
         eid, vid, self._ref, self._reftype, self._dateEdited, \
             self._dateAdded = d.cursor.fetchall()[0]
-        self._entry = db.entries.Entry(eid)
+        self._entry = db.entries.Entry.byEid(eid)
         self._volume = db.volumes.Volume(vid)
         self._reftype = ReferenceType(self._reftype)
         self._dateEdited = deserializeDate(self._dateEdited)
@@ -417,7 +417,7 @@ class Occurrence:
                ORDER BY LOWER(sortkey)"""
         d.cursor.execute(q, (self._volume.vid, pageStart,
                              pageEnd, self._oid))
-        entries = [db.entries.Entry(i[0]) for i in d.cursor.fetchall()]
+        entries = [db.entries.Entry.byEid(i[0]) for i in d.cursor.fetchall()]
         return entries
 
 def allOccurrences():
@@ -454,7 +454,6 @@ def fetchForEntryFiltered(entry: db.entries.Entry,
     filterQuery, filterParams = occurrenceFilterString(
         enteredDateStr, modifiedDateStr, source, volumeRange)
     if filterQuery:
-        print(filterQuery)
         d.cursor.execute(queryHead + ' AND ' + filterQuery,
                          [str(entry.eid)] + filterParams)
     else:

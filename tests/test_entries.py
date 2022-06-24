@@ -75,16 +75,14 @@ class DbTests(utils.DbTestCase):
             db.entries.findOne("%Maudlin%")
         assert 'should not have returned multiple' in str(context.exception)
 
-        # try changing
+        # try changing and re-fetching
         newName = "Kathariana"
         e3.name = newName
-        obj = db.entries.findOne(e2Name)
-        assert obj.name == e2Name
         obj = db.entries.findOne(newName)
         assert obj.name == newName
 
         # test fetching by id
-        assert db.entries.Entry(e1eid).eid == e1.eid
+        assert db.entries.Entry.byEid(e1eid).eid == e1.eid
 
         # test allEntries
         assert len(db.entries.allEntries()) == 3
@@ -103,7 +101,7 @@ class DbTests(utils.DbTestCase):
         assert l[0].entry == e1
 
         # test delete
-        assert db.entries.Entry(e1eid)
+        assert db.entries.Entry.byEid(e1eid)
 
         # occurrence that should be deleted
         e1occs = db.occurrences.fetchForEntry(e1)
@@ -115,7 +113,7 @@ class DbTests(utils.DbTestCase):
 
         e1.delete()
         with self.assertRaises(IndexError):
-            db.entries.Entry(e1eid)
+            db.entries.Entry.byEid(e1eid)
         # the occurrence should be deleted too
         d.cursor.execute('SELECT oid FROM occurrences WHERE oid=?', (oids[0],))
         with self.assertRaises(IndexError):

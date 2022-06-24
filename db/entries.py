@@ -54,6 +54,7 @@ class Entry:
     An Entry has a name and is associated with some set of occurrences,
     along with some metadata.
     """
+    _instanceCache: dict[int, Entry] = {}
 
     def __init__(self, eid: int):
         q = '''SELECT name, sortkey, classification, dEdited, dAdded
@@ -65,6 +66,16 @@ class Entry:
         self._dateEdited = deserializeDate(self._dateEdited)
         self._dateAdded = deserializeDate(self._dateAdded)
         self._eid = eid
+
+    @classmethod
+    def byEid(cls, eid: int) -> Entry:
+        """
+        Get an entry by its ID, from the cache if available and from the database
+        if not.
+        """
+        if eid not in cls._instanceCache:
+            cls._instanceCache[eid] = Entry(eid)
+        return cls._instanceCache[eid]
 
     @classmethod
     def makeNew(cls, name: str, sortkey: Optional[str] = None,
@@ -90,7 +101,9 @@ class Entry:
         d.cursor.execute(q, (name, sortkey, classification.value, dAdded, dEdited))
         d.checkAutosave()
         eid = d.cursor.lastrowid
-        return cls(eid)
+
+        obj = cls._instanceCache[eid] = cls(eid)
+        return obj
 
     @classmethod
     def multiConstruct(
@@ -123,16 +136,22 @@ class Entry:
         """
         constructed = []
         for eid, name, sortKey, classification, dateEdited, dateAdded in entryData:
-            entry = cls.__new__(cls)
-            entry._name = name
-            entry._sortKey = sortKey
-            entry._classification = EntryClassification(classification)
-            entry._dateEdited = deserializeDate(dateEdited)
-            entry._dateAdded = deserializeDate(dateAdded)
-            entry._eid = eid
-            constructed.append(entry)
+            if eid not in cls._instanceCache:
+                entry = cls.__new__(cls)
+                entry._name = name
+                entry._sortKey = sortKey
+                entry._classification = EntryClassification(classification)
+                entry._dateEdited = deserializeDate(dateEdited)
+                entry._dateAdded = deserializeDate(dateAdded)
+                entry._eid = eid
+                cls._instanceCache[eid] = entry
+            constructed.append(cls._instanceCache[eid])
         return constructed
 
+    @classmethod
+    def clearEntryCache(cls) -> None:
+        # Wipe the cache of entries. Required when changing databases.
+        cls._instanceCache.clear()
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Entry):
@@ -245,6 +264,7 @@ class Entry:
         "Toast this entry."
         d.cursor.execute('DELETE FROM occurrences WHERE eid=?', (self._eid,))
         d.cursor.execute('DELETE FROM entries WHERE eid=?', (self._eid,))
+        del self._instanceCache[self._eid]
         d.checkAutosave()
 
     def flush(self):
@@ -267,9 +287,15 @@ def deleteOrphaned():
     can think of that this situation would happen unintentionally is if someone
     deleted the last occurrence, which should be disallowed, so it should be
     safe to run this function whenever you want for cleanup.
+
+    It's important to retrieve these and then use the .delete() method rather than
+    simply running a DELETE FROM query so that deleted entries are evicted from
+    the entry instance cache.
     """
-    d.cursor.execute('''DELETE FROM entries
+    d.cursor.execute('''SELECT eid FROM entries
                         WHERE eid NOT IN (SELECT eid FROM occurrences)''')
+    for eid in d.cursor.fetchall():
+        Entry(eid[0]).delete()
 
 def nameExists(name):
     """
@@ -369,10 +395,10 @@ def findOne(
     search: str,
     classification: Sequence[EntryClassification] = None,
     regex: bool = False,
-    enteredDate: Optional[datetime.date] = None,
-    modifiedDate: Optional[datetime.date] = None,
+    enteredDateStr: str = None,
+    modifiedDateStr: str = None,
     source: Optional[Source] = None,
-    volume: Optional[Volume] = None
+    volumeRange: Optional[Tuple[int, int]] = None
     ) -> Optional[Entry]:
     """
     Interface to find() for when no more than one result should be possible.
@@ -386,7 +412,7 @@ def findOne(
     are duplicates and shouldn't be, and we'd like to know about that.
     """
     results = find(search, classification, regex,
-                   enteredDate, modifiedDate, source, volume)
+                   enteredDateStr, modifiedDateStr, source, volumeRange)
     if len(results) == 1:
         return results[0]
     elif not results:

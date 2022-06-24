@@ -76,8 +76,8 @@ class VolumeTests(utils.DbTestCase):
         # this should preserve v2 and e2, since o3 is part of v*2*, as well as
         # o3, but nothing else.
         with self.assertRaises(IndexError):
-            db.entries.Entry(1)
-        assert db.entries.Entry(2) == e2
+            db.entries.Entry.byEid(1)
+        assert db.entries.Entry.byEid(2) == e2
         assert len(fetchForEntry(e2)) == 1
         assert fetchForEntry(e2)[0] == o3
         assert not s1.volExists(1)

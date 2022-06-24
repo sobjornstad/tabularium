@@ -1,7 +1,5 @@
 from datetime import date
 
-from . import utils
-
 from db.consts import sourceTypes
 from db.entries import Entry
 from db.occurrences import Occurrence, ReferenceType
@@ -10,6 +8,8 @@ from db.volumes import Volume
 import db.importing
 import db.entries
 import db.occurrences
+
+from . import utils
 
 class ImportTests(utils.DbTestCase):
     MINDEX_FILE = "tests/resources/testImportFile.mindex"
