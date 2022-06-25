@@ -82,7 +82,7 @@ def parseArgs():
 
 
 def initDb():
-    db.database.connect(DATABASE_PATH)
+    db.database.installGlobalConnection(db.database.DatabaseConnection(DATABASE_PATH))
 
 def start():
     initDb()

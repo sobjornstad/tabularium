@@ -11,11 +11,10 @@ import re
 import sqlite3
 from typing import Any, Iterable, List, Optional, Sequence, TextIO, Tuple, Union
 
-import db.database as d
+from db.database import d
 import db.occurrences
 from db.sources import Source
 from db.utils import serializeDate, deserializeDate
-from db.volumes import Volume
 
 
 class MultipleResultsUnexpectedError(Exception):
@@ -59,9 +58,9 @@ class Entry:
     def __init__(self, eid: int):
         q = '''SELECT name, sortkey, classification, dEdited, dAdded
                FROM entries WHERE eid=?'''
-        d.cursor.execute(q, (eid,))
+        d().cursor.execute(q, (eid,))
         self._name, self._sortKey, self._classification, self._dateEdited, \
-            self._dateAdded = d.cursor.fetchall()[0]
+            self._dateAdded = d().cursor.fetchall()[0]
         self._classification = EntryClassification(self._classification)
         self._dateEdited = deserializeDate(self._dateEdited)
         self._dateAdded = deserializeDate(self._dateAdded)
@@ -80,8 +79,8 @@ class Entry:
     @classmethod
     def byName(cls, name: str) -> Optional[Entry]:
         "Get an entry by its name."
-        d.cursor.execute('SELECT eid FROM entries WHERE name = ?', (name,))
-        results = d.cursor.fetchall()
+        d().cursor.execute('SELECT eid FROM entries WHERE name = ?', (name,))
+        results = d().cursor.fetchall()
         assert len(results) < 2, "Multiple results for name: " + name
         eid = results[0][0] if results else None
         return cls.byEid(eid) if eid else None
@@ -107,9 +106,9 @@ class Entry:
         q = '''INSERT INTO entries
                (eid, name, sortkey, classification, dAdded, dEdited) 
                VALUES (null, ?, ?, ?, ?, ?)'''
-        d.cursor.execute(q, (name, sortkey, classification.value, dAdded, dEdited))
-        d.checkAutosave()
-        eid = d.cursor.lastrowid
+        d().cursor.execute(q, (name, sortkey, classification.value, dAdded, dEdited))
+        d().checkAutosave()
+        eid = d().cursor.lastrowid
 
         obj = cls._instanceCache[eid] = cls(eid)
         return obj
@@ -138,7 +137,7 @@ class Entry:
             entryData: a list of tuples of (eid, name, sortKey, classification,
             dateEdited, dateAdded) -- the order of the fields in the database.
             So with an appropriate query retrieving all the fields, this works:
-            Entry.multiConstruct(d.cursor.fetchall()).
+            Entry.multiConstruct(d().cursor.fetchall()).
 
         Return:
             A list of Entry objects containing the specified content.
@@ -238,8 +237,8 @@ class Entry:
     @property
     def image(self):
         "Image associated with a person."
-        d.cursor.execute('SELECT picture FROM entries WHERE eid=?', (self._eid,))
-        image = d.cursor.fetchall()[0][0]
+        d().cursor.execute('SELECT picture FROM entries WHERE eid=?', (self._eid,))
+        image = d().cursor.fetchall()[0][0]
         return image
     @image.setter
     def image(self, content: Union[None, str, bytes]):
@@ -248,20 +247,20 @@ class Entry:
         image), or a filename to read from, or raw data.
         """
         if content is None:
-            d.cursor.execute('UPDATE entries SET picture=null WHERE eid=?',
+            d().cursor.execute('UPDATE entries SET picture=null WHERE eid=?',
                              (self._eid,))
         elif isinstance(content, str):
             path = content
             with open(path, 'rb') as thefile:
-                d.cursor.execute(
+                d().cursor.execute(
                     'UPDATE entries SET picture=? WHERE eid=?',
                      (sqlite3.Binary(thefile.read()), self._eid))
         else:
             # raw data
-            d.cursor.execute('UPDATE entries SET picture=? WHERE eid=?',
+            d().cursor.execute('UPDATE entries SET picture=? WHERE eid=?',
                              (sqlite3.Binary(content), self._eid))
             # No need to refresh the cache as images aren't stored within the object
-        d.checkAutosave()
+        d().checkAutosave()
 
     def writeImage(self, filehandle: TextIO):
         "Write an image in the DB to disk so the user can work with it further."
@@ -274,10 +273,10 @@ class Entry:
 
     def delete(self):
         "Toast this entry."
-        d.cursor.execute('DELETE FROM occurrences WHERE eid=?', (self._eid,))
-        d.cursor.execute('DELETE FROM entries WHERE eid=?', (self._eid,))
+        d().cursor.execute('DELETE FROM occurrences WHERE eid=?', (self._eid,))
+        d().cursor.execute('DELETE FROM entries WHERE eid=?', (self._eid,))
         del self._instanceCache[self._eid]
-        d.checkAutosave()
+        d().checkAutosave()
 
     def flush(self):
         "Write this entry to the database after changes are made."
@@ -286,10 +285,10 @@ class Entry:
         q = '''UPDATE entries
                SET name=?, sortkey=?, classification=?, dAdded=?, dEdited=?
                WHERE eid=?'''
-        d.cursor.execute(q, (self._name, self._sortKey, self._classification.value,
+        d().cursor.execute(q, (self._name, self._sortKey, self._classification.value,
                          serializeDate(self._dateAdded),
                          serializeDate(dEdited), self._eid))
-        d.checkAutosave()
+        d().checkAutosave()
 
 
 def deleteOrphaned():
@@ -304,9 +303,9 @@ def deleteOrphaned():
     simply running a DELETE FROM query so that deleted entries are evicted from
     the entry instance cache.
     """
-    d.cursor.execute('''SELECT eid FROM entries
+    d().cursor.execute('''SELECT eid FROM entries
                         WHERE eid NOT IN (SELECT eid FROM occurrences)''')
-    for eid in d.cursor.fetchall():
+    for eid in d().cursor.fetchall():
         Entry(eid[0]).delete()
 
 def nameExists(name):
@@ -396,10 +395,10 @@ def find(
                      classifPlaceholders,
                      'AND ' + occQuery if occQuery else '')
 
-    d.cursor.execute(
+    d().cursor.execute(
         query,
         (search,) + tuple(i.value for i in classification) + tuple(occQueryParams))
-    results = d.cursor.fetchall()
+    results = d().cursor.fetchall()
     return Entry.multiConstruct(results)
 
 
@@ -448,9 +447,9 @@ def nonRedirectTopLevelPeople():
            WHERE classification = ?
                  AND occurrences.type != ?
            ORDER BY sortkey COLLATE nocase"""
-    d.cursor.execute(q, (EntryClassification.PERSON.value,
+    d().cursor.execute(q, (EntryClassification.PERSON.value,
                          db.occurrences.ReferenceType.REDIRECT.value))
-    entries = db.entries.Entry.multiConstruct(d.cursor.fetchall())
+    entries = db.entries.Entry.multiConstruct(d().cursor.fetchall())
     cleanedEntries = []
     for i in entries:
         if (not cleanedEntries
@@ -471,9 +470,9 @@ def updateRedirectsTo(oldName: str, newName: str):
     q = '''UPDATE occurrences
            SET ref = ?
            WHERE type = ? AND ref = ?'''
-    d.cursor.execute(q, (newName, db.occurrences.ReferenceType.REDIRECT.value,
+    d().cursor.execute(q, (newName, db.occurrences.ReferenceType.REDIRECT.value,
                          oldName))
-    d.checkAutosave()
+    d().checkAutosave()
 
 
 def findPossibleMisspellings(name: str,
@@ -488,21 +487,21 @@ def findPossibleMisspellings(name: str,
     a background thread if it's updating as the user types or keystrokes will be
     slow as molasses.
     """
-    d.cursor.execute('''SELECT eid, lsim(?, name) as similarity
+    d().cursor.execute('''SELECT eid, lsim(?, name) as similarity
                         FROM entries WHERE similarity > ?''',
                      (name, threshold))
-    return [(Entry.byEid(row[0]), row[1]) for row in d.cursor.fetchall()]
+    return [(Entry.byEid(row[0]), row[1]) for row in d().cursor.fetchall()]
 
 
 def allEntries():
     """
     Return a list of all entries in the database.
     """
-    d.cursor.execute('''SELECT eid, name, sortkey, classification, dEdited,
+    d().cursor.execute('''SELECT eid, name, sortkey, classification, dEdited,
                                dAdded
                         FROM entries
                         ORDER BY sortkey COLLATE nocase''')
-    return Entry.multiConstruct(d.cursor.fetchall())
+    return Entry.multiConstruct(d().cursor.fetchall())
 
 def percentageWrap(search):
     return "%" + search.replace(r'%', r'\%') + "%"

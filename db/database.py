@@ -3,106 +3,149 @@ database.py - simple interface to the Tabularium database
 """
 # Copyright (c) 2015-2022 Soren Bjornstad <contact@sorenbjornstad.com>
 
+from __future__ import annotations
+from contextlib import contextmanager
+import pathlib
+
+import os
 import pickle
 import re
 import sqlite3 as sqlite
 import time
+from typing import Generator, Optional, overload, Union
 
 # pylint: disable=invalid-name
 
-connection = None
-# Ignoring that these can have type None prior to initialization is a little ugly,
-# but it seems excessive to add helper functions to assert these are not None
-# and have to call them every time we use them rather than simply using module globals.
-cursor: sqlite.Cursor = None # type: ignore
-lastSavedTime: float = None # type: ignore
-saveInterval: int = 60
+_globalConnection: Optional[DatabaseConnection] = None
 
-
-def connect(fname: str, autosaveInterval: int = 60):
+class DatabaseConnection:
     """
-    Open a connection to a database on disk. This connection will then be used
-    throughout the rest of the application.
+    Connection to the Tabularium SQLite database. Wrapper around sqlite3.Connection.
     """
-    global connection, cursor, lastSavedTime, saveInterval
-    connection = sqlite.connect(fname)
-    cursor = connection.cursor()
-    lastSavedTime = time.time()
-    saveInterval = autosaveInterval
-    regexSetup()
-    editDistSetup()
+    @overload
+    def __init__(self, fnameOrConn: str, autosaveInterval: int = 60) -> None: ...
+    @overload
+    def __init__(self, fnameOrConn: sqlite.Connection,
+                 autosaveInterval: int = 60) -> None: ...
+    def __init__(self, fnameOrConn: Union[str, sqlite.Connection],
+                 autosaveInterval: int = 60) -> None:
+        if isinstance(fnameOrConn, sqlite.Connection):
+            self.connection = fnameOrConn
+            self.location = None
+        else:
+            self.connection = sqlite.connect(fnameOrConn)
+            self.location = fnameOrConn
+
+        self.cursor: sqlite.Cursor = self.connection.cursor() # type: ignore
+        self.lastSavedTime: float = time.time() # type: ignore
+        self.saveInterval = autosaveInterval
+        self.regexSetup()
+        self.editDistSetup()
+
+    def regexSetup(self) -> None:
+        """
+        Configure SQLite to allow regex queries.
+
+        <http://stackoverflow.com/questions/5071601/how-do-i-use-regex-in-a-sqlite-query>
+        """
+        def regexMatch(expr, item):
+            # note: use .search(), not match, or it searches only at start of str
+            return re.search(expr, item) is not None
+        self.connection.create_function("REGEXP", 2, regexMatch)
+
+    def editDistSetup(self) -> None:
+        """
+        Configure SQLite to load bundled edit distance extensions.
+        Do nothing if the extensions are not available.
+
+        TODO: We should check for the existence of the extensions when
+        calling them elsewhere.
+        """
+        EXTENSION_PATH = 'distlib/distlib_64.so'
+        if os.path.exists(EXTENSION_PATH):
+            self.connection.enable_load_extension(True)
+            self.connection.load_extension(EXTENSION_PATH)
+
+    def close(self) -> None:
+        "Close this connection."
+        self.forceSave()
+        self.connection.close()
+
+    def checkAutosave(self, thresholdSeconds: int = None) -> bool:
+        """
+        Check if it's time to autosave and do so if needed. Return True if we saved.
+        """
+        assert self.connection is not None, \
+            "Checked autosave before connection was opened."
+        useThreshold: int = (thresholdSeconds
+                             if thresholdSeconds is not None
+                             else self.saveInterval)
+
+        now = time.time()
+        if now - self.lastSavedTime > useThreshold:
+            self.connection.commit()
+            self.lastSavedTime = time.time()
+            return True
+        else:
+            return False
+
+    def forceSave(self):
+        """Force a save now and update last save time."""
+        self.connection.commit()
+        self.lastSavedTime = time.time()
 
 
-def openDbConnect(conn):
+def installGlobalConnection(conn: DatabaseConnection) -> None:
     """
-    This function pulls an open connection into the database module's namespace
-    for access by other parts of the program. This is useful in cases like
-    running tests by creating a database in RAM (such that you can't run
-    create_database separately and then reopen the connection).
-
-    It is an alternative to connect().
-
-    Example:
-        >>> conn = db.tools.create_database.makeDatabase(':memory:')
-        >>> db.database.openDbConnect(conn)
-        >>> db.database.connection.commit()
+    Set the global database connection to the database at /fname/.
     """
-    global connection, cursor, lastSavedTime
-    connection = conn
-    cursor = connection.cursor()
-    lastSavedTime = time.time()
-    regexSetup()
-    editDistSetup()
+    global _globalConnection
+    _globalConnection = conn
 
 
-def regexSetup():
+def d() -> DatabaseConnection:
     """
-    Configure SQLite to allow regex queries.
-
-    <http://stackoverflow.com/questions/5071601/how-do-i-use-regex-in-a-sqlite-query>
+    Return the global database connection.
     """
-    def regexMatch(expr, item):
-        # note: use .search(), not match, or it searches only at start of str
-        return re.search(expr, item) is not None
-    connection.create_function("REGEXP", 2, regexMatch)
+    assert _globalConnection is not None, \
+        "Tried to access database before initialization"
+    return _globalConnection
 
 
-def editDistSetup():
-    print("setting up exetinsons")
-    connection.enable_load_extension(True)
-    connection.load_extension('distlib/distlib_64.so')
+@contextmanager
+def auxiliaryConnection(readOnly=True) -> Generator[DatabaseConnection, None, None]:
+    """
+    Create and return a temporary connection to be used in a background thread,
+    as a context manager. The connection will be closed when the context is exited,
+    but changes will NOT be committed -- you must do that yourself if necessary.
 
+    By default, the auxiliary connection is read-only for safety; you can change
+    this with the optional readOnly argument if you need to write within the
+    background thread.
 
-def close():
-    forceSave()
-    connection.close()
+    Note that this will not work if the global connection wasn't opened on a filename,
+    for instance on in-memory tests, as it's not possible to open multiple connections
+    to an in-memory database (and even if it's not in-memory, we don't know the
+    location). Attempting such a connection will raise an AssertionError.
+    """
+    assert _globalConnection is not None, \
+        "Tried to create auxiliary connection before main connection initialization"
+    assert _globalConnection.location is not None, \
+        "Cannot create an auxiliary connection to a connection without a filename"
+    try:
+        fileUri = pathlib.Path(_globalConnection.location).as_uri()
+        if readOnly:
+            fileUri += '?mode=ro'
+        sqliteConn = sqlite.connect(fileUri, uri=True)
+        tabulariumConn = DatabaseConnection(sqliteConn)
+        yield tabulariumConn
+    finally:
+        tabulariumConn.close()
 
-
-def checkAutosave(thresholdSeconds: int = None):
-    "Check if it's time to autosave."
-    assert connection is not None, "Checked autosave before connection was opened."
-    useThreshold: int = (thresholdSeconds
-                         if thresholdSeconds is not None
-                         else saveInterval)
-
-    global lastSavedTime
-    now = time.time()
-    if now - lastSavedTime > useThreshold:
-        connection.commit()
-        lastSavedTime = time.time()
-        return True
-    else:
-        return False
-
-def forceSave():
-    """Force a commit and update last save time."""
-    global lastSavedTime
-    connection.commit()
-    lastSavedTime = time.time()
 
 
 #### to be called without a database open ####
-def makeDatabase(fname: str):
+def makeDatabase(fname: str) -> sqlite.Connection:
     """
     Create a new Tabularium database at file /fname/.
     """

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import date
 
-import db.database as d
-from db.entries import Entry, find
+from db.database import d
+from db.entries import Entry
 from db.occurrences import *
 import db.occurrences
 from db.sources import Source
@@ -355,9 +355,9 @@ class OccTests(utils.DbTestCase):
         o4 = Occurrence.makeNew(self.e1, self.v3, '8', ReferenceType.NUM)
 
         # manually set dates
-        d.cursor.execute('''UPDATE occurrences SET dAdded = '2012-01-01'
+        d().cursor.execute('''UPDATE occurrences SET dAdded = '2012-01-01'
                             WHERE oid=?''', (o1.oid,))
-        d.cursor.execute('''UPDATE occurrences SET dEdited = '2012-04-01'
+        d().cursor.execute('''UPDATE occurrences SET dEdited = '2012-04-01'
                             WHERE oid=?''', (o2.oid,))
         # others using today's date, sometime after 2012
 

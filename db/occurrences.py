@@ -9,7 +9,7 @@ import datetime
 from enum import Enum
 from typing import Any, List, Literal, Optional, Tuple, Union, overload
 
-import db.database as d
+from db.database import d
 import db.entries
 import db.volumes
 import db.sources
@@ -107,9 +107,9 @@ class Occurrence:
     def __init__(self, oid: int) -> None:
         query = '''SELECT eid, vid, ref, type, dEdited, dAdded
                    FROM occurrences WHERE oid=?'''
-        d.cursor.execute(query, (oid,))
+        d().cursor.execute(query, (oid,))
         eid, vid, self._ref, self._reftype, self._dateEdited, \
-            self._dateAdded = d.cursor.fetchall()[0]
+            self._dateAdded = d().cursor.fetchall()[0]
         self._entry = db.entries.Entry.byEid(eid)
         self._volume = db.volumes.Volume(vid)
         self._reftype = ReferenceType(self._reftype)
@@ -138,9 +138,9 @@ class Occurrence:
         q = '''INSERT INTO occurrences
                (oid, eid, vid, ref, type, dEdited, dAdded)
                VALUES (null, ?,?,?,?,?,?)'''
-        d.cursor.execute(q, (eid, vid, ref, occType.value, dEdited, dAdded))
-        d.checkAutosave()
-        oid = d.cursor.lastrowid
+        d().cursor.execute(q, (eid, vid, ref, occType.value, dEdited, dAdded))
+        d().checkAutosave()
+        oid = d().cursor.lastrowid
         return cls(oid)
 
     def __eq__(self, other: Any) -> bool:
@@ -290,14 +290,14 @@ class Occurrence:
         query = '''UPDATE occurrences
                    SET eid=?, vid=?, ref=?, type=?, dEdited=?, dAdded=?
                    WHERE oid=?'''
-        d.cursor.execute(query, (self._entry.eid, self._volume.vid,
+        d().cursor.execute(query, (self._entry.eid, self._volume.vid,
                 self._ref, self._reftype.value, serializeDate(dEdited),
                 serializeDate(self._dateAdded), self._oid))
-        d.checkAutosave()
+        d().checkAutosave()
 
     def delete(self):
-        d.cursor.execute('DELETE FROM occurrences WHERE oid=?', (self._oid,))
-        d.checkAutosave()
+        d().cursor.execute('DELETE FROM occurrences WHERE oid=?', (self._oid,))
+        d().checkAutosave()
 
     def extend(self, amount: int = 1):
         """
@@ -373,8 +373,8 @@ class Occurrence:
         self).
         """
         q = 'SELECT oid FROM occurrences WHERE eid=?'
-        d.cursor.execute(q, (self._entry.eid,))
-        return [Occurrence(oidTuple[0]) for oidTuple in d.cursor.fetchall()]
+        d().cursor.execute(q, (self._entry.eid,))
+        return [Occurrence(oidTuple[0]) for oidTuple in d().cursor.fetchall()]
 
     def getNearby(self) -> Optional[List[db.entries.Entry]]:
         """
@@ -415,9 +415,9 @@ class Occurrence:
                      AND CAST(ref as integer) BETWEEN ? AND ?
                      AND oid != ?
                ORDER BY LOWER(sortkey)"""
-        d.cursor.execute(q, (self._volume.vid, pageStart,
+        d().cursor.execute(q, (self._volume.vid, pageStart,
                              pageEnd, self._oid))
-        entries = [db.entries.Entry.byEid(i[0]) for i in d.cursor.fetchall()]
+        entries = [db.entries.Entry.byEid(i[0]) for i in d().cursor.fetchall()]
         return entries
 
 
@@ -425,8 +425,8 @@ def allOccurrences():
     """
     Return a list of all occurrences in the database.
     """
-    d.cursor.execute('SELECT oid FROM occurrences')
-    return [Occurrence(i[0]) for i in d.cursor.fetchall()]
+    d().cursor.execute('SELECT oid FROM occurrences')
+    return [Occurrence(i[0]) for i in d().cursor.fetchall()]
 
 
 def brokenRedirects():
@@ -436,11 +436,11 @@ def brokenRedirects():
 
     I benchmarked this one and surprisingly IN is faster than EXISTS here.
     """
-    d.cursor.execute('''SELECT oid FROM occurrences
+    d().cursor.execute('''SELECT oid FROM occurrences
                          WHERE type=?
                            AND ref NOT IN (SELECT name FROM entries)''',
                          (ReferenceType.REDIRECT.value,))
-    return [Occurrence(i[0]) for i in d.cursor.fetchall()]
+    return [Occurrence(i[0]) for i in d().cursor.fetchall()]
 
 
 def fetchForEntry(entry: db.entries.Entry) -> List[Occurrence]:
@@ -448,8 +448,8 @@ def fetchForEntry(entry: db.entries.Entry) -> List[Occurrence]:
     Return a list of all Occurrences for a given Entry.
     """
     eid = entry.eid
-    d.cursor.execute('SELECT oid FROM occurrences WHERE eid=?', (eid,))
-    return [Occurrence(i[0]) for i in d.cursor.fetchall()]
+    d().cursor.execute('SELECT oid FROM occurrences WHERE eid=?', (eid,))
+    return [Occurrence(i[0]) for i in d().cursor.fetchall()]
 
 
 def fetchForEntryFiltered(entry: db.entries.Entry,
@@ -472,11 +472,11 @@ def fetchForEntryFiltered(entry: db.entries.Entry,
     filterQuery, filterParams = occurrenceFilterString(
         enteredDateStr, modifiedDateStr, source, volumeRange, ref)
     if filterQuery:
-        d.cursor.execute(queryHead + ' AND ' + filterQuery,
+        d().cursor.execute(queryHead + ' AND ' + filterQuery,
                          [str(entry.eid)] + filterParams)
     else:
-        d.cursor.execute(queryHead, (str(entry.eid),))
-    return [Occurrence(i[0]) for i in d.cursor.fetchall()]
+        d().cursor.execute(queryHead, (str(entry.eid),))
+    return [Occurrence(i[0]) for i in d().cursor.fetchall()]
 
 def occurrenceFilterString(enteredDateStr: str = None,
                            modifiedDateStr: str = None,
@@ -854,6 +854,6 @@ def _raiseDupeIfExists(eid: int, vid: int, ref: str, reftype: ReferenceType) -> 
     """
     q = '''SELECT oid FROM occurrences
            WHERE eid=? AND vid=? AND ref=? AND type=?'''
-    d.cursor.execute(q, (eid, vid, ref, reftype.value))
-    if d.cursor.fetchall():
+    d().cursor.execute(q, (eid, vid, ref, reftype.value))
+    if d().cursor.fetchall():
         raise DuplicateError

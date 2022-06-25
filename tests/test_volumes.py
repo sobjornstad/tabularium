@@ -1,12 +1,12 @@
-from db.entries import EntryClassification
-import tests.utils as utils
 from datetime import date
 
-import db.database as d
+from db.entries import EntryClassification
 from db.consts import sourceTypes
 from db.volumes import *
 from db.sources import Source
 from db.occurrences import Occurrence, ReferenceType, fetchForEntry
+
+from tests import utils
 
 class VolumeTests(utils.DbTestCase):
     def testObject(self):

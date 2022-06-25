@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import QObject, QSettings
 from ui.forms.prefs import Ui_Dialog
 
-import db.database as d
+from db.database import d
 
 dateOrder = ('Jun 1, 2016', '1 Jun 2016', '6/1/16', '1/6/16', '2016-06-01')
 dateOptions = {'Jun 1, 2016' : 'MMM d, yyyy',
@@ -135,17 +135,17 @@ class SettingsHandler(QObject):
         (Re)load configuration from the database. This method is automatically
         called by the constructor, and it is rare to need to call it manually.
         """
-        d.cursor.execute('SELECT conf FROM conf')
+        d().cursor.execute('SELECT conf FROM conf')
         try:
-            self.conf = pickle.loads(d.cursor.fetchall()[0][0])
+            self.conf = pickle.loads(d().cursor.fetchall()[0][0])
         except (EOFError, TypeError):
             # no configuration initialized
             self.conf = {}
 
     def sync(self):
         "Write current dictionary state out to the database."
-        d.cursor.execute('UPDATE conf SET conf=?', (pickle.dumps(self.conf),))
-        d.checkAutosave()
+        d().cursor.execute('UPDATE conf SET conf=?', (pickle.dumps(self.conf),))
+        d().checkAutosave()
 
 
 def checkPassword(password, conf):

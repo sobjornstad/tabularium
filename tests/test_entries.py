@@ -1,13 +1,15 @@
-from . import utils
 from datetime import date
 
-import db.database as d
+from db.database import d
 import db.entries
 from db.entries import EntryClassification as ec
 import db.occurrences
 from db.sources import Source
 from db.volumes import Volume
 from db.consts import sourceTypes
+
+from . import utils
+
 
 class DbTests(utils.DbTestCase):
     def testObject(self):
@@ -115,9 +117,9 @@ class DbTests(utils.DbTestCase):
         with self.assertRaises(IndexError):
             db.entries.Entry.byEid(e1eid)
         # the occurrence should be deleted too
-        d.cursor.execute('SELECT oid FROM occurrences WHERE oid=?', (oids[0],))
+        d().cursor.execute('SELECT oid FROM occurrences WHERE oid=?', (oids[0],))
         with self.assertRaises(IndexError):
-            d.cursor.fetchall()[0]
+            d().cursor.fetchall()[0]
         assert db.occurrences.Occurrence(o2.oid)
 
     def testAdvancedFindFeatures(self):

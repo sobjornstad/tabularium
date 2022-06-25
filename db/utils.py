@@ -6,7 +6,7 @@ utils.py - miscellaneous helper functions
 import datetime
 from typing import List, Optional, Sequence, Tuple, Union
 
-import db.database as d
+from db.database import d
 
 
 def serializeDate(obj: Optional[datetime.date]) -> Optional[str]:
@@ -45,20 +45,20 @@ def minMaxOccurrenceDates() -> Tuple[datetime.date, datetime.date]:
     Return the earliest and latest Dates used for "entered" or "modified"
     dates for any occurrence.
     """
-    d.cursor.execute('SELECT MIN(dEdited) FROM occurrences')
-    minEdit = d.cursor.fetchall()[0][0]
-    d.cursor.execute('SELECT MIN(dAdded) FROM occurrences')
-    minAdd = d.cursor.fetchall()[0][0]
+    d().cursor.execute('SELECT MIN(dEdited) FROM occurrences')
+    minEdit = d().cursor.fetchall()[0][0]
+    d().cursor.execute('SELECT MIN(dAdded) FROM occurrences')
+    minAdd = d().cursor.fetchall()[0][0]
     if minEdit is None:
         minEdit = serializeDate(datetime.date.today())
     if minAdd is None:
         minAdd = serializeDate(datetime.date.today())
     early = minEdit if minEdit < minAdd else minAdd
 
-    d.cursor.execute('SELECT MAX(dEdited) FROM occurrences')
-    maxEdit = d.cursor.fetchall()[0][0]
-    d.cursor.execute('SELECT MAX(dAdded) FROM occurrences')
-    maxAdd = d.cursor.fetchall()[0][0]
+    d().cursor.execute('SELECT MAX(dEdited) FROM occurrences')
+    maxEdit = d().cursor.fetchall()[0][0]
+    d().cursor.execute('SELECT MAX(dAdded) FROM occurrences')
+    maxAdd = d().cursor.fetchall()[0][0]
     if maxEdit is None:
         maxEdit = serializeDate(datetime.date.today())
     if maxAdd is None:

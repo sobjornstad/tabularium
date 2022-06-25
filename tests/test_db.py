@@ -1,21 +1,20 @@
 import tempfile
-import time
 import unittest
 
-import db.database as database
+from db.database import d, makeDatabase, installGlobalConnection, DatabaseConnection
 import db.entries
 
 from . import utils
 
 class DbTests(utils.DbTestCase):
     def test_DbAutosave(self):
-        database.saveInterval = 0
+        d().saveInterval = 0
         db.entries.Entry.makeNew("Margareta")
-        assert database.checkAutosave()
+        assert d().checkAutosave()
 
-        database.saveInterval = 5000
+        d().saveInterval = 5000
         db.entries.Entry.makeNew("Maggie")
-        assert not database.checkAutosave()
+        assert not d().checkAutosave()
 
     def test_regex(self):
         for i in ("Katherine", "Kate", "Kaitlyn", "Katelyn", "Jonathan",
@@ -23,7 +22,7 @@ class DbTests(utils.DbTestCase):
             db.entries.Entry.makeNew(i)
 
         q = "SELECT * FROM entries WHERE name REGEXP '%s'"
-        cur = database.cursor
+        cur = d().cursor
 
         cur.execute(q % 'Katherine')
         assert len(cur.fetchall()) == 1
@@ -45,11 +44,12 @@ class FileDbTest(unittest.TestCase):
     """
     def test_fileDb(self):
         with tempfile.NamedTemporaryFile() as f:
-            database.makeDatabase(f.name).close()
-            database.connect(f.name)
+            makeDatabase(f.name).close()
+            installGlobalConnection(DatabaseConnection(f.name))
             e1 = db.entries.Entry.makeNew("Margareta")
-            database.close()
+            d().close()
 
-            database.connect(f.name)
+            # check for persistence
+            installGlobalConnection(DatabaseConnection(f.name))
             ret = db.entries.findOne("Margareta")
             assert ret == e1

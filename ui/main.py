@@ -209,7 +209,7 @@ class MainWindow(QMainWindow):
             if yellOnNonexistence:
                 ui.utils.warningBox(f"The database '{location}' no longer exists!")
             return False
-        db.database.connect(location)
+        db.database.installGlobalConnection(db.database.DatabaseConnection(location))
         self.dbLocation = location
 
         self.search = ""
@@ -266,7 +266,7 @@ class MainWindow(QMainWindow):
         "Quit the application in an orderly fashion."
         self.saveWindowState()
         ui.settings.saveDbLocation(self.dbLocation)
-        db.database.close()
+        db.database.d().close()
         sys.exit(0)
 
     def saveWindowState(self):
@@ -851,9 +851,9 @@ class MainWindow(QMainWindow):
             return False
 
         # close current database, delete db to be overwritten, create new db
-        if db.database.connection is not None:
+        if db.database.d is not None:
             self.saveWindowState()
-            db.database.close()
+            db.database.d().close()
         try:
             os.remove(fname)
         except OSError:
@@ -872,9 +872,9 @@ class MainWindow(QMainWindow):
             filter="Tabularium databases (*.tdb);;All files (*)")[0]
         if not fname:
             return False
-        if db.database.connection is not None:
+        if db.database.d is not None:
             self.saveWindowState()
-            db.database.close()
+            db.database.d().close()
         if self._initDb(fname):
             return True
         return False
@@ -885,7 +885,7 @@ class MainWindow(QMainWindow):
         Force a save now. Usually not necessary: autosaves take place as edits
         are made, but crashes could still cause losses.
         """
-        db.database.forceSave()
+        db.database.d().forceSave()
 
     @preserveSelectionsDuring
     def onImportMindex(self) -> None:

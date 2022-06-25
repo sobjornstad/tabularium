@@ -4,7 +4,7 @@
 import datetime
 import json
 
-import db.database as d
+from db.database import d
 import db.consts
 import db.sources
 import db.entries
@@ -31,8 +31,8 @@ class ValidationError(Exception):
 class Volume(object):
     def __init__(self, vid):
         q = 'SELECT sid, num, notes, dopened, dclosed FROM volumes WHERE vid=?'
-        d.cursor.execute(q, (vid,))
-        sid, self._num, self._notes, dopened, dclosed = d.cursor.fetchall()[0]
+        d().cursor.execute(q, (vid,))
+        sid, self._num, self._notes, dopened, dclosed = d().cursor.fetchall()[0]
         self._dateOpened = deserializeDate(dopened)
         self._dateClosed = deserializeDate(dclosed)
         self._source = db.sources.Source(sid)
@@ -72,11 +72,11 @@ class Volume(object):
 
         q = '''INSERT INTO volumes (vid, sid, num, notes, dopened, dclosed)
                VALUES (null, ?, ?, ?, ?, ?)'''
-        d.cursor.execute(q, (source.sid, num, notes,
+        d().cursor.execute(q, (source.sid, num, notes,
                              serializeDate(dopened),
                              serializeDate(dclosed)))
-        d.checkAutosave()
-        vid = d.cursor.lastrowid
+        d().checkAutosave()
+        vid = d().cursor.lastrowid
         return cls(vid)
 
 
@@ -135,45 +135,45 @@ class Volume(object):
         return (self._dateOpened is not None and self._dateClosed is not None)
 
     def delete(self):
-        d.cursor.execute('DELETE FROM occurrences WHERE vid=?', (self._vid,))
+        d().cursor.execute('DELETE FROM occurrences WHERE vid=?', (self._vid,))
         db.entries.deleteOrphaned()
-        d.cursor.execute('DELETE FROM volumes WHERE vid=?', (self._vid,))
-        d.checkAutosave()
+        d().cursor.execute('DELETE FROM volumes WHERE vid=?', (self._vid,))
+        d().checkAutosave()
 
     def _flush(self):
         q = """UPDATE volumes
                SET sid=?, num=?, notes=?, dopened=?, dclosed=?
                WHERE vid=?"""
-        d.cursor.execute(q, (self._source.sid, self._num, self._notes,
+        d().cursor.execute(q, (self._source.sid, self._num, self._notes,
                          serializeDate(self._dateOpened),
                          serializeDate(self._dateClosed), self._vid))
-        d.checkAutosave()
+        d().checkAutosave()
 
 
 def allVolumes():
-    d.cursor.execute('SELECT vid FROM volumes')
-    vs = [Volume(vid[0]) for vid in d.cursor.fetchall()]
+    d().cursor.execute('SELECT vid FROM volumes')
+    vs = [Volume(vid[0]) for vid in d().cursor.fetchall()]
     return vs
 
 def volumesInSource(source):
     sid = source.sid
-    d.cursor.execute('SELECT vid FROM volumes WHERE sid=?', (sid,))
-    return [Volume(vid[0]) for vid in d.cursor.fetchall()]
+    d().cursor.execute('SELECT vid FROM volumes WHERE sid=?', (sid,))
+    return [Volume(vid[0]) for vid in d().cursor.fetchall()]
 
 def byNumAndSource(source, num):
     sid = source.sid
     q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
-    d.cursor.execute(q, (sid, num))
+    d().cursor.execute(q, (sid, num))
     try:
-        return Volume(d.cursor.fetchall()[0][0])
+        return Volume(d().cursor.fetchall()[0][0])
     except IndexError:
         return None
 
 def volExists(source, num):
     sid = source.sid
     q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
-    d.cursor.execute(q, (sid, num))
-    return True if d.cursor.fetchall() else False
+    d().cursor.execute(q, (sid, num))
+    return True if d().cursor.fetchall() else False
 
 def findNextDateOpened(source):
     """
@@ -185,11 +185,11 @@ def findNextDateOpened(source):
 
     Return value as a datetime.date.
     """
-    d.cursor.execute('''SELECT dclosed FROM volumes
+    d().cursor.execute('''SELECT dclosed FROM volumes
                         WHERE num=(SELECT MAX(num) FROM volumes)
                         AND sid=?''', (source.sid,))
     try:
-        return (deserializeDate(d.cursor.fetchall()[0][0]) +
+        return (deserializeDate(d().cursor.fetchall()[0][0]) +
                 datetime.timedelta(days=1))
     except (IndexError, TypeError):
         # unsupported operand types: NoneType and timedelta
@@ -202,10 +202,10 @@ def findNextOpenVol(source):
     """
     if source.isSingleVol():
         return 0
-    d.cursor.execute('SELECT MAX(num) FROM volumes WHERE sid=?',
+    d().cursor.execute('SELECT MAX(num) FROM volumes WHERE sid=?',
                      (source.sid,))
     try:
-        return d.cursor.fetchall()[0][0] + 1
+        return d().cursor.fetchall()[0][0] + 1
     except (IndexError, TypeError):
         # unsupported operand types: NoneType and int
         return 1
@@ -227,8 +227,8 @@ def findDateInDiary(date):
            AND dclosed >= ?'''
     date = serializeDate(date)
     vals = (db.consts.sourceTypes['diary'], date, date)
-    d.cursor.execute(q, vals)
-    fetch = d.cursor.fetchall()
+    d().cursor.execute(q, vals)
+    fetch = d().cursor.fetchall()
     if len(fetch) > 1:
         assert False, "Multiple diary volumes open at the same time!"
     elif len(fetch) == 1:

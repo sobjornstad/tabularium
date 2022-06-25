@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2015 Soren Bjornstad <contact@sorenbjornstad.com>
-
 """
 Add/Edit entry dialog implementation
 
@@ -9,16 +6,23 @@ ones. The developer is referred to the documentation for the AddEntryWindow
 class, which is the entire contents of this module.
 """
 
-from PyQt5.QtWidgets import QDialog, QWidget, QApplication
+# Copyright (c) 2015-2022 Soren Bjornstad <contact@sorenbjornstad.com>
+
+from __future__ import annotations
+
+from typing import List, Optional, Tuple, Union, overload, TYPE_CHECKING
+from PyQt5.QtWidgets import QDialog, QWidget, QMainWindow
 
 import db.entries
-import db.database as d
 
 import ui.addoccurrence
 import ui.forms.newentry
-from ui import utils
 from ui.mergeentry import MergeEntryDialog
 from ui.settings import SettingsHandler
+from ui.worker import Worker
+
+if TYPE_CHECKING:
+    from ui.main import MainWindow
 
 class AddEntryWindow(QDialog):
     """
@@ -53,13 +57,22 @@ class AddEntryWindow(QDialog):
     that dialog is rejected so we're not left with an entry with no
     occurrences.
     """
-
-    def __init__(self, parent: QWidget, settings: SettingsHandler = None) -> None:
+    @overload
+    def __init__(self, parent: MainWindow) -> None: ...
+    @overload
+    def __init__(self, parent: QWidget, settings: SettingsHandler) -> None: ...
+    def __init__(self, parent: Union[QWidget, MainWindow],
+                 settings: SettingsHandler = None) -> None:
         QDialog.__init__(self)
         self.form = ui.forms.newentry.Ui_Dialog()
         self.form.setupUi(self)
         self.mw = parent
-        self.sh = settings if settings else self.mw.sh
+        if isinstance(self.mw, MainWindow):
+            self.sh = self.mw.sh
+        elif settings is not None:
+            # not sure why I have to guard this -- overloads should make it impossible
+            self.sh = settings
+        self.validationWorker = None
 
         self.skManual = False # whether user has manually changed sk
         self.preparedOccurrence = None # see .putRedirect()
@@ -174,38 +187,70 @@ class AddEntryWindow(QDialog):
         self.skManual = False
 
     def validateEntryName(self):
-        # TODO: This is rather slow and should be run in a background thread.
-        QApplication.processEvents()
-        misspells = db.entries.findPossibleMisspellings(self.form.nameBox.text())
-        # Don't warn about a misspelling while typing if the only difference between
-        # the current name and the candidate is characters that haven't been typed yet.
-        # TODO: run again when actually hitting Add and pop up a warning if it wasn't there already?
-        real_misspells = [m for m in misspells
-                          if not m[0].name.startswith(self.form.nameBox.text())]
+        class EntryValidationWorker(Worker):
+            def __init__(self, parent: QWidget, entryText: str, editing: bool) -> None:
+                super().__init__(parent)
+                self.entryText = entryText
+                self.isEditing = editing
 
-        if db.entries.nameExists(self.form.nameBox.text()):
-            self.form.validationLabel.setText(
-                "❗ There is an existing entry by this name.\n"
-                "Press Enter to " + (
-                    "start a merge." if self.isEditing else "add occurrences to it."
-                )
-            )
-            # background color of name is yellow
-            self.form.nameBox.setStyleSheet("background-color: yellow")
-        elif real_misspells:
-            self.form.validationLabel.setText(
-                "❗ There "
-                + ("is an existing entry with a similar name:\n"
-                   if len(real_misspells) == 1
-                   else "are existing entries with similar names:\n")
-                + ",".join(i[0].name for i in real_misspells)
-            )
-            self.form.nameBox.setStyleSheet("background-color: lightblue")
-        else:
-            self.form.nameBox.setStyleSheet("")
-            self.form.validationLabel.setText(
-                "✔️ Looking good!\n"
-            )
+                self.newLabel: Optional[str] = None
+                self.newStyleSheet: Optional[str] = None
+
+            def __repr__(self) -> str:
+                return (f"EntryValidationWorker( "
+                        f"result={self.newLabel} {self.newStyleSheet})")
+
+            def findMisspells(self) -> List[Tuple[db.entries.Entry, float]]:
+                "Find similar entries to the typed word."
+                misspells = db.entries.findPossibleMisspellings(self.entryText)
+                # Don't warn about a misspelling while typing if the only
+                # difference between the current name and the candidate is
+                # characters that haven't been typed yet
+                # TODO: run again when # actually hitting Add and pop up a warning
+                # if it wasn't there # already?
+                return [m for m in misspells
+                        if not m[0].name.startswith(self.entryText)]
+
+            def process(self) -> None:
+                if db.entries.nameExists(self.entryText):
+                    print(f"found name {self.entryText}")
+                    self.newLabel = (
+                        "❗ There is an existing entry by this name.\n"
+                        "Press Enter to " + (
+                            "start a merge."
+                            if self.isEditing
+                            else "add occurrences to it."
+                        )
+                    )
+                    self.newStyleSheet = "background-color: yellow"
+                elif m := self.findMisspells():
+                    print("found misspells: ", m)
+                    self.newLabel = (
+                        "❗ There "
+                        + ("is an existing entry with a similar name:\n"
+                        if len(m) == 1
+                        else "are existing entries with similar names:\n")
+                        + ",".join(i[0].name for i in m)
+                    )
+                    self.newStyleSheet = "background-color: lightblue"
+                else:
+                    print("marking good")
+                    self.newLabel = "✔️ Looking good!\n"
+                    self.newStyleSheet = ""
+
+        if self.validationWorker is not None:
+            self.validationWorker.finished.disconnect()
+        self.validationWorker = EntryValidationWorker(self, self.form.nameBox.text(),
+                                                      self.isEditing)
+        self.validationWorker.jobFailed.connect(lambda exc, tb: print(exc))
+        self.validationWorker.finished.connect(self.onValidationFinished)
+        self.validationWorker.start()
+
+    def onValidationFinished(self):
+        "Update UI to match the result of the validation worker."
+        if self.validationWorker.newLabel:
+            self.form.validationLabel.setText(self.validationWorker.newLabel)
+            self.form.nameBox.setStyleSheet(self.validationWorker.newStyleSheet)
 
     def accept(self):
         """

@@ -5,11 +5,10 @@ from contextlib import contextmanager
 import json
 from typing import List
 
-import db.database as d
+from db.database import d
 import db.consts
 import db.volumes
 import db.occurrences
-from db.utils import serializeDate
 
 class DuplicateError(Exception):
     def __init__(self, what):
@@ -56,10 +55,10 @@ class TrouncesError(Exception):
 
 class Source(object):
     def __init__(self, sid):
-        d.cursor.execute('SELECT name, volval, pageval, nearrange, abbrev, '
+        d().cursor.execute('SELECT name, volval, pageval, nearrange, abbrev, '
                 'stype FROM sources WHERE sid=?', (sid,))
         self._name, self._volVal, self._pageVal, self._nearbyRange, \
-                self._abbrev, self._sourceType = d.cursor.fetchall()[0]
+                self._abbrev, self._sourceType = d().cursor.fetchall()[0]
         self._volVal = tuple(json.loads(self._volVal))
         self._pageVal = tuple(json.loads(self._pageVal))
         self._sid = sid
@@ -99,19 +98,19 @@ class Source(object):
         if '|' in abbrev:
             raise InvalidNameError(abbrev, 'abbreviation')
         if stype == db.consts.sourceTypes['diary']:
-            d.cursor.execute("SELECT name FROM sources WHERE stype = ?",
+            d().cursor.execute("SELECT name FROM sources WHERE stype = ?",
                     (db.consts.sourceTypes['diary'],))
-            existing = d.cursor.fetchall()
+            existing = d().cursor.fetchall()
             if existing:
                 raise DiaryExistsError(existing[0][0])
 
         q = """INSERT INTO sources
                (sid, name, volval, pageval, nearrange, abbrev, stype)
                VALUES (null, ?, ?, ?, ?, ?, ?)"""
-        d.cursor.execute(q, (name, json.dumps(volval), json.dumps(pageval),
+        d().cursor.execute(q, (name, json.dumps(volval), json.dumps(pageval),
                nearrange, abbrev, stype))
-        d.checkAutosave()
-        sid = d.cursor.lastrowid
+        d().checkAutosave()
+        sid = d().cursor.lastrowid
         sourceObj = cls(sid)
 
         # before returning, add a dummy volume if this is a single-vol source
@@ -185,8 +184,8 @@ class Source(object):
 
             q = '''SELECT vid FROM volumes WHERE sid=?
                    AND (num < ? OR num > ?)'''
-            d.cursor.execute(q, (self._sid, tup[0], tup[1]))
-            volsAffected = d.cursor.fetchall()
+            d().cursor.execute(q, (self._sid, tup[0], tup[1]))
+            volsAffected = d().cursor.fetchall()
             if volsAffected:
                 if self.trounceWarning:
                     q = '''SELECT oid FROM occurrences
@@ -194,8 +193,8 @@ class Source(object):
                                          WHERE sid=?
                                          AND (num < ? OR num > ?))'''
                     vals = (self._sid, tup[0], tup[1])
-                    d.cursor.execute(q, vals)
-                    occsAffected = d.cursor.fetchall()
+                    d().cursor.execute(q, vals)
+                    occsAffected = d().cursor.fetchall()
                     raise TrouncesError(tup, 'volume', len(volsAffected),
                                         len(occsAffected))
                 else:
@@ -229,8 +228,8 @@ class Source(object):
                           OR CAST(ref as integer) > ?)
                      AND type IN (0,1)'''
         vals = (self._sid, tup[0], tup[1])
-        d.cursor.execute(q, vals)
-        occsAffected = d.cursor.fetchall()
+        d().cursor.execute(q, vals)
+        occsAffected = d().cursor.fetchall()
 
         if occsAffected:
             if self.trounceWarning:
@@ -255,8 +254,8 @@ class Source(object):
         return self._pageVal[0] <= num <= self._pageVal[1]
     def volExists(self, num):
         q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
-        d.cursor.execute(q, (self._sid, num))
-        return True if d.cursor.fetchall() else False
+        d().cursor.execute(q, (self._sid, num))
+        return True if d().cursor.fetchall() else False
     def getNumVolsRepr(self):
         "Get a friendly representation of how many volumes are in this source."
         if self.isSingleVol():
@@ -272,13 +271,13 @@ class Source(object):
         without providing an appropriate warning (perhaps with the details from
         deletePreview()).
         """
-        d.cursor.execute('SELECT vid FROM volumes WHERE sid=?', (self._sid,))
+        d().cursor.execute('SELECT vid FROM volumes WHERE sid=?', (self._sid,))
         volumes = [db.volumes.Volume(volTuple[0])
-                   for volTuple in d.cursor.fetchall()]
+                   for volTuple in d().cursor.fetchall()]
         for vol in volumes:
             vol.delete()
-        d.cursor.execute('DELETE FROM sources WHERE sid=?', (self._sid,))
-        d.checkAutosave()
+        d().cursor.execute('DELETE FROM sources WHERE sid=?', (self._sid,))
+        d().checkAutosave()
 
     def deletePreview(self):
         """
@@ -295,47 +294,47 @@ class Source(object):
         vidList = [i.vid for i in volumes]
         bindings = ','.join('?' * len(volumes))
         q = 'SELECT oid FROM occurrences WHERE vid IN (%s)' % (bindings)
-        d.cursor.execute(q, vidList)
+        d().cursor.execute(q, vidList)
         occurrences = [db.occurrences.Occurrence(occTuple[0])
-                       for occTuple in d.cursor.fetchall()]
+                       for occTuple in d().cursor.fetchall()]
         return len(volumes), len(occurrences)
 
     def _flush(self):
         q = """UPDATE sources SET name=?, volval=?, pageval=?, nearrange=?,
                abbrev=?, stype=?
                WHERE sid=?"""
-        d.cursor.execute(q, (self._name, json.dumps(self._volVal),
+        d().cursor.execute(q, (self._name, json.dumps(self._volVal),
                          json.dumps(self._pageVal), self._nearbyRange,
                          self._abbrev, self._sourceType, self._sid))
-        d.checkAutosave()
+        d().checkAutosave()
 
 
 def byName(name):
     q = 'SELECT sid FROM sources WHERE name = ?'
-    d.cursor.execute(q, (name,))
-    return Source(d.cursor.fetchall()[0][0])
+    d().cursor.execute(q, (name,))
+    return Source(d().cursor.fetchall()[0][0])
 
 def byAbbrev(abbrev):
     q = 'SELECT sid FROM sources WHERE abbrev = ?'
-    d.cursor.execute(q, (abbrev,))
-    return Source(d.cursor.fetchall()[0][0])
+    d().cursor.execute(q, (abbrev,))
+    return Source(d().cursor.fetchall()[0][0])
 
 def sourceExists(name):
     q = 'SELECT sid FROM sources WHERE name = ?'
-    d.cursor.execute(q, (name,))
-    return True if d.cursor.fetchall() else False
+    d().cursor.execute(q, (name,))
+    return True if d().cursor.fetchall() else False
 
 def abbrevUsed(name):
     q = 'SELECT sid FROM sources WHERE abbrev = ?'
-    d.cursor.execute(q, (name,))
-    return True if d.cursor.fetchall() else False
+    d().cursor.execute(q, (name,))
+    return True if d().cursor.fetchall() else False
 
 def allSources(includeSingleVolSources=True) -> List[Source]:
     """
     Return a list of all sources, sorted by name.
     """
-    d.cursor.execute('SELECT sid FROM sources ORDER BY name')
-    sources = [Source(sid[0]) for sid in d.cursor.fetchall()]
+    d().cursor.execute('SELECT sid FROM sources ORDER BY name')
+    sources = [Source(sid[0]) for sid in d().cursor.fetchall()]
     if not includeSingleVolSources:
         sources = [source for source in sources if source.volVal != (1,1)]
     return sources
@@ -347,9 +346,9 @@ def getDiary():
     Return:
         The Source that is the diary, or None if no source has the diary type.
     """
-    d.cursor.execute('SELECT sid FROM sources WHERE stype=?',
+    d().cursor.execute('SELECT sid FROM sources WHERE stype=?',
                      (db.consts.sourceTypes['diary'],))
-    fetch = d.cursor.fetchall()
+    fetch = d().cursor.fetchall()
     if fetch:
         return Source(fetch[0][0])
     else:
