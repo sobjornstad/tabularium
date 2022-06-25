@@ -78,6 +78,15 @@ class Entry:
         return cls._instanceCache[eid]
 
     @classmethod
+    def byName(cls, name: str) -> Optional[Entry]:
+        "Get an entry by its name."
+        d.cursor.execute('SELECT eid FROM entries WHERE name = ?', (name,))
+        results = d.cursor.fetchall()
+        assert len(results) < 2, "Multiple results for name: " + name
+        eid = results[0][0] if results else None
+        return cls.byEid(eid) if eid else None
+
+    @classmethod
     def makeNew(cls, name: str, sortkey: Optional[str] = None,
                 classification: EntryClassification = EntryClassification.UNCLASSIFIED
                ) -> Optional[Entry]:

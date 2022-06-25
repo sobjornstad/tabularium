@@ -864,7 +864,7 @@ If the interface is sluggish, try turning this off.</string>
      <x>0</x>
      <y>0</y>
      <width>925</width>
-     <height>19</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -954,6 +954,7 @@ If the interface is sluggish, try turning this off.</string>
     <addaction name="actionClassify_Entries"/>
     <addaction name="actionLetter_Distribution_Check"/>
     <addaction name="actionSearch_Faces"/>
+    <addaction name="actionRepair_Broken_Redirects"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -1489,7 +1490,7 @@ If the interface is sluggish, try turning this off.</string>
   </action>
   <action name="actionSearch_Faces">
    <property name="text">
-    <string>Search Faces...</string>
+    <string>Search &amp;Faces...</string>
    </property>
    <property name="statusTip">
     <string>View and add pictures of the people in your database.</string>
@@ -1501,7 +1502,7 @@ If the interface is sluggish, try turning this off.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
-  </property>
+   </property>
   </action>
   <action name="actionExtendOccurrence">
    <property name="text">
@@ -1523,6 +1524,11 @@ If the interface is sluggish, try turning this off.</string>
    </property>
    <property name="shortcut">
     <string>Alt+-</string>
+   </property>
+  </action>
+  <action name="actionRepair_Broken_Redirects">
+   <property name="text">
+    <string>Repair Broken &amp;Redirects...</string>
    </property>
   </action>
  </widget>

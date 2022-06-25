@@ -15,6 +15,7 @@ import ui.addoccurrence
 import ui.forms.newentry
 from ui import utils
 import db.entries
+from ui.settings import SettingsHandler
 
 class AddEntryWindow(QDialog):
     """
@@ -50,12 +51,12 @@ class AddEntryWindow(QDialog):
     occurrences.
     """
 
-    def __init__(self, parent: QWidget) -> None:
+    def __init__(self, parent: QWidget, settings: SettingsHandler = None) -> None:
         QDialog.__init__(self)
         self.form = ui.forms.newentry.Ui_Dialog()
         self.form.setupUi(self)
         self.mw = parent
-        self.sh = self.mw.sh
+        self.sh = settings if settings else self.mw.sh
 
         self.skManual = False # whether user has manually changed sk
         self.preparedOccurrence = None # see .putRedirect()

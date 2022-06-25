@@ -46,6 +46,7 @@ import ui.sourcemanager
 import ui.volmanager
 import ui.utils
 import ui.tools_classification
+import ui.tools_brokenredirects
 
 from ui.forms.main import Ui_MainWindow
 
@@ -1258,6 +1259,15 @@ class MainWindow(QMainWindow):
         self.onSearch()
         #self.updateAndRestoreSelections()
 
+    def onRepairRedirects(self):
+        "Load the redirect repair tool."
+        with ui.utils.temporaryStatusMessage(
+                self.form.statusBar,
+                "Loading redirect repair tool, this may take a moment..."):
+            QApplication.processEvents()
+            rw = ui.tools_brokenredirects.RedirectsWindow(self)
+        rw.exec_()
+
     def onLetterDistro(self):
         ui.utils.reportBox(self, db.analytics.letterDistribution(),
                            "Letter distribution statistics")
@@ -1313,6 +1323,7 @@ class MainWindow(QMainWindow):
         sf.action_Simplification.triggered.connect(self.onPrintSimplification)
         sf.actionPreferences.triggered.connect(self.onPrefs)
         sf.actionClassify_Entries.triggered.connect(self.onClassify)
+        sf.actionRepair_Broken_Redirects.triggered.connect(self.onRepairRedirects)
         sf.actionEditOcc.triggered.connect(self.onEditOccurrence)
         sf.actionCopyEntryToClipboard.triggered.connect(self.onCopyEntryToClipboard)
         sf.actionExtendOccurrence.triggered.connect(self.onExtendOccurrence)

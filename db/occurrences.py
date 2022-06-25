@@ -420,12 +420,28 @@ class Occurrence:
         entries = [db.entries.Entry.byEid(i[0]) for i in d.cursor.fetchall()]
         return entries
 
+
 def allOccurrences():
     """
     Return a list of all occurrences in the database.
     """
     d.cursor.execute('SELECT oid FROM occurrences')
     return [Occurrence(i[0]) for i in d.cursor.fetchall()]
+
+
+def brokenRedirects():
+    """
+    Return a list of all occurrences which are redirects and whose ref does not
+    match the name of any entry currently in the database.
+
+    I benchmarked this one and surprisingly IN is faster than EXISTS here.
+    """
+    d.cursor.execute('''SELECT oid FROM occurrences
+                         WHERE type=?
+                           AND ref NOT IN (SELECT name FROM entries)''',
+                         (ReferenceType.REDIRECT.value,))
+    return [Occurrence(i[0]) for i in d.cursor.fetchall()]
+
 
 def fetchForEntry(entry: db.entries.Entry) -> List[Occurrence]:
     """
@@ -435,11 +451,13 @@ def fetchForEntry(entry: db.entries.Entry) -> List[Occurrence]:
     d.cursor.execute('SELECT oid FROM occurrences WHERE eid=?', (eid,))
     return [Occurrence(i[0]) for i in d.cursor.fetchall()]
 
+
 def fetchForEntryFiltered(entry: db.entries.Entry,
                           enteredDateStr: str = None,
                           modifiedDateStr: str = None,
                           source: Optional[db.sources.Source] = None,
-                          volumeRange: Optional[Tuple[int, int]] = None
+                          volumeRange: Optional[Tuple[int, int]] = None,
+                          ref: str = None
                          ) -> List[Occurrence]:
     """
     Return a list of all Occurrences for a given Entry that additionally match
@@ -452,7 +470,7 @@ def fetchForEntryFiltered(entry: db.entries.Entry,
     """
     queryHead = 'SELECT oid FROM occurrences WHERE eid=?'
     filterQuery, filterParams = occurrenceFilterString(
-        enteredDateStr, modifiedDateStr, source, volumeRange)
+        enteredDateStr, modifiedDateStr, source, volumeRange, ref)
     if filterQuery:
         d.cursor.execute(queryHead + ' AND ' + filterQuery,
                          [str(entry.eid)] + filterParams)
@@ -463,7 +481,8 @@ def fetchForEntryFiltered(entry: db.entries.Entry,
 def occurrenceFilterString(enteredDateStr: str = None,
                            modifiedDateStr: str = None,
                            source: Optional[db.sources.Source] = None,
-                           volumeRange: Optional[Tuple[int, int]] = None
+                           volumeRange: Optional[Tuple[int, int]] = None,
+                           ref: str = None,
                           ) -> Tuple[str, List[Any]]:
     """
     Return a slice of SQL query string and a list of parameters that filter
@@ -506,6 +525,9 @@ def occurrenceFilterString(enteredDateStr: str = None,
     if source and not volumeRange:
         query.append(" AND vid IN (SELECT vid FROM volumes WHERE volumes.sid = ?)")
         params.append(source.sid)
+    if ref:
+        query.append(' AND ref = ?')
+        params.append(ref)
 
     #TODO: Commented out because it's causing issues when starting Tabularium
     #when vol/source were both selected before. As we improve the startup
