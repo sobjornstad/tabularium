@@ -55,8 +55,9 @@ class TrouncesError(Exception):
 
 class Source(object):
     def __init__(self, sid):
-        d().cursor.execute('SELECT name, volval, pageval, nearrange, abbrev, '
-                'stype FROM sources WHERE sid=?', (sid,))
+        d().cursor.execute('''SELECT name, volval, pageval, nearrange, abbrev, stype
+                              FROM sources
+                              WHERE sid=?''', (sid,))
         self._name, self._volVal, self._pageVal, self._nearbyRange, \
                 self._abbrev, self._sourceType = d().cursor.fetchall()[0]
         self._volVal = tuple(json.loads(self._volVal))
@@ -182,16 +183,16 @@ class Source(object):
             if tup[0] > tup[1]:
                 raise InvalidRangeError('volume')
 
-            q = '''SELECT vid FROM volumes WHERE sid=?
-                   AND (num < ? OR num > ?)'''
+            q = '''SELECT vid FROM volumes
+                    WHERE sid=? AND (num < ? OR num > ?)'''
             d().cursor.execute(q, (self._sid, tup[0], tup[1]))
             volsAffected = d().cursor.fetchall()
             if volsAffected:
                 if self.trounceWarning:
                     q = '''SELECT oid FROM occurrences
                            WHERE vid IN (SELECT vid FROM volumes
-                                         WHERE sid=?
-                                         AND (num < ? OR num > ?))'''
+                                          WHERE sid=?
+                                            AND (num < ? OR num > ?))'''
                     vals = (self._sid, tup[0], tup[1])
                     d().cursor.execute(q, vals)
                     occsAffected = d().cursor.fetchall()
@@ -222,11 +223,10 @@ class Source(object):
         # range. (The cast even works for ranges, though I'm not entirely sure
         # how! SQL is awesome.)
         q = '''SELECT oid FROM occurrences
-               WHERE vid IN (SELECT vid FROM volumes
-                             WHERE sid=?)
-                     AND (CAST(ref as integer) < ?
-                          OR CAST(ref as integer) > ?)
-                     AND type IN (0,1)'''
+                WHERE vid IN (SELECT vid FROM volumes
+                              WHERE sid=?)
+                  AND (CAST(ref as integer) < ? OR CAST(ref as integer) > ?)
+                  AND type IN (0,1)'''
         vals = (self._sid, tup[0], tup[1])
         d().cursor.execute(q, vals)
         occsAffected = d().cursor.fetchall()
@@ -252,10 +252,11 @@ class Source(object):
         return self._volVal[0] <= num <= self._volVal[1]
     def isValidPage(self, num):
         return self._pageVal[0] <= num <= self._pageVal[1]
-    def volExists(self, num):
-        q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
-        d().cursor.execute(q, (self._sid, num))
-        return True if d().cursor.fetchall() else False
+    def volExists(self, num: int):
+        "Check if a volume with the given number exists in this source."
+        q = 'SELECT 1 FROM volumes WHERE sid=? AND num=?'
+        d().cursor.execute(q, (self.sid, num))
+        return bool(d().cursor.fetchall())
     def getNumVolsRepr(self):
         "Get a friendly representation of how many volumes are in this source."
         if self.isSingleVol():
@@ -293,19 +294,19 @@ class Source(object):
 
         vidList = [i.vid for i in volumes]
         bindings = ','.join('?' * len(volumes))
-        q = 'SELECT oid FROM occurrences WHERE vid IN (%s)' % (bindings)
+        q = f'SELECT COUNT(oid) FROM occurrences WHERE vid IN ({bindings})'
         d().cursor.execute(q, vidList)
-        occurrences = [db.occurrences.Occurrence(occTuple[0])
-                       for occTuple in d().cursor.fetchall()]
-        return len(volumes), len(occurrences)
+        occCount = d().cursor.fetchall()[0][0]
+        return len(volumes), occCount
 
     def _flush(self):
-        q = """UPDATE sources SET name=?, volval=?, pageval=?, nearrange=?,
-               abbrev=?, stype=?
-               WHERE sid=?"""
-        d().cursor.execute(q, (self._name, json.dumps(self._volVal),
-                         json.dumps(self._pageVal), self._nearbyRange,
-                         self._abbrev, self._sourceType, self._sid))
+        q = '''UPDATE sources
+                  SET name=?, volval=?, pageval=?, nearrange=?, abbrev=?, stype=?
+                WHERE sid=?'''
+        d().cursor.execute(q, (
+            self._name, json.dumps(self._volVal), json.dumps(self._pageVal),
+            self._nearbyRange, self._abbrev, self._sourceType, self._sid
+        ))
         d().checkAutosave()
 
 
@@ -333,7 +334,7 @@ def allSources(includeSingleVolSources=True) -> List[Source]:
     """
     Return a list of all sources, sorted by name.
     """
-    d().cursor.execute('SELECT sid FROM sources ORDER BY name')
+    d().cursor.execute('SELECT sid FROM sources ORDER BY LOWER(name)')
     sources = [Source(sid[0]) for sid in d().cursor.fetchall()]
     if not includeSingleVolSources:
         sources = [source for source in sources if source.volVal != (1,1)]
@@ -347,7 +348,7 @@ def getDiary():
         The Source that is the diary, or None if no source has the diary type.
     """
     d().cursor.execute('SELECT sid FROM sources WHERE stype=?',
-                     (db.consts.sourceTypes['diary'],))
+                       (db.consts.sourceTypes['diary'],))
     fetch = d().cursor.fetchall()
     if fetch:
         return Source(fetch[0][0])

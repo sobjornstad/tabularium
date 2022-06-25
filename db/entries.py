@@ -52,12 +52,30 @@ class Entry:
 
     An Entry has a name and is associated with some set of occurrences,
     along with some metadata.
+
+    Entries should be retrieved using the byEid() or byName() classmethod, or
+    one of the search functions in the module, and created using the makeNew()
+    or multiConstruct() classmethod.  The constructor should not be called
+    directly by client code, as this bypasses the entry cache (see below).
+
+    Entries are cached by ID so that only one instance is maintained in memory;
+    when an Entry is constructed through one of the classmethods, it uses a
+    cached instance if available and lazy-loads one from the database if not.
+    Most of the time this just works, but if you run an UPDATE or DELETE query
+    that touches Entries (rather than modifying the objects in Python and
+    flushing them), it's important to invalidate the cache, preferably by
+    deleting the specific entries you touched. If you change databases or
+    perform some kind of bulk update or migration, call Entry.invalidateCache()
+    to clear everything (if you don't do this on changing databases, everything
+    will go completely haywire as the wrong entries are returned everywhere).)
+
     """
     _instanceCache: dict[int, Entry] = {}
 
-    def __init__(self, eid: int):
+    def __init__(self, eid: int) -> None:
         q = '''SELECT name, sortkey, classification, dEdited, dAdded
-               FROM entries WHERE eid=?'''
+                 FROM entries
+                WHERE eid=?'''
         d().cursor.execute(q, (eid,))
         self._name, self._sortKey, self._classification, self._dateEdited, \
             self._dateAdded = d().cursor.fetchall()[0]
@@ -304,7 +322,7 @@ def deleteOrphaned():
     the entry instance cache.
     """
     d().cursor.execute('''SELECT eid FROM entries
-                        WHERE eid NOT IN (SELECT eid FROM occurrences)''')
+                          WHERE eid NOT IN (SELECT eid FROM occurrences)''')
     for eid in d().cursor.fetchall():
         Entry(eid[0]).delete()
 

@@ -171,9 +171,10 @@ def byNumAndSource(source, num):
 
 def volExists(source, num):
     sid = source.sid
-    q = 'SELECT vid FROM volumes WHERE sid=? AND num=?'
+    q = 'SELECT 1 FROM volumes WHERE sid=? AND num=?'
     d().cursor.execute(q, (sid, num))
-    return True if d().cursor.fetchall() else False
+    return bool(d().cursor.fetchall())
+
 
 def findNextDateOpened(source):
     """
@@ -186,14 +187,15 @@ def findNextDateOpened(source):
     Return value as a datetime.date.
     """
     d().cursor.execute('''SELECT dclosed FROM volumes
-                        WHERE num=(SELECT MAX(num) FROM volumes)
-                        AND sid=?''', (source.sid,))
+                           WHERE num=(SELECT MAX(num) FROM volumes)
+                             AND sid=?''', (source.sid,))
     try:
         return (deserializeDate(d().cursor.fetchall()[0][0]) +
                 datetime.timedelta(days=1))
     except (IndexError, TypeError):
         # unsupported operand types: NoneType and timedelta
         return datetime.date.today()
+
 
 def findNextOpenVol(source):
     """
@@ -203,12 +205,13 @@ def findNextOpenVol(source):
     if source.isSingleVol():
         return 0
     d().cursor.execute('SELECT MAX(num) FROM volumes WHERE sid=?',
-                     (source.sid,))
+                        (source.sid,))
     try:
         return d().cursor.fetchall()[0][0] + 1
     except (IndexError, TypeError):
         # unsupported operand types: NoneType and int
         return 1
+
 
 def findDateInDiary(date):
     """
@@ -222,9 +225,9 @@ def findDateInDiary(date):
         return None
 
     q = '''SELECT vid FROM volumes
-           WHERE sid=(SELECT sid FROM sources WHERE stype=?)
-           AND dopened <= ?
-           AND dclosed >= ?'''
+            WHERE sid=(SELECT sid FROM sources WHERE stype=?)
+              AND dopened <= ?
+              AND dclosed >= ?'''
     date = serializeDate(date)
     vals = (db.consts.sourceTypes['diary'], date, date)
     d().cursor.execute(q, vals)

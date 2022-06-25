@@ -106,7 +106,8 @@ class Occurrence:
     """
     def __init__(self, oid: int) -> None:
         query = '''SELECT eid, vid, ref, type, dEdited, dAdded
-                   FROM occurrences WHERE oid=?'''
+                     FROM occurrences
+                    WHERE oid=?'''
         d().cursor.execute(query, (oid,))
         eid, vid, self._ref, self._reftype, self._dateEdited, \
             self._dateAdded = d().cursor.fetchall()[0]
@@ -408,13 +409,15 @@ class Occurrence:
         else:
             pageStart, pageEnd = self.volume.source.nearbySpread(int(page))
 
-        q = """SELECT DISTINCT entries.eid FROM entries
-               INNER JOIN occurrences ON occurrences.eid = entries.eid
-               WHERE vid = ?
-                     AND (type = 0 OR type = 1)
-                     AND CAST(ref as integer) BETWEEN ? AND ?
-                     AND oid != ?
-               ORDER BY LOWER(sortkey)"""
+        q = """SELECT DISTINCT entries.eid
+                          FROM entries
+                    INNER JOIN occurrences
+                            ON occurrences.eid = entries.eid
+                         WHERE vid = ?
+                           AND (type = 0 OR type = 1)
+                           AND CAST(ref as integer) BETWEEN ? AND ?
+                           AND oid != ?
+                      ORDER BY LOWER(sortkey)"""
         d().cursor.execute(q, (self._volume.vid, pageStart,
                              pageEnd, self._oid))
         entries = [db.entries.Entry.byEid(i[0]) for i in d().cursor.fetchall()]
@@ -437,8 +440,8 @@ def brokenRedirects():
     I benchmarked this one and surprisingly IN is faster than EXISTS here.
     """
     d().cursor.execute('''SELECT oid FROM occurrences
-                         WHERE type=?
-                           AND ref NOT IN (SELECT name FROM entries)''',
+                           WHERE type=?
+                             AND ref NOT IN (SELECT name FROM entries)''',
                          (ReferenceType.REDIRECT.value,))
     return [Occurrence(i[0]) for i in d().cursor.fetchall()]
 
