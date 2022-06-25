@@ -75,5 +75,5 @@ class FileDbTest(unittest.TestCase):
 
             # check for persistence
             installGlobalConnection(DatabaseConnection(f.name))
-            ret = findOne("Margareta")
+            ret = Entry.byName("Margareta")
             assert ret == e1

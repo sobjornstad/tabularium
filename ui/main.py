@@ -236,8 +236,9 @@ class MainWindow(QMainWindow):
                                   "No dice!")
                 return False
 
-        # wipe entry cache
+        # wipe object caches
         db.entries.Entry.invalidateCache()
+        db.occurrences.Occurrence.invalidateCache()
 
         # fill entries
         self.savedTexts = ["", ""]
@@ -1499,7 +1500,7 @@ class MainWindow(QMainWindow):
         Get an Entry object for the currently selected entry. Return None if
         nothing is selected or the entry was just deleted.
         """
-        # Waiting for findOne() every time we pick a new row can make the interface
+        # Waiting for byName() every time we pick a new row can make the interface
         # feel sluggish, so we cache a configurable number of Entries by their index
         # in the widget.
         # This differs from the cache in the Entry class, which also caches database
@@ -1513,7 +1514,7 @@ class MainWindow(QMainWindow):
         except AttributeError:
             return None
         else:
-            return db.entries.findOne(search)
+            return db.entries.Entry.byName(search)
 
     def _fetchCurrentOccurrence(self) -> Optional[db.occurrences.Occurrence]:
         """

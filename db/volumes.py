@@ -135,8 +135,13 @@ class Volume(object):
         return (self._dateOpened is not None and self._dateClosed is not None)
 
     def delete(self):
-        d().cursor.execute('DELETE FROM occurrences WHERE vid=?', (self._vid,))
+        "Delete the volume, its occurrences, and any entries that are orphaned thereby."
+        d().cursor.execute('SELECT oid FROM occurrences WHERE vid = ?',
+                           (self._vid,))
+        for oid, in d().cursor.fetchall():
+            db.occurrences.Occurrence.byOid(oid).delete()
         db.entries.deleteOrphaned()
+
         d().cursor.execute('DELETE FROM volumes WHERE vid=?', (self._vid,))
         d().checkAutosave()
 
@@ -145,8 +150,8 @@ class Volume(object):
                SET sid=?, num=?, notes=?, dopened=?, dclosed=?
                WHERE vid=?"""
         d().cursor.execute(q, (self._source.sid, self._num, self._notes,
-                         serializeDate(self._dateOpened),
-                         serializeDate(self._dateClosed), self._vid))
+                           serializeDate(self._dateOpened),
+                           serializeDate(self._dateClosed), self._vid))
         d().checkAutosave()
 
 

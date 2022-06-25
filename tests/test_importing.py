@@ -36,7 +36,7 @@ class ImportTests(utils.DbTestCase):
 
         assert len(db.entries.allEntries()) == 7
         assert len(db.occurrences.allOccurrences()) == 10
-        extraTesting = db.entries.findOne("Greta")
+        extraTesting = db.entries.Entry.byName("Greta")
         assert extraTesting.sortKey == "Greta"
         occs = db.occurrences.fetchForEntry(extraTesting)
         assert len(occs) == 2

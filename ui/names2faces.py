@@ -133,7 +133,7 @@ class FacesWindow(QDialog):
             print("Oopsies!")
             return None
         else:
-            return db.entries.findOne(selectedName)
+            return db.entries.Entry.byName(selectedName)
 
     def onSelectPerson(self):
         entry = self._fetchCurrentPerson()

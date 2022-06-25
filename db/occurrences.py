@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import datetime
 from enum import Enum
-from typing import Any, List, Literal, Optional, Tuple, Union, overload
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union, overload
 
 from db.database import d
 import db.entries
@@ -104,6 +104,8 @@ class Occurrence:
     """
     Represents one reference target of an entry.
     """
+    _instanceCache: Dict[int, Occurrence] = {}
+
     def __init__(self, oid: int) -> None:
         query = '''SELECT eid, vid, ref, type, dEdited, dAdded
                      FROM occurrences
@@ -117,6 +119,13 @@ class Occurrence:
         self._dateEdited = deserializeDate(self._dateEdited)
         self._dateAdded = deserializeDate(self._dateAdded)
         self._oid = oid
+
+    @classmethod
+    def byOid(cls, oid: int) -> Occurrence:
+        "Retrieve an occurrence from the cache, or from the database if not cached."
+        if oid not in cls._instanceCache:
+            cls._instanceCache[oid] = Occurrence(oid)
+        return cls._instanceCache[oid]
 
     @classmethod
     def makeNew(cls, entry: db.entries.Entry, volume: db.volumes.Volume,
@@ -142,7 +151,20 @@ class Occurrence:
         d().cursor.execute(q, (eid, vid, ref, occType.value, dEdited, dAdded))
         d().checkAutosave()
         oid = d().cursor.lastrowid
+        assert oid is not None, "Insertion of occurrence failed."
         return cls(oid)
+
+    @classmethod
+    def invalidateCache(cls) -> None:
+        """
+        Wipe the cache of occurrences. Required when changing databases.
+        """
+        cls._instanceCache.clear()
+
+    @classmethod
+    def evictFromCache(cls, oid: int) -> None:
+        if oid in cls._instanceCache:
+            del cls._instanceCache[oid]
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Occurrence):
@@ -297,7 +319,9 @@ class Occurrence:
         d().checkAutosave()
 
     def delete(self):
+        print("deleting occurrence: ", self)
         d().cursor.execute('DELETE FROM occurrences WHERE oid=?', (self._oid,))
+        self.evictFromCache(self._oid)
         d().checkAutosave()
 
     def extend(self, amount: int = 1):
@@ -375,7 +399,7 @@ class Occurrence:
         """
         q = 'SELECT oid FROM occurrences WHERE eid=?'
         d().cursor.execute(q, (self._entry.eid,))
-        return [Occurrence(oidTuple[0]) for oidTuple in d().cursor.fetchall()]
+        return [Occurrence.byOid(oidTuple[0]) for oidTuple in d().cursor.fetchall()]
 
     def getNearby(self) -> Optional[List[db.entries.Entry]]:
         """
@@ -429,7 +453,7 @@ def allOccurrences():
     Return a list of all occurrences in the database.
     """
     d().cursor.execute('SELECT oid FROM occurrences')
-    return [Occurrence(i[0]) for i in d().cursor.fetchall()]
+    return [Occurrence.byOid(i[0]) for i in d().cursor.fetchall()]
 
 
 def brokenRedirects():
@@ -443,7 +467,7 @@ def brokenRedirects():
                            WHERE type=?
                              AND ref NOT IN (SELECT name FROM entries)''',
                          (ReferenceType.REDIRECT.value,))
-    return [Occurrence(i[0]) for i in d().cursor.fetchall()]
+    return [Occurrence.byOid(i[0]) for i in d().cursor.fetchall()]
 
 
 def fetchForEntry(entry: db.entries.Entry) -> List[Occurrence]:
@@ -452,7 +476,7 @@ def fetchForEntry(entry: db.entries.Entry) -> List[Occurrence]:
     """
     eid = entry.eid
     d().cursor.execute('SELECT oid FROM occurrences WHERE eid=?', (eid,))
-    return [Occurrence(i[0]) for i in d().cursor.fetchall()]
+    return [Occurrence.byOid(i[0]) for i in d().cursor.fetchall()]
 
 
 def fetchForEntryFiltered(entry: db.entries.Entry,
@@ -479,7 +503,7 @@ def fetchForEntryFiltered(entry: db.entries.Entry,
                          [str(entry.eid)] + filterParams)
     else:
         d().cursor.execute(queryHead, (str(entry.eid),))
-    return [Occurrence(i[0]) for i in d().cursor.fetchall()]
+    return [Occurrence.byOid(i[0]) for i in d().cursor.fetchall()]
 
 def occurrenceFilterString(enteredDateStr: str = None,
                            modifiedDateStr: str = None,

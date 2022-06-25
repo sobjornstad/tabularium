@@ -63,12 +63,11 @@ class Entry:
     cached instance if available and lazy-loads one from the database if not.
     Most of the time this just works, but if you run an UPDATE or DELETE query
     that touches Entries (rather than modifying the objects in Python and
-    flushing them), it's important to invalidate the cache, preferably by
-    deleting the specific entries you touched. If you change databases or
-    perform some kind of bulk update or migration, call Entry.invalidateCache()
-    to clear everything (if you don't do this on changing databases, everything
-    will go completely haywire as the wrong entries are returned everywhere).)
-
+    flushing them), it's important to invalidate the cache, preferably with
+    evictFromCache(). If you change databases or perform some kind of bulk
+    update or migration, call Entry.invalidateCache() to clear everything (if
+    you don't do this on changing databases, everything will go completely
+    haywire as the wrong entries are returned everywhere).)
     """
     _instanceCache: dict[int, Entry] = {}
 
@@ -181,6 +180,11 @@ class Entry:
         """
         cls._instanceCache.clear()
 
+    @classmethod
+    def evictFromCache(cls, eid: int) -> None:
+        if eid in cls._instanceCache:
+            del cls._instanceCache[eid]
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Entry):
             return NotImplemented
@@ -291,9 +295,10 @@ class Entry:
 
     def delete(self):
         "Toast this entry."
-        d().cursor.execute('DELETE FROM occurrences WHERE eid=?', (self._eid,))
+        for occ in db.occurrences.fetchForEntry(self):
+            occ.delete()
         d().cursor.execute('DELETE FROM entries WHERE eid=?', (self._eid,))
-        del self._instanceCache[self._eid]
+        self.evictFromCache(self._eid)
         d().checkAutosave()
 
     def flush(self):
@@ -322,7 +327,7 @@ def deleteOrphaned():
     the entry instance cache.
     """
     d().cursor.execute('''SELECT eid FROM entries
-                          WHERE eid NOT IN (SELECT eid FROM occurrences)''')
+                           WHERE eid NOT IN (SELECT eid FROM occurrences)''')
     for eid in d().cursor.fetchall():
         Entry(eid[0]).delete()
 
@@ -438,9 +443,9 @@ def find(
         + [i.value for i in classification]
         + occQueryParams
     )
-    print("query:", query)
-    print("params:", params)
 
+    print(query)
+    print(params)
     d().cursor.execute(query, params)
     results = d().cursor.fetchall()
     return Entry.multiConstruct(results)
@@ -508,14 +513,14 @@ def updateRedirectsTo(oldName: str, newName: str):
     of type redirect whose ref points to oldName must have their ref updated
     to point to newName instead.
 
-    Since we don't store occurrences within entries, we don't need to update
-    any cache.
+    We retrieve the occurrences and then reset them rather than using an UPDATE
+    statement to avoid needing to flush cache.
     """
-    q = '''UPDATE occurrences
-           SET ref = ?
-           WHERE type = ? AND ref = ?'''
-    d().cursor.execute(q, (newName, db.occurrences.ReferenceType.REDIRECT.value,
-                         oldName))
+    q = '''SELECT oid FROM occurrences WHERE type = ? AND ref = ?'''
+    d().cursor.execute(q, (db.occurrences.ReferenceType.REDIRECT.value,
+                           oldName))
+    for oid, in d().cursor.fetchall():
+        db.occurrences.Occurrence.byOid(oid).ref = newName
     d().checkAutosave()
 
 

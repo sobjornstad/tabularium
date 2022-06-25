@@ -69,8 +69,8 @@ class VolumeTests(utils.DbTestCase):
         e1 = db.entries.Entry.makeNew(e1Name)
         e2 = db.entries.Entry.makeNew(e2Name, "ZKaterina", EntryClassification.TITLE)
         o1 = Occurrence.makeNew(e1, v1, '25', ReferenceType.NUM)
-        o2 = Occurrence.makeNew(e2, v1, '25', ReferenceType.NUM)
-        o3 = Occurrence.makeNew(e2, v2, '25', ReferenceType.NUM)
+        o2 = Occurrence.makeNew(e2, v1, '27', ReferenceType.NUM)
+        o3 = Occurrence.makeNew(e2, v2, '29', ReferenceType.NUM)
 
         v1.delete()
         # this should preserve v2 and e2, since o3 is part of v*2*, as well as

@@ -269,7 +269,7 @@ class AddEntryWindow(QDialog):
         classif = self._getSelectedClassif()
 
         if self.isEditing:
-            entryToEdit = db.entries.findOne(self.beforeEditingName)
+            entryToEdit = db.entries.Entry.byName(self.beforeEditingName)
             if (newName != self.beforeEditingName
                     and db.entries.nameExists(newName)):
                 # need both checks because new and old names may differ only in
@@ -291,7 +291,7 @@ class AddEntryWindow(QDialog):
                 db.entries.updateRedirectsTo(self.beforeEditingName, newName)
             super().accept()
         else:
-            existingEntry = db.entries.findOne(newName)
+            existingEntry = db.entries.Entry.byName(newName)
             if not existingEntry:
                 entry = db.entries.Entry.makeNew(newName, newSk, classif)
             else:

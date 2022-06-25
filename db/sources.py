@@ -235,7 +235,7 @@ class Source(object):
             if self.trounceWarning:
                 raise TrouncesError(tup, 'page', len(occsAffected))
             else:
-                occs = [db.occurrences.Occurrence(occTuple[0])
+                occs = [db.occurrences.Occurrence.byOid(occTuple[0])
                         for occTuple in occsAffected]
                 for occ in occs:
                     occ.delete()

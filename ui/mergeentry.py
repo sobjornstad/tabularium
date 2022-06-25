@@ -81,7 +81,7 @@ class MergeEntryDialog(QDialog):
             "Must call setFrom() before allowing user to use this dialog"
 
         newEntryName = self.form.toBox.text()
-        newEntry = db.entries.findOne(newEntryName)
+        newEntry = db.entries.Entry.byName(newEntryName)
         if not newEntry:
             #TODO: offer a move instead
             ui.utils.errorBox(

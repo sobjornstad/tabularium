@@ -68,8 +68,8 @@ class UOFTests(utils.DbTestCase):
                     'RT see "21st century classroom"': 'RT 1."21st century classroom" (2) == ',
                     'Random Thoughts see "21st century classroom"': 'RT 1."21st century classroom" (2) == ',
                     'CB 2.see King, Heather': 'CB 2.King, Heather (2) == ',
-                    'CB 2.see King\; Heather': 'CB 2.King; Heather (2) == ',
-                    'CB 2.35; see King\; Heather': 'CB 2.35 (0) == CB 2.King; Heather (2) == ',
+                    r'CB 2.see King\; Heather': 'CB 2.King; Heather (2) == ',
+                    r'CB 2.35; see King\; Heather': 'CB 2.35 (0) == CB 2.King; Heather (2) == ',
                    }
 
         for i in testDict.keys():
@@ -224,19 +224,19 @@ class OccTests(utils.DbTestCase):
 
     def testAssociatedEntry(self):
         self.o1.entry = self.e2
-        oNew = Occurrence(self.o1.oid)
+        oNew = Occurrence.byOid(self.o1.oid)
         assert oNew.entry == self.e2
 
     def testAssociatedRef(self):
         self.o1.reftype = ReferenceType.RANGE
         self.o1.ref = '25-27'
-        oNew = Occurrence(self.o1.oid)
+        oNew = Occurrence.byOid(self.o1.oid)
         assert oNew.ref == '25-27'
         assert oNew.reftype == ReferenceType.RANGE
 
     def testAssociatedVolume(self):
         self.o1.volume = self.v2
-        oNew = Occurrence(self.o1.oid)
+        oNew = Occurrence.byOid(self.o1.oid)
         assert oNew.volume == self.v2
 
     def testFetchForEntry(self):
