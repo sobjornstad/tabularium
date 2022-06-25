@@ -203,18 +203,19 @@ class AddEntryWindow(QDialog):
             entryToEdit.name = newName
             entryToEdit.sortKey = newSk
             entryToEdit.classification = classif
-            super(AddEntryWindow, self).accept()
+            db.entries.updateRedirectsTo(self.beforeEditingName, newName)
+            super().accept()
         else:
             existingEntry = db.entries.findOne(newName)
             if not existingEntry:
                 entry = db.entries.Entry.makeNew(newName, newSk, classif)
             else:
-                utils.informationBox("Entry already exists; adding "
-                                     "occurrences.", "Entry exists")
+                utils.informationBox("Entry already exists; adding occurrences.",
+                                     "Entry exists")
                 entry = existingEntry
             ac = ui.addoccurrence.AddOccWindow(self, entry, self.sh,
                                                self.preparedOccurrence)
-            super(AddEntryWindow, self).accept()
+            super().accept()
             ac.exec_()
 
     def _getSelectedClassif(self) -> db.entries.EntryClassification:

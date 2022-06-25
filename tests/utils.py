@@ -20,4 +20,4 @@ class DbTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.dbTearDown()
-        db.entries.Entry.clearEntryCache()
+        db.entries.Entry.invalidateCache()

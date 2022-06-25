@@ -232,6 +232,9 @@ class MainWindow(QMainWindow):
                                   "No dice!")
                 return False
 
+        # wipe entry cache
+        db.entries.Entry.invalidateCache()
+
         # fill entries
         self.savedTexts = ["", ""]
         self.savedSelections = (-1, -1)

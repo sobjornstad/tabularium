@@ -149,8 +149,10 @@ class Entry:
         return constructed
 
     @classmethod
-    def clearEntryCache(cls) -> None:
-        # Wipe the cache of entries. Required when changing databases.
+    def invalidateCache(cls) -> None:
+        """
+        Wipe the cache of entries. Required when changing databases.
+        """
         cls._instanceCache.clear()
 
     def __eq__(self, other: Any) -> bool:
@@ -249,6 +251,7 @@ class Entry:
             # raw data
             d.cursor.execute('UPDATE entries SET picture=? WHERE eid=?',
                              (sqlite3.Binary(content), self._eid))
+            # No need to refresh the cache as images aren't stored within the object
         d.checkAutosave()
 
     def writeImage(self, filehandle: TextIO):
@@ -445,6 +448,24 @@ def nonRedirectTopLevelPeople():
                 or not i.name.startswith(cleanedEntries[-1].name)):
             cleanedEntries.append(i)
     return cleanedEntries
+
+
+def updateRedirectsTo(oldName: str, newName: str):
+    """
+    When an entry is renamed from oldName to newName, any occurrences in the database
+    of type redirect whose ref points to oldName must have their ref updated
+    to point to newName instead.
+
+    Since we don't store occurrences within entries, we don't need to update
+    any cache.
+    """
+    q = '''UPDATE occurrences
+           SET ref = ?
+           WHERE type = ? AND ref = ?'''
+    d.cursor.execute(q, (newName, db.occurrences.ReferenceType.REDIRECT.value,
+                         oldName))
+    d.checkAutosave()
+
 
 def allEntries():
     """
