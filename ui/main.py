@@ -415,11 +415,11 @@ class MainWindow(QMainWindow):
         checkWrapper(sf.modifiedCheck, 'modifiedCheck')
         checkWrapper(sf.sourceCheck, 'sourceCheck')
         checkWrapper(sf.volumeCheck, 'volumeCheck')
-        self._occurrenceFilterHandlers()
         def setupSourceCombo(value):
             i = sf.occurrencesSourceCombo.findText(value)
             sf.occurrencesSourceCombo.setCurrentIndex(i)
-        wrapper(setupSourceCombo, 'sourceCombo')
+        with ui.utils.blockSignals(sf.occurrencesSourceCombo):
+            wrapper(setupSourceCombo, 'sourceCombo')
         wrapper(sf.occurrencesVolumeSpin1.setValue, 'minVolume')
         wrapper(sf.occurrencesVolumeSpin2.setValue, 'maxVolume')
         wrapper(sf.occurrencesAddedDateSpin1.setDate, 'minDateAdded')
@@ -427,6 +427,8 @@ class MainWindow(QMainWindow):
         wrapper(sf.occurrencesEditedDateSpin1.setDate, 'minDateEdited')
         wrapper(sf.occurrencesEditedDateSpin2.setDate, 'maxDateEdited')
         wrapper(self._resetDateFormat, 'dateFormat')
+
+        self._occurrenceFilterHandlers()
 
 
     ### Setting, resetting, and filling the data windows ###
@@ -685,7 +687,7 @@ class MainWindow(QMainWindow):
         self.onSearch() # immediately update search based on new options
 
     def onOccurrenceSourceChanged(self):
-        self.onSourceToggled()
+        self.onSourceToggled(False)
         self._resetForOccurrenceFilter()
 
     def onEnteredToggled(self, doReset=True):
@@ -728,15 +730,17 @@ class MainWindow(QMainWindow):
 
     def onSourceToggled(self, doReset=True):
         "Update window state for modified source occurrence limits."
-        self.updateSourceCombo() # in case sources have changed
         state = self.form.sourceCheck.isChecked()
         self.form.occurrencesSourceCombo.setEnabled(state)
         if state:
+            self.updateSourceCombo() # in case sources have changed
             source = self._getSourceComboSelection()
             if source is not None:
-                self.form.volumeCheck.setEnabled(True)
-                self.onVolumeToggled() # because if already enabled, above will
-                                       # not emit the signal again
+                # block signals and call handler manually so it gets called
+                # unconditionally, even if already enabled
+                with ui.utils.blockSignals(self.form.volumeCheck):
+                    self.form.volumeCheck.setEnabled(True)
+                self.onVolumeToggled(False)
         else:
             self.form.volumeCheck.setChecked(False)
             self.form.volumeCheck.setEnabled(False)
@@ -770,16 +774,15 @@ class MainWindow(QMainWindow):
     def updateSourceCombo(self):
         combo = self.form.occurrencesSourceCombo
         oldSelection = combo.currentText()
-        oldBlockSignals = combo.blockSignals(True)
-        combo.clear()
-        combo.addItem(db.consts.noSourceLimitText)
-        for i in db.sources.allSources():
-            combo.addItem(i.name)
-        # restore old selection if possible
-        index = combo.findText(oldSelection)
-        if index != -1:
-            combo.setCurrentIndex(index)
-        combo.blockSignals(oldBlockSignals)
+        with ui.utils.blockSignals(combo):
+            combo.clear()
+            combo.addItem(db.consts.noSourceLimitText)
+            for i in db.sources.allSources():
+                combo.addItem(i.name)
+            # restore old selection if possible
+            index = combo.findText(oldSelection)
+            if index != -1:
+                combo.setCurrentIndex(index)
 
 
     def _getSourceComboSelection(self):
@@ -1475,13 +1478,16 @@ class MainWindow(QMainWindow):
 
 
     ### UTILITIES ###
-    def _fetchCurrentEntry(self):
+    def _fetchCurrentEntry(self) -> Optional[db.entries.Entry]:
         """
         Get an Entry object for the currently selected entry. Return None if
         nothing is selected or the entry was just deleted.
         """
-        # a database hit for changing rows is rather slow, so we cache a
-        # configurable number of them
+        # Waiting for findOne() every time we pick a new row can make the interface
+        # feel sluggish, so we cache a configurable number of Entries by their index
+        # in the widget.
+        # This differs from the cache in the Entry class, which also caches database
+        # objects, but only helps when we know the entry ID.
         currentRow = self.form.entriesList.currentRow()
         if currentRow < len(self.entryCache):
             return self.entryCache[currentRow]
@@ -1555,10 +1561,15 @@ class MainWindow(QMainWindow):
         filters, to make sure that all the spin/calendar/combo boxes are in the
         correct state for the check boxes.
         """
-        self.onEnteredToggled(False)
-        self.onModifiedToggled(False)
-        self.onSourceToggled(False)
-        self.onVolumeToggled(False)
+        sf = self.form
+        with ui.utils.blockSignals(sf.enteredCheck):
+            with ui.utils.blockSignals(sf.modifiedCheck):
+                with ui.utils.blockSignals(sf.sourceCheck):
+                    with ui.utils.blockSignals(sf.volumeCheck):
+                        self.onEnteredToggled(False)
+                        self.onModifiedToggled(False)
+                        self.onSourceToggled(False)
+                        self.onVolumeToggled(False)
         self._resetForOccurrenceFilter()
 
     def _resetDateFormat(self, fmt):
@@ -1583,6 +1594,7 @@ class MainWindow(QMainWindow):
     def _resetForNearby(self) -> None:
         self.form.nearbyList.clear()
         self.form.inspectBox.clear()
+
     def _resetForOccurrenceFilter(self) -> None:
         self.updateMatchesStatus()
         self.saveSelections()
