@@ -98,31 +98,16 @@ class ReferenceType(Enum):
     RANGE = 1
     REDIRECT = 2
 
-    def __repr__(self) -> str:
-        return f"{self.name}({self.value})"
 
-    def occurrenceOfType(self, oid: int, eid: int, vid: int, ref: str, dateEdited: str,
-                         dateAdded: str) -> 'Occurrence':
-        "Construct an Occurrence with the specified fixed reference type."
-        if self == ReferenceType.NUM:
-            return NumOccurrence(oid, eid, vid, ref, dateEdited, dateAdded)
-        elif self == ReferenceType.RANGE:
-            return RangeOccurrence(oid, eid, vid, ref, dateEdited, dateAdded)
-        elif self == ReferenceType.REDIRECT:
-            return RedirectOccurrence(oid, eid, vid, ref, dateEdited, dateAdded)
-        else:
-            raise ValueError(f"Invalid reference type {self!r}.")
-
-
-# pylint: disable=too-many-instance-attributes, too-many-public-methods
+# pylint: disable=too-many-instance-attributes
 class Occurrence:
     """
     Represents one reference target of an entry.
     """
     _instanceCache: Dict[int, Occurrence] = {}
 
-    def __init__(self, oid: int, eid: int, vid: int, ref: str, dateEdited: str,
-                 dateAdded: str) -> None:
+    def __init__(self, oid: int, eid: int, vid: int, ref: str, reftype: ReferenceType,
+                 dateEdited: str, dateAdded: str) -> None:
         self._oid = oid
         self._eid = eid
         self._vid = vid
@@ -132,9 +117,9 @@ class Occurrence:
         self._volume: Optional[db.volumes.Volume] = None
 
         self._ref = ref
+        self._reftype = ReferenceType(reftype)
         self._dateEdited = deserializeDate(dateEdited)
         self._dateAdded = deserializeDate(dateAdded)
-        self._reftype: ReferenceType
 
     @classmethod
     def byOid(cls, oid: int) -> Occurrence:
@@ -145,8 +130,8 @@ class Occurrence:
                         WHERE oid=?'''
             d().cursor.execute(query, (oid,))
             eid, vid, ref, reftype, dateEdited, dateAdded = d().cursor.fetchall()[0]
-            return ReferenceType(reftype).occurrenceOfType(oid, eid, vid, ref,
-                                                           dateEdited, dateAdded)
+            cls._instanceCache[oid] = Occurrence(oid, eid, vid, ref, reftype,
+                                                 dateEdited, dateAdded)
         return cls._instanceCache[oid]
 
     @classmethod
@@ -174,7 +159,7 @@ class Occurrence:
         d().checkAutosave()
         oid = d().cursor.lastrowid
         assert oid is not None, "Insertion of occurrence failed."
-        return Occurrence.byOid(oid)
+        return cls.byOid(oid)
 
     @classmethod
     def invalidateCache(cls) -> None:
@@ -345,6 +330,7 @@ class Occurrence:
         d().checkAutosave()
 
     def delete(self):
+        print("deleting occurrence: ", self)
         d().cursor.execute('DELETE FROM occurrences WHERE oid=?', (self._oid,))
         self.evictFromCache(self._oid)
         d().checkAutosave()
@@ -415,7 +401,7 @@ class Occurrence:
                          else '%s%s.see %s')
                         % (source.abbrev, vol, self._ref))
         else:
-            assert False, "invalid reftype in occurrence"
+            assert False, f"invalid reftype '{self.reftype}' in occurrence"
 
     def getOccsOfEntry(self) -> List[Occurrence]:
         """
@@ -471,30 +457,6 @@ class Occurrence:
                                pageEnd, self._oid))
         entries = [db.entries.Entry.byEid(i[0]) for i in d().cursor.fetchall()]
         return entries
-
-
-class NumOccurrence(Occurrence):
-    "An occurrence representing a single number."
-    def __init__(self, oid: int, eid: int, vid: int, ref: str, dateEdited: str,
-                 dateAdded: str) -> None:
-        super().__init__(oid, eid, vid, ref, dateEdited, dateAdded)
-        self._reftype = ReferenceType.NUM
-
-
-class RangeOccurrence(Occurrence):
-    "An occurrence representing a range of pages."
-    def __init__(self, oid: int, eid: int, vid: int, ref: str, dateEdited: str,
-                 dateAdded: str) -> None:
-        super().__init__(oid, eid, vid, ref, dateEdited, dateAdded)
-        self._reftype = ReferenceType.RANGE
-
-
-class RedirectOccurrence(Occurrence):
-    "An occurrence representing a redirect."
-    def __init__(self, oid: int, eid: int, vid: int, ref: str, dateEdited: str,
-                 dateAdded: str) -> None:
-        super().__init__(oid, eid, vid, ref, dateEdited, dateAdded)
-        self._reftype = ReferenceType.REDIRECT
 
 
 def allOccurrences():
@@ -553,7 +515,6 @@ def fetchForEntryFiltered(entry: db.entries.Entry,
     else:
         d().cursor.execute(queryHead, (str(entry.eid),))
     return [Occurrence.byOid(i[0]) for i in d().cursor.fetchall()]
-
 
 def occurrenceFilterString(enteredDateStr: str = None,
                            modifiedDateStr: str = None,
@@ -615,7 +576,6 @@ def occurrenceFilterString(enteredDateStr: str = None,
     queryStr = ''.join(query)[5:] # to remove the initial AND
     return queryStr, params
 
-
 def parseRange(val: str) -> Tuple[int, int]:
     """
     Return a tuple of bottom, top integers for a range (a string consisting of
@@ -642,7 +602,6 @@ def previewUofString(s: str) -> List[str]:
         else:
             resultsPreview.append(f"{source.abbrev} {vol.num}.{ref}")
     return resultsPreview
-
 
 def makeOccurrencesFromString(s: str,
                               entry: db.entries.Entry) -> Tuple[List[Occurrence], int]:
@@ -671,7 +630,6 @@ def makeOccurrencesFromString(s: str,
         except DuplicateError:
             numDupes += 1
     return occs, numDupes
-
 
 UofParserReturn = Tuple[db.sources.Source, db.volumes.Volume, str, ReferenceType]
 
