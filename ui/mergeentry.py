@@ -63,6 +63,15 @@ class MergeEntryDialog(QDialog):
             "Add a redirect pointing to the To entry to the From entry.")
         self.moveOcc = occ
 
+    def setTo(self, entryName: str) -> None:
+        """
+        Configure the dialog with initial text of an entry to which
+        occurrences will be moved.
+        """
+        self.form.toBox.setText(entryName)
+        self.form.toBox.selectAll()
+        self.form.toBox.setFocus()
+
     ### Event handlers ###
     def accept(self):
         """

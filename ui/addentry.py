@@ -15,6 +15,7 @@ import ui.addoccurrence
 import ui.forms.newentry
 from ui import utils
 import db.entries
+from ui.mergeentry import MergeEntryDialog
 from ui.settings import SettingsHandler
 
 class AddEntryWindow(QDialog):
@@ -190,21 +191,25 @@ class AddEntryWindow(QDialog):
 
         if self.isEditing:
             entryToEdit = db.entries.findOne(self.beforeEditingName)
-            #TODO: offer option to merge
             if (newName != self.beforeEditingName
                     and db.entries.nameExists(newName)):
                 # need both checks because new and old names may differ only in
                 # case, but it's fine to not change the name at all
-                utils.errorBox(
-                    "That entry already exists, or it differs from an "
-                    "existing entry only in its capitalization. Please choose "
-                    "a different name, or use the Merge feature.",
-                    "Entry exists")
-                return
-            entryToEdit.name = newName
-            entryToEdit.sortKey = newSk
-            entryToEdit.classification = classif
-            db.entries.updateRedirectsTo(self.beforeEditingName, newName)
+                if ui.utils.questionBox(
+                        f"The entry '{newName}' already exists. "
+                        f"Do you want to merge the current entry "
+                        f"'{self.beforeEditingName}' into it?",
+                        "Merge entry?"):
+                    dlg = MergeEntryDialog(self)
+                    dlg.setFrom(entryToEdit)
+                    dlg.setTitle(f"Merge '{entryToEdit}' into...")
+                    dlg.setTo(newName)
+                    dlg.exec_()
+            else:
+                entryToEdit.name = newName
+                entryToEdit.sortKey = newSk
+                entryToEdit.classification = classif
+                db.entries.updateRedirectsTo(self.beforeEditingName, newName)
             super().accept()
         else:
             existingEntry = db.entries.findOne(newName)
