@@ -123,6 +123,7 @@ class AddEntryWindow(QDialog):
         # object handy.
         self.beforeEditingName = self.form.nameBox.text()
         self.form.addButton.setText("S&ave")
+        self.validateEntryName()
 
     def resetTitle(self, title: str) -> None:
         "Change the title of the window, prior to exec_()."
@@ -195,10 +196,12 @@ class AddEntryWindow(QDialog):
             Make database calls to check for issues with the entry name in the
             background.
             """
-            def __init__(self, parent: QWidget, entryText: str, editing: bool) -> None:
+            def __init__(self, parent: QWidget, entryText: str, editing: bool,
+                         beforeEditingName: str = None) -> None:
                 super().__init__(parent)
                 self.entryText = entryText
                 self.isEditing = editing
+                self.beforeEditingName = beforeEditingName
 
                 self.newLabel: Optional[str] = None
                 self.newStyleSheet: Optional[str] = None
@@ -210,7 +213,8 @@ class AddEntryWindow(QDialog):
             def process(self) -> None:
                 looksGood = "✔️ Looking good!\n"
                 with db.database.auxiliaryConnection():
-                    if db.entries.nameExists(self.entryText):
+                    if (db.entries.nameExists(self.entryText)
+                             and self.entryText != self.beforeEditingName):
                         self.newLabel = (
                             "❗ There is an existing entry by this name.\n"
                             "Press Enter to " + (
@@ -237,8 +241,10 @@ class AddEntryWindow(QDialog):
 
         if self.validationWorker is not None:
             self.validationWorker.finished.disconnect()
-        self.validationWorker = EntryValidationWorker(self, self.form.nameBox.text(),
-                                                      self.isEditing)
+        self.validationWorker = EntryValidationWorker(
+            self, self.form.nameBox.text(),
+            self.isEditing, self.beforeEditingName
+        )
         self.validationWorker.jobFailed.connect(lambda exc, tb: print(exc))
         self.validationWorker.finished.connect(self.onValidationFinished)
         self.validationWorker.start()

@@ -379,17 +379,6 @@ def find(
     if not classification:
         classification = tuple(i for i in EntryClassification)
 
-    if not regex:
-        pass
-        #if not (search.startswith('%') and search.endswith('%')):
-        #    # This search is not supposed to be percent-wrapped, but we might
-        #    # need to escape percents inside it. Note that we require both ends
-        #    # for it to be considered percent-wrapped: if we want to specify
-        #    # anything besides a substring search or an exact match, we should
-        #    # use regexes. This ensures we catch, e.g., "100%", as improperly
-        #    # escaped.
-        #    search = search.replace(r'%', r'\%')
-
     if (enteredDateStr is None and modifiedDateStr is None
             and source is None and volumeRange is None):
         # The last %s is a fake so that the below code works without
@@ -444,8 +433,6 @@ def find(
         + occQueryParams
     )
 
-    print(query)
-    print(params)
     d().cursor.execute(query, params)
     results = d().cursor.fetchall()
     return Entry.multiConstruct(results)
