@@ -1500,6 +1500,9 @@ If the interface is sluggish, try turning this off.</string>
    <property name="text">
     <string>&amp;Copy Text to Clipboard</string>
    </property>
+   <property name="statusTip">
+    <string>Copy the name of the selected entry to your clipboard.</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
    </property>

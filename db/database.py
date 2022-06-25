@@ -11,12 +11,14 @@ import os
 import pickle
 import re
 import sqlite3 as sqlite
+import threading
 import time
-from typing import Generator, Optional, overload, Union
+from typing import Dict, Generator, Optional, overload, Union
 
 # pylint: disable=invalid-name
 
 _globalConnection: Optional[DatabaseConnection] = None
+_auxiliaryConnections: Dict[int, DatabaseConnection] = {}
 
 class DatabaseConnection:
     """
@@ -39,6 +41,7 @@ class DatabaseConnection:
         self.cursor: sqlite.Cursor = self.connection.cursor() # type: ignore
         self.lastSavedTime: float = time.time() # type: ignore
         self.saveInterval = autosaveInterval
+
         self.regexSetup()
         self.editDistSetup()
 
@@ -105,28 +108,36 @@ def installGlobalConnection(conn: DatabaseConnection) -> None:
 
 def d() -> DatabaseConnection:
     """
-    Return the global database connection.
+    Return the global database connection, or an auxiliary connectioni
+    if one has been configured for the current thread.
     """
-    assert _globalConnection is not None, \
-        "Tried to access database before initialization"
-    return _globalConnection
+    threadId = threading.current_thread().ident
+    if threadId in _auxiliaryConnections:
+        return _auxiliaryConnections[threadId]
+    else:
+        assert _globalConnection is not None, \
+            "Tried to access database before initialization"
+        return _globalConnection
 
 
 @contextmanager
-def auxiliaryConnection(readOnly=True) -> Generator[DatabaseConnection, None, None]:
+def auxiliaryConnection(readOnly: bool = True) -> Generator[None, None, None]:
     """
     Create and return a temporary connection to be used in a background thread,
-    as a context manager. The connection will be closed when the context is exited,
+    as a context manager. The connection will be closed once the context is exited,
     but changes will NOT be committed -- you must do that yourself if necessary.
 
     By default, the auxiliary connection is read-only for safety; you can change
     this with the optional readOnly argument if you need to write within the
     background thread.
 
-    Note that this will not work if the global connection wasn't opened on a filename,
-    for instance on in-memory tests, as it's not possible to open multiple connections
-    to an in-memory database (and even if it's not in-memory, we don't know the
-    location). Attempting such a connection will raise an AssertionError.
+    Note that this will not work if the global connection wasn't opened on a
+    filename, for instance on in-memory tests, as it's not possible to open
+    multiple connections to an in-memory database.  Attempting such a connection
+    will raise an AssertionError. (Even if it's not in-memory, we don't know the
+    location and hence can't use this function; we could possibly fix this, but
+    presently the only time we don't open with a filename is in-memory
+    databases, so it doesn't seem worth it right now.)
     """
     assert _globalConnection is not None, \
         "Tried to create auxiliary connection before main connection initialization"
@@ -138,10 +149,14 @@ def auxiliaryConnection(readOnly=True) -> Generator[DatabaseConnection, None, No
             fileUri += '?mode=ro'
         sqliteConn = sqlite.connect(fileUri, uri=True)
         tabulariumConn = DatabaseConnection(sqliteConn)
-        yield tabulariumConn
+
+        threadId = threading.current_thread().ident
+        assert threadId is not None, \
+             "Impossible: Currently executing thread has not been started"
+        _auxiliaryConnections[threadId] = tabulariumConn
+        yield
     finally:
         tabulariumConn.close()
-
 
 
 #### to be called without a database open ####

@@ -11,8 +11,10 @@ class, which is the entire contents of this module.
 from __future__ import annotations
 
 from typing import List, Optional, Tuple, Union, overload, TYPE_CHECKING
+
 from PyQt5.QtWidgets import QDialog, QWidget, QMainWindow
 
+import db.database
 import db.entries
 
 import ui.addoccurrence
@@ -67,16 +69,12 @@ class AddEntryWindow(QDialog):
         self.form = ui.forms.newentry.Ui_Dialog()
         self.form.setupUi(self)
         self.mw = parent
-        if isinstance(self.mw, MainWindow):
-            self.sh = self.mw.sh
-        elif settings is not None:
-            # not sure why I have to guard this -- overloads should make it impossible
-            self.sh = settings
+        self.sh = settings if settings else self.mw.sh  # type: ignore
         self.validationWorker = None
 
         self.skManual = False # whether user has manually changed sk
-        self.preparedOccurrence = None # see .putRedirect()
-        self.beforeEditingName = None # see .setEditing()
+        self.preparedOccurrence: Optional[str] = None # see .putRedirect()
+        self.beforeEditingName: Optional[str] = None # see .setEditing()
         self.isEditing = False # see .setEditing()
         self.initializeSortKeyCheck()
 
@@ -142,6 +140,7 @@ class AddEntryWindow(QDialog):
             self.form.autoButton.setChecked(False)
         else:
             self._autoSortKey()
+        self.validateEntryName()
 
     def maybeUpdateSortKey(self):
         """
@@ -187,7 +186,15 @@ class AddEntryWindow(QDialog):
         self.skManual = False
 
     def validateEntryName(self):
+        """
+        Check for potential problems with the presently entered entry name
+        as the user types.
+        """
         class EntryValidationWorker(Worker):
+            """
+            Make database calls to check for issues with the entry name in the
+            background.
+            """
             def __init__(self, parent: QWidget, entryText: str, editing: bool) -> None:
                 super().__init__(parent)
                 self.entryText = entryText
@@ -200,43 +207,33 @@ class AddEntryWindow(QDialog):
                 return (f"EntryValidationWorker( "
                         f"result={self.newLabel} {self.newStyleSheet})")
 
-            def findMisspells(self) -> List[Tuple[db.entries.Entry, float]]:
-                "Find similar entries to the typed word."
-                misspells = db.entries.findPossibleMisspellings(self.entryText)
-                # Don't warn about a misspelling while typing if the only
-                # difference between the current name and the candidate is
-                # characters that haven't been typed yet
-                # TODO: run again when # actually hitting Add and pop up a warning
-                # if it wasn't there # already?
-                return [m for m in misspells
-                        if not m[0].name.startswith(self.entryText)]
-
             def process(self) -> None:
-                if db.entries.nameExists(self.entryText):
-                    print(f"found name {self.entryText}")
-                    self.newLabel = (
-                        "❗ There is an existing entry by this name.\n"
-                        "Press Enter to " + (
-                            "start a merge."
-                            if self.isEditing
-                            else "add occurrences to it."
+                looksGood = "✔️ Looking good!\n"
+                with db.database.auxiliaryConnection():
+                    if db.entries.nameExists(self.entryText):
+                        self.newLabel = (
+                            "❗ There is an existing entry by this name.\n"
+                            "Press Enter to " + (
+                                "start a merge."
+                                if self.isEditing
+                                else "add occurrences to it."
+                            )
                         )
-                    )
-                    self.newStyleSheet = "background-color: yellow"
-                elif m := self.findMisspells():
-                    print("found misspells: ", m)
-                    self.newLabel = (
-                        "❗ There "
-                        + ("is an existing entry with a similar name:\n"
-                        if len(m) == 1
-                        else "are existing entries with similar names:\n")
-                        + ",".join(i[0].name for i in m)
-                    )
-                    self.newStyleSheet = "background-color: lightblue"
-                else:
-                    print("marking good")
-                    self.newLabel = "✔️ Looking good!\n"
-                    self.newStyleSheet = ""
+                        self.newStyleSheet = "background-color: lightblue"
+                    elif m := db.entries.findPossibleMisspellings(self.entryText):
+                        self.newLabel = (
+                            "❗ There "
+                            + ("is an existing entry with a similar name:\n"
+                            if len(m) == 1
+                            else "are existing entries with similar names:\n")
+                            + "; ".join(i[0].name for i in m)
+                        )
+                        self.newStyleSheet = "background-color: yellow"
+                    else:
+                        # don't force UI refresh if nothing has changed
+                        if self.newLabel != looksGood:
+                            self.newLabel = looksGood
+                            self.newStyleSheet = ""
 
         if self.validationWorker is not None:
             self.validationWorker.finished.disconnect()

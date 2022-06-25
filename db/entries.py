@@ -479,8 +479,14 @@ def findPossibleMisspellings(name: str,
                              threshold: float = 0.80) -> List[Tuple[Entry, float]]:
     """
     Compute Levenshtein similarity between /name/ and entries in the database
-    and return a tuple (Entry, similarity) for all entries whose similarity to /name/
-    exceeds threshold.
+    and return a tuple (Entry, similarity) where 0 < similarity < 1
+    for all entries whose similarity to /name/ exceeds threshold.
+
+    Similar entries are excluded in the following cases:
+    * The incoming name is the beginning of the similar entry (indicating the user
+      most likely just hasn't finished typing yet).
+    * The incoming name is the similar entry with a comma and some additional text
+      after it (indicating this is a subentry of the similar name).
 
     This function is reasonably fast when the name is short, but becomes rather
     slow as it gets longer and the database gets larger, so it should be run in
@@ -488,8 +494,11 @@ def findPossibleMisspellings(name: str,
     slow as molasses.
     """
     d().cursor.execute('''SELECT eid, lsim(?, name) as similarity
-                        FROM entries WHERE similarity > ?''',
-                     (name, threshold))
+                            FROM entries
+                           WHERE similarity > ?
+                             AND NOT name LIKE (? || '%')
+                             AND NOT ? LIKE (name || ',' || '%')''',
+                     (name, threshold, name, name))
     return [(Entry.byEid(row[0]), row[1]) for row in d().cursor.fetchall()]
 
 
