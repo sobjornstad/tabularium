@@ -54,6 +54,9 @@
          <property name="text">
           <string>&amp;New</string>
          </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
         </widget>
        </item>
        <item>

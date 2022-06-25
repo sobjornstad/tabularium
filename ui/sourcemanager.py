@@ -100,6 +100,7 @@ class SourceManager(QDialog):
         self.form.sourceTable.resizeColumnsToContents()
         self.sm = self.form.sourceTable.selectionModel()
         self.sm.selectionChanged.connect(self.checkButtonEnablement)
+        self.form.sourceTable.doubleClicked.connect(self.onEdit)
         self.model.modelReset.connect(self.checkButtonEnablement)
         self.checkButtonEnablement()
 

@@ -107,6 +107,7 @@ class VolumeManager(QDialog):
 
         self.volModel = VolumeTableModel(self)
         self.form.volTable.setModel(self.volModel)
+        self.form.volTable.doubleClicked.connect(self.onEdit)
         self.sm = self.form.volTable.selectionModel()
         self.sm.selectionChanged.connect(self.checkButtonEnablement)
 
