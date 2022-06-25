@@ -4,18 +4,18 @@ database.py - simple interface to the Tabularium database
 # Copyright (c) 2015-2022 Soren Bjornstad <contact@sorenbjornstad.com>
 
 from __future__ import annotations
-from contextlib import contextmanager
-import pathlib
 
+from contextlib import contextmanager
 import os
+import pathlib
 import pickle
 import re
 import sqlite3 as sqlite
 import threading
 import time
-from typing import Dict, Generator, Optional, overload, Union
+from typing import Callable, Dict, Generator, Optional, Sequence, Tuple, overload, Union
 
-# pylint: disable=invalid-name
+CURRENT_SCHEMA_VERSION = 1
 
 _globalConnection: Optional[DatabaseConnection] = None
 _auxiliaryConnections: Dict[int, DatabaseConnection] = {}
@@ -44,6 +44,22 @@ class DatabaseConnection:
 
         self.regexSetup()
         self.editDistSetup()
+
+    @property
+    def schemaVersion(self) -> int:
+        "Current version of the database schema the current database is using."
+        self.cursor.execute('SELECT conf FROM conf')
+        conf = pickle.loads(self.cursor.fetchone()[0])
+        return conf.get('schemaVersion', 0)
+    @schemaVersion.setter
+    def schemaVersion(self, version: int) -> None:
+        "Set the schema version of the database."
+        self.cursor.execute('SELECT conf FROM conf')
+        conf = pickle.loads(self.cursor.fetchone()[0])
+        conf['schemaVersion'] = version
+        self.cursor.execute('UPDATE conf SET conf = ?',
+                            (pickle.dumps(conf),))
+        self.connection.commit()
 
     def regexSetup(self) -> None:
         """
@@ -159,7 +175,7 @@ def auxiliaryConnection(readOnly: bool = True) -> Generator[None, None, None]:
         tabulariumConn.close()
 
 
-#### to be called without a database open ####
+#### Database creation and upgrade ####
 def makeDatabase(fname: str) -> sqlite.Connection:
     """
     Create a new Tabularium database at file /fname/.
@@ -202,12 +218,115 @@ def makeDatabase(fname: str) -> sqlite.Connection:
                         dclosed TEXT
                     )''')
     curs.execute('''CREATE TABLE conf (conf TEXT)''')
-    curs.execute('''INSERT INTO conf (conf) VALUES (?)''', (pickle.dumps({}),))
+    curs.execute('''INSERT INTO conf (conf) VALUES (?)''',
+                 (pickle.dumps({'schemaVersion': CURRENT_SCHEMA_VERSION-1}),))
     conn.commit()
     return conn
 
 
+UpgradeStatusCallback = Callable[[str], None]
+Upgrader = Callable[[DatabaseConnection, UpgradeStatusCallback], None]
+
+
+def _eligibleUpgrades(
+        conn: DatabaseConnection,
+        statusCallback: UpgradeStatusCallback,
+    ) -> Sequence[Tuple[Tuple[int, int], Upgrader]]:
+    """
+    Return a list of all upgrades that need to be performed to reach the latest schema.
+    """
+    version = conn.schemaVersion
+    upgrades = []
+    if version < CURRENT_SCHEMA_VERSION:
+        statusCallback(f"Database upgrades are required "
+                       f"(database is at version {version}, "
+                       f"application expects version {CURRENT_SCHEMA_VERSION}).")
+        statusCallback("Computing upgrade path...")
+        while upg := database_upgrades.UPGRADES.get((version, version+1)):
+            upgrades.append(((version, version+1), upg))
+            version += 1
+    return upgrades
+
+
+# pylint: disable=unnecessary-lambda-assignment
+def gradePath(
+        conn: DatabaseConnection,
+        desiredVersion: int,
+        statusCallback: UpgradeStatusCallback
+    ) -> Sequence[Tuple[Tuple[int, int], Upgrader]]:
+    """
+    Compute the upgrade or downgrade path from the current version of the connected
+    database to the desired version.
+    """
+    currentVersion = conn.schemaVersion
+    if currentVersion == desiredVersion:
+        return []
+    elif currentVersion < desiredVersion:
+        statusCallback(f"Computing upgrade path "
+                       f"from {currentVersion} to {desiredVersion}...")
+        versionPair = lambda current: (current, current+1)
+        searchIn = database_upgrades.UPGRADES
+        continueWhile = lambda current, desired: current < desired
+        afterStep = lambda current: current + 1
+    elif currentVersion > desiredVersion:
+        statusCallback(f"Computing downgrade path "
+                       f"from {currentVersion} to {desiredVersion}...")
+        versionPair = lambda current: (current, current-1)
+        searchIn = database_upgrades.DOWNGRADES
+        continueWhile = lambda current, desired: current > desired
+        afterStep = lambda current: current - 1
+
+    grades = []
+    while continueWhile(currentVersion, desiredVersion):
+        if upg := searchIn.get(versionPair(currentVersion)):
+            grades.append((versionPair(currentVersion), upg))
+            currentVersion = afterStep(currentVersion)
+    return grades
+
+
+def upgradeDatabase(conn: DatabaseConnection,
+                    statusCallback: UpgradeStatusCallback) -> None:
+    """
+    Perform all possible upgrades on the database,
+    calling statusCallback() with information on each upgrade.
+    """
+    if path := gradePath(conn, CURRENT_SCHEMA_VERSION, statusCallback):
+        statusCallback(f"Database upgrades are required "
+                       f"(database is at version {conn.schemaVersion}, "
+                       f"application expects version {CURRENT_SCHEMA_VERSION}).")
+        for (fromVer, toVer), func in path:
+            statusCallback(f"Upgrading schema v{fromVer} -> v{toVer}...")
+            func(conn, statusCallback)
+            conn.schemaVersion = toVer
+        statusCallback(
+            f"Database upgrade to version {conn.schemaVersion} complete."
+        )
+
+
+def downgradeDatabase(conn: DatabaseConnection,
+                      desiredVersion: int,
+                      statusCallback: UpgradeStatusCallback) -> None:
+    """
+    Downgrade the database to the given version.
+    """
+    statusCallback(f"A database downgrade to version {desiredVersion} was requested.")
+    if path := gradePath(conn, desiredVersion, statusCallback):
+        for (fromVer, toVer), func in path:
+            statusCallback(f"Downgrading schema v{fromVer} -> v{toVer}...")
+            func(conn, statusCallback)
+            conn.schemaVersion = toVer
+        statusCallback(
+            f"Database downgrade to version {conn.schemaVersion} complete."
+        )
+
+
 if __name__ == '__main__':
+    import database_upgrades  # pylint: disable=import-error
     print("Create New Indexer DB - Interactive Interface")
     DATABASE = input("Type the name of the new DB to init: ")
-    makeDatabase(DATABASE)
+    dconn = makeDatabase(DATABASE)
+    installGlobalConnection(DatabaseConnection(dconn))
+    upgradeDatabase(d(), print)
+    downgradeDatabase(d(), 0, print)
+else:
+    from db import database_upgrades

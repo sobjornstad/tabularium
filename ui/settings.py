@@ -16,9 +16,8 @@ in the normal settings handler, since we can't access the settings stored in
 the database before we've found the database.
 """
 
-# no idea why pylint thinks this function doesn't exist: it works just fine
 import pickle
-from passlib.hash import pbkdf2_sha256 as pbkdf #pylint: disable=E0611
+from passlib.hash import pbkdf2_sha256 as pbkdf
 
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import QObject, QSettings
