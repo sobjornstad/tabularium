@@ -52,8 +52,46 @@ class AddOccWindow(QDialog):
             if sv is not None:
                 self.form.valueBox.setText(sv)
 
+        self.form.valueBox.textChanged.connect(self.onValueBoxEdited)
+        self.form.validationHelpButton.clicked.connect(self.onUofHelp)
+
         self.form.addButton.clicked.connect(self.accept)
         self.form.cancelButton.clicked.connect(self.reject)
+
+        self.onValueBoxEdited()
+
+    def onValueBoxEdited(self):
+        "Parse UOF as you type and display the results."
+        prefix = ""
+        try:
+            results = db.occurrences.previewUofString(self.form.valueBox.text())
+        except db.occurrences.InvalidUOFError as e:
+            self.validationMessage = str(e)
+            friendlyError = "Waiting for complete UOF..."
+            prefix = "⌨️ "
+        except db.occurrences.NonexistentSourceError as e:
+            self.validationMessage = str(e)
+            friendlyError = "Unknown source"
+        except db.occurrences.NonexistentVolumeError as e:
+            self.validationMessage = str(e)
+            friendlyError = "Volume not created yet"
+        except db.occurrences.InvalidReferenceError as e:
+            self.validationMessage = str(e)
+            friendlyError = "Page number out of range for this source"
+        else:
+            self.form.validationLabel.setText(
+                f"✔️ UOF is valid, press Enter to add:\n{', '.join(results)}"
+            )
+            self.form.validationHelpButton.setVisible(False)
+            return
+
+        self.form.validationHelpButton.setVisible(True)
+        self.form.validationLabel.setText(
+            (prefix if prefix else "❓ ") + f"{friendlyError}")
+
+    def onUofHelp(self):
+        "Show the current validationError."
+        ui.utils.informationBox(self.validationMessage, "Current validation issues")
 
     def accept(self):
         """

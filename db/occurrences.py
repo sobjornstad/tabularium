@@ -548,6 +548,23 @@ def parseRange(val: str) -> Tuple[int, int]:
     assert len(stringSplits) == 2, "More than one hyphen in range!"
     return int(stringSplits[0]), int(stringSplits[1])
 
+
+def previewUofString(s: str) -> List[str]:
+    """
+    Get a friendly display of the occurrences this string will create in
+    expanded UOF, or raise a validation exception if the string is invalid UOF.
+    """
+    uofRets = parseUnifiedFormat(s)
+    resultsPreview: List[str] = []
+    for source, vol, ref, refType in uofRets:
+        if refType == ReferenceType.REDIRECT:
+            ref = "see " + ref
+        if source.isSingleVol():
+            resultsPreview.append(f"{source.abbrev} {ref}")
+        else:
+            resultsPreview.append(f"{source.abbrev} {vol.num}.{ref}")
+    return resultsPreview
+
 def makeOccurrencesFromString(s: str,
                               entry: db.entries.Entry) -> Tuple[List[Occurrence], int]:
     """
