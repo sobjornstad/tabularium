@@ -154,8 +154,8 @@ class MainWindow(QMainWindow):
 
         # set up statusbar
         self.matchesWidget = QLabel("")
-        self.limitsWidget = QLabel("")
-        self.form.statusBar.addPermanentWidget(self.limitsWidget)
+        self.errorWidget = QLabel("")
+        self.form.statusBar.addPermanentWidget(self.errorWidget)
         self.form.statusBar.addPermanentWidget(self.matchesWidget)
 
         # initialize db and set up searching and entries
@@ -210,7 +210,7 @@ class MainWindow(QMainWindow):
                 ui.utils.warningBox(f"The database '{location}' no longer exists!")
             return False
         conn = db.database.DatabaseConnection(location)
-        db.database.downgradeDatabase(conn, 0, print)
+        #db.database.downgradeDatabase(conn, 0, print)
         db.database.upgradeDatabase(conn, print)  # no-op if no upgrade needed
         db.database.installGlobalConnection(conn)
         self.dbLocation = location
@@ -491,16 +491,17 @@ class MainWindow(QMainWindow):
         search.
         """
         classification = self._getOKClassifications()
-        if self.searchOptions['regex']:
-            try:
-                entries = db.entries.find(self.search, classification, True,
-                                          **self._getOccurrenceFilters())
-            except sqlite3.OperationalError:
-                # regex in search box is invalid
-                entries = []
-        else:
+        try:
             entries = db.entries.find(self.search, classification,
+                                      self.searchOptions.get('regex', False),
                                       **self._getOccurrenceFilters())
+            self.errorWidget.setText("")
+            self.form.searchBox.setStyleSheet("")
+        except sqlite3.OperationalError:
+            # regex in search box is invalid
+            self.errorWidget.setText("Search syntax incorrect  |")
+            self.form.searchBox.setStyleSheet("background-color: indianred;")
+            entries = []
         return entries
 
     def fillOccurrences(self):

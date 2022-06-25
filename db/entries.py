@@ -363,8 +363,7 @@ def find(
         there were no matches. The entries will be returned in sorted order.
 
     Raises:
-        SQLite.OperationalError - if using regex mode and the regex is invalid,
-            this error will propagate.
+        SQLite.OperationalError - if the search is invalid, this error will propagate.
 
     TODO: An additional optimization for sorting would be to make COLLATE nocase
     an attribute of the column rather than using it here -- some people on SO
