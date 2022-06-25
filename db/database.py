@@ -191,6 +191,8 @@ def makeDatabase(fname: str) -> sqlite.Connection:
                         dEdited TEXT,
                         dAdded TEXT
                     )''')
+    curs.execute('''CREATE INDEX occurrences_by_entry ON occurrences(eid)''')
+    curs.execute('''CREATE INDEX nearby_occurrences ON occurrences(vid, type)''')
     curs.execute('''CREATE TABLE entries (
                         eid INTEGER PRIMARY KEY,
                         name TEXT,
@@ -226,26 +228,6 @@ def makeDatabase(fname: str) -> sqlite.Connection:
 
 UpgradeStatusCallback = Callable[[str], None]
 Upgrader = Callable[[DatabaseConnection, UpgradeStatusCallback], None]
-
-
-def _eligibleUpgrades(
-        conn: DatabaseConnection,
-        statusCallback: UpgradeStatusCallback,
-    ) -> Sequence[Tuple[Tuple[int, int], Upgrader]]:
-    """
-    Return a list of all upgrades that need to be performed to reach the latest schema.
-    """
-    version = conn.schemaVersion
-    upgrades = []
-    if version < CURRENT_SCHEMA_VERSION:
-        statusCallback(f"Database upgrades are required "
-                       f"(database is at version {version}, "
-                       f"application expects version {CURRENT_SCHEMA_VERSION}).")
-        statusCallback("Computing upgrade path...")
-        while upg := database_upgrades.UPGRADES.get((version, version+1)):
-            upgrades.append(((version, version+1), upg))
-            version += 1
-    return upgrades
 
 
 # pylint: disable=unnecessary-lambda-assignment

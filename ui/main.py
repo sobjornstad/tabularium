@@ -209,7 +209,10 @@ class MainWindow(QMainWindow):
             if yellOnNonexistence:
                 ui.utils.warningBox(f"The database '{location}' no longer exists!")
             return False
-        db.database.installGlobalConnection(db.database.DatabaseConnection(location))
+        conn = db.database.DatabaseConnection(location)
+        db.database.downgradeDatabase(conn, 0, print)
+        db.database.upgradeDatabase(conn, print)  # no-op if no upgrade needed
+        db.database.installGlobalConnection(conn)
         self.dbLocation = location
 
         self.search = ""
@@ -496,9 +499,9 @@ class MainWindow(QMainWindow):
                 # regex in search box is invalid
                 entries = []
         else:
-            mungedSearch = db.entries.percentageWrap(self.search)
-            mungedSearch = mungedSearch.replace(r'_', r'\_')
-            entries = db.entries.find(mungedSearch, classification,
+            #mungedSearch = db.entries.percentageWrap(self.search)
+            #mungedSearch = mungedSearch.replace(r'_', r'\_')
+            entries = db.entries.find(self.search, classification,
                                       **self._getOccurrenceFilters())
         return entries
 

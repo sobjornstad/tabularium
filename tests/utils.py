@@ -8,9 +8,9 @@ TEST_DB_FNAME = ":memory:"
 class DbTestCase(unittest.TestCase):
     # common to all database-using test cases
     def dbSetUp(self):
-        conn = db.database.makeDatabase(TEST_DB_FNAME)
-        db.database.installGlobalConnection(db.database.DatabaseConnection(conn))
-        print(db.database.d)
+        sqliteConn = db.database.makeDatabase(TEST_DB_FNAME)
+        self.conn = db.database.DatabaseConnection(sqliteConn)
+        db.database.installGlobalConnection(self.conn)
 
     def dbTearDown(self):
         db.database.d().close()

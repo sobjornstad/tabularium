@@ -332,7 +332,7 @@ def nameExists(name):
     We should not have entries with duplicate names, so this is a useful
     test. Returns a boolean.
     """
-    return bool(find(name))
+    return bool(ind(name))
 
 
 # pylint: disable=too-many-arguments
@@ -376,46 +376,73 @@ def find(
         classification = tuple(i for i in EntryClassification)
 
     if not regex:
-        if not (search.startswith('%') and search.endswith('%')):
-            # This search is not supposed to be percent-wrapped, but we might
-            # need to escape percents inside it. Note that we require both ends
-            # for it to be considered percent-wrapped: if we want to specify
-            # anything besides a substring search or an exact match, we should
-            # use regexes. This ensures we catch, e.g., "100%", as improperly
-            # escaped.
-            search = search.replace(r'%', r'\%')
+        pass
+        #if not (search.startswith('%') and search.endswith('%')):
+        #    # This search is not supposed to be percent-wrapped, but we might
+        #    # need to escape percents inside it. Note that we require both ends
+        #    # for it to be considered percent-wrapped: if we want to specify
+        #    # anything besides a substring search or an exact match, we should
+        #    # use regexes. This ensures we catch, e.g., "100%", as improperly
+        #    # escaped.
+        #    search = search.replace(r'%', r'\%')
 
     if (enteredDateStr is None and modifiedDateStr is None
             and source is None and volumeRange is None):
         # The last %s is a fake so that the below code works without
         # modification: nothing will ever be substituted there.
-        query = """SELECT eid, name, sortkey, classification,
-                          entries.dEdited, entries.dAdded
+        query = """SELECT entries.eid, entries.name, entries.sortkey,
+                          entries.classification, entries.dEdited, entries.dAdded
                    FROM entries
-                   WHERE name %s ? %s
-                         AND classification IN (%s)%s
-                   ORDER BY sortkey COLLATE nocase"""
+                   {join}
+                   WHERE {where}
+                         AND entries.classification IN ({classifications}){extra}
+                   ORDER BY entries.sortkey COLLATE nocase"""
     else:
-        query = """SELECT DISTINCT entries.eid, name, sortkey, classification,
-                                   entries.dEdited, entries.dAdded
+        query = """SELECT DISTINCT entries.eid, entries.name, entries.sortkey,
+                                   entries.classification, entries.dEdited,
+                                   entries.dAdded
                    FROM occurrences
                    INNER JOIN entries
                            ON entries.eid = occurrences.eid
-                   WHERE name %s ? %s
-                         AND classification IN (%s)
-                         %s
+                   INNER JOIN entry_fts
+                           ON entries.eid = entry_fts.eid
+                   WHERE {where}
+                         AND entries.classification IN ({classifications})
+                         {extra}
                    ORDER BY sortkey COLLATE nocase"""
     classifPlaceholders = ','.join('?' * len(classification))
     occQuery, occQueryParams = db.occurrences.occurrenceFilterString(
         enteredDateStr, modifiedDateStr, source, volumeRange)
-    query = query % ('REGEXP' if regex else 'LIKE',
-                     "ESCAPE '\\'" if not regex else '',
-                     classifPlaceholders,
-                     'AND ' + occQuery if occQuery else '')
 
-    d().cursor.execute(
-        query,
-        (search,) + tuple(i.value for i in classification) + tuple(occQueryParams))
+    searchTextParams: List[Any]
+    if regex:
+        textQuery = 'entries.name REGEXP ?'
+        joins = ''
+        searchTextParams = [search]
+    elif search:
+        textQuery = 'entry_fts MATCH ?'
+        joins = 'INNER JOIN entry_fts ON entries.eid = entry_fts.eid'
+        searchTextParams = [search]
+    else:
+        textQuery = '1=1'
+        joins = ''
+        searchTextParams = []
+
+    query = query.format(
+        join=joins,
+        where=textQuery,
+        classifications=classifPlaceholders,
+        extra=('AND ' + occQuery if occQuery else '')
+    )
+    params = tuple(
+        searchTextParams
+        + [i.value for i in classification]
+        + occQueryParams
+    )
+    print("query:", query)
+    print("params:", params)
+
+    d().cursor.execute(query, params)
     results = d().cursor.fetchall()
     return Entry.multiConstruct(results)
 
