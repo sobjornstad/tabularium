@@ -9,7 +9,7 @@ import datetime
 from enum import Enum
 import re
 import sqlite3
-from typing import Any, Iterable, Optional, Sequence, TextIO, Tuple, Union
+from typing import Any, Iterable, List, Optional, Sequence, TextIO, Tuple, Union
 
 import db.database as d
 import db.occurrences
@@ -474,6 +474,24 @@ def updateRedirectsTo(oldName: str, newName: str):
     d.cursor.execute(q, (newName, db.occurrences.ReferenceType.REDIRECT.value,
                          oldName))
     d.checkAutosave()
+
+
+def findPossibleMisspellings(name: str,
+                             threshold: float = 0.80) -> List[Tuple[Entry, float]]:
+    """
+    Compute Levenshtein similarity between /name/ and entries in the database
+    and return a tuple (Entry, similarity) for all entries whose similarity to /name/
+    exceeds threshold.
+
+    This function is reasonably fast when the name is short, but becomes rather
+    slow as it gets longer and the database gets larger, so it should be run in
+    a background thread if it's updating as the user types or keystrokes will be
+    slow as molasses.
+    """
+    d.cursor.execute('''SELECT eid, lsim(?, name) as similarity
+                        FROM entries WHERE similarity > ?''',
+                     (name, threshold))
+    return [(Entry.byEid(row[0]), row[1]) for row in d.cursor.fetchall()]
 
 
 def allEntries():

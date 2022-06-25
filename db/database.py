@@ -30,6 +30,7 @@ def connect(fname: str, autosaveInterval: int = 60):
     lastSavedTime = time.time()
     saveInterval = autosaveInterval
     regexSetup()
+    editDistSetup()
 
 
 def openDbConnect(conn):
@@ -51,6 +52,7 @@ def openDbConnect(conn):
     cursor = connection.cursor()
     lastSavedTime = time.time()
     regexSetup()
+    editDistSetup()
 
 
 def regexSetup():
@@ -63,6 +65,12 @@ def regexSetup():
         # note: use .search(), not match, or it searches only at start of str
         return re.search(expr, item) is not None
     connection.create_function("REGEXP", 2, regexMatch)
+
+
+def editDistSetup():
+    print("setting up exetinsons")
+    connection.enable_load_extension(True)
+    connection.load_extension('distlib/distlib_64.so')
 
 
 def close():

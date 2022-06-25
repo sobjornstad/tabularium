@@ -9,12 +9,14 @@ ones. The developer is referred to the documentation for the AddEntryWindow
 class, which is the entire contents of this module.
 """
 
-from PyQt5.QtWidgets import QDialog, QWidget
+from PyQt5.QtWidgets import QDialog, QWidget, QApplication
+
+import db.entries
+import db.database as d
 
 import ui.addoccurrence
 import ui.forms.newentry
 from ui import utils
-import db.entries
 from ui.mergeentry import MergeEntryDialog
 from ui.settings import SettingsHandler
 
@@ -66,6 +68,7 @@ class AddEntryWindow(QDialog):
         self.initializeSortKeyCheck()
 
         self.form.nameBox.textEdited.connect(self.maybeUpdateSortKey)
+        self.form.nameBox.textEdited.connect(self.validateEntryName)
         self.form.sortKeyBox.textEdited.connect(self.sortKeyManuallyChanged)
         self.form.unclassifiedButton.setChecked(True)
         self.form.autoButton.setChecked(True)
@@ -170,6 +173,40 @@ class AddEntryWindow(QDialog):
         self.form.sortKeyBox.setText(sk)
         self.skManual = False
 
+    def validateEntryName(self):
+        # TODO: This is rather slow and should be run in a background thread.
+        QApplication.processEvents()
+        misspells = db.entries.findPossibleMisspellings(self.form.nameBox.text())
+        # Don't warn about a misspelling while typing if the only difference between
+        # the current name and the candidate is characters that haven't been typed yet.
+        # TODO: run again when actually hitting Add and pop up a warning if it wasn't there already?
+        real_misspells = [m for m in misspells
+                          if not m[0].name.startswith(self.form.nameBox.text())]
+
+        if db.entries.nameExists(self.form.nameBox.text()):
+            self.form.validationLabel.setText(
+                "❗ There is an existing entry by this name.\n"
+                "Press Enter to " + (
+                    "start a merge." if self.isEditing else "add occurrences to it."
+                )
+            )
+            # background color of name is yellow
+            self.form.nameBox.setStyleSheet("background-color: yellow")
+        elif real_misspells:
+            self.form.validationLabel.setText(
+                "❗ There "
+                + ("is an existing entry with a similar name:\n"
+                   if len(real_misspells) == 1
+                   else "are existing entries with similar names:\n")
+                + ",".join(i[0].name for i in real_misspells)
+            )
+            self.form.nameBox.setStyleSheet("background-color: lightblue")
+        else:
+            self.form.nameBox.setStyleSheet("")
+            self.form.validationLabel.setText(
+                "✔️ Looking good!\n"
+            )
+
     def accept(self):
         """
         Add new entry to the database and open the add occurrences window,
@@ -216,8 +253,8 @@ class AddEntryWindow(QDialog):
             if not existingEntry:
                 entry = db.entries.Entry.makeNew(newName, newSk, classif)
             else:
-                utils.informationBox("Entry already exists; adding occurrences.",
-                                     "Entry exists")
+                #utils.informationBox("Entry already exists; adding occurrences.",
+                #                     "Entry exists")
                 entry = existingEntry
             ac = ui.addoccurrence.AddOccWindow(self, entry, self.sh,
                                                self.preparedOccurrence)
