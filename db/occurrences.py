@@ -124,9 +124,13 @@ class Occurrence:
     def __init__(self, oid: int, eid: int, vid: int, ref: str, dateEdited: str,
                  dateAdded: str) -> None:
         self._oid = oid
-        # todo: construct these objects lazily?
-        self._entry = db.entries.Entry.byEid(eid)
-        self._volume = db.volumes.Volume(vid)
+        self._eid = eid
+        self._vid = vid
+
+        # lazy-loaded from _eid / _vid
+        self._entry: Optional[db.entries.Entry] = None
+        self._volume: Optional[db.volumes.Volume] = None
+
         self._ref = ref
         self._dateEdited = deserializeDate(dateEdited)
         self._dateAdded = deserializeDate(dateAdded)
@@ -224,17 +228,21 @@ class Occurrence:
     # TODO: More error-checking right in here?
     @property
     def entry(self) -> db.entries.Entry:
+        if self._entry is None:
+            self._entry = db.entries.Entry.byEid(self._eid)
         return self._entry
     @entry.setter
     def entry(self, entry: db.entries.Entry):
         "NOTE: Can raise DuplicateError, caller must handle this."
-        _raiseDupeIfExists(entry.eid, self._volume.vid,
-                          self._ref, self._reftype)
+        _raiseDupeIfExists(entry.eid, self.volume.vid,
+                           self._ref, self._reftype)
         self._entry = entry
         self.flush()
 
     @property
     def volume(self) -> db.volumes.Volume:
+        if self._volume is None:
+            self._volume = db.volumes.Volume(self._vid)
         return self._volume
     @volume.setter
     def volume(self, volume: db.volumes.Volume):
@@ -331,7 +339,7 @@ class Occurrence:
         query = '''UPDATE occurrences
                    SET eid=?, vid=?, ref=?, type=?, dEdited=?, dAdded=?
                    WHERE oid=?'''
-        d().cursor.execute(query, (self._entry.eid, self._volume.vid,
+        d().cursor.execute(query, (self.entry.eid, self.volume.vid,
                 self._ref, self._reftype.value, serializeDate(dEdited),
                 serializeDate(self._dateAdded), self._oid))
         d().checkAutosave()
@@ -391,7 +399,7 @@ class Occurrence:
         valid UOF, but cannot necessarily be combined cleanly in other ways.
         """
         if self.isRefType(ReferenceType.NUM) or self.isRefType(ReferenceType.RANGE):
-            source = self._volume.source
+            source = self.volume.source
             if source.isSingleVol():
                 return f"{source.abbrev} {self.ref}"
             else:
@@ -415,7 +423,7 @@ class Occurrence:
         self).
         """
         q = 'SELECT oid FROM occurrences WHERE eid=?'
-        d().cursor.execute(q, (self._entry.eid,))
+        d().cursor.execute(q, (self.entry.eid,))
         return [Occurrence.byOid(oidTuple[0]) for oidTuple in d().cursor.fetchall()]
 
     def getNearby(self) -> Optional[List[db.entries.Entry]]:
@@ -459,8 +467,8 @@ class Occurrence:
                            AND CAST(ref as integer) BETWEEN ? AND ?
                            AND oid != ?
                       ORDER BY LOWER(sortkey)"""
-        d().cursor.execute(q, (self._volume.vid, pageStart,
-                             pageEnd, self._oid))
+        d().cursor.execute(q, (self.volume.vid, pageStart,
+                               pageEnd, self._oid))
         entries = [db.entries.Entry.byEid(i[0]) for i in d().cursor.fetchall()]
         return entries
 
