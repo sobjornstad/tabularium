@@ -182,46 +182,80 @@ def makeDatabase(fname: str) -> sqlite.Connection:
     """
     conn = sqlite.connect(fname)
     curs = conn.cursor()
-    curs.execute('''CREATE TABLE occurrences (
-                        oid INTEGER PRIMARY KEY,
-                        eid INTEGER,
-                        vid INTEGER,
-                        ref TEXT,
-                        type INTEGER,
-                        dEdited TEXT,
-                        dAdded TEXT
-                    )''')
-    curs.execute('''CREATE INDEX occurrences_by_entry ON occurrences(eid)''')
-    curs.execute('''CREATE INDEX nearby_occurrences ON occurrences(vid, type)''')
-    curs.execute('''CREATE TABLE entries (
-                        eid INTEGER PRIMARY KEY,
-                        name TEXT,
-                        sortkey TEXT,
-                        classification INTEGER,
-                        dEdited TEXT,
-                        dAdded TEXT,
-                        picture BLOB
-                   )''')
-    curs.execute('''CREATE TABLE sources (
-                        sid INTEGER PRIMARY KEY,
-                        name TEXT,
-                        volval TEXT,
-                        pageval TEXT,
-                        nearrange INTEGER,
-                        abbrev TEXT,
-                        stype INTEGER
-                    )''')
-    curs.execute('''CREATE TABLE volumes (
-                        vid INTEGER PRIMARY KEY,
-                        sid INTEGER,
-                        num INTEGER,
-                        notes TEXT,
-                        dopened TEXT,
-                        dclosed TEXT
-                    )''')
-    curs.execute('''CREATE TABLE conf (conf TEXT)''')
-    curs.execute('''INSERT INTO conf (conf) VALUES (?)''',
-                 (pickle.dumps({'schemaVersion': CURRENT_SCHEMA_VERSION-1}),))
+    x = curs.execute
+
+    x('''CREATE TABLE entries (
+             eid INTEGER PRIMARY KEY,
+             name TEXT,
+             sortkey TEXT,
+             classification INTEGER,
+             dEdited TEXT,
+             dAdded TEXT,
+             picture BLOB
+         )''')
+    x('''CREATE INDEX entries_by_name ON entries(name)''')
+
+    x('''CREATE TABLE occurrences (
+             oid INTEGER PRIMARY KEY,
+             eid INTEGER,
+             vid INTEGER,
+             ref TEXT,
+             type INTEGER,
+             dEdited TEXT,
+             dAdded TEXT
+         )''')
+    x('''CREATE INDEX occurrences_by_entry
+                   ON occurrences(eid)''')
+    x('''CREATE INDEX nearby_occurrences
+                   ON occurrences(vid, type)''')
+
+    x('''CREATE TABLE sources (
+             sid INTEGER PRIMARY KEY,
+             name TEXT,
+             volval TEXT,
+             pageval TEXT,
+             nearrange INTEGER,
+             abbrev TEXT,
+             stype INTEGER
+         )''')
+
+    x('''CREATE TABLE volumes (
+             vid INTEGER PRIMARY KEY,
+             sid INTEGER,
+             num INTEGER,
+             notes TEXT,
+             dopened TEXT,
+             dclosed TEXT
+         )''')
+
+    x('''CREATE TABLE conf (conf TEXT)''')
+    x('''INSERT INTO conf (conf) VALUES (?)''',
+                 (pickle.dumps({'schemaVersion': CURRENT_SCHEMA_VERSION}),))
+
+    x('''CREATE VIRTUAL TABLE entry_fts
+         USING fts5(
+            name,
+            content="entries",
+            content_rowid="eid"
+        )''')
+    x('''CREATE TRIGGER entry_fts_ai AFTER INSERT ON entries
+         BEGIN
+             INSERT INTO entry_fts (rowid, name)
+             VALUES (new.eid, new.name);
+         END''')
+    x('''CREATE TRIGGER entry_fts_ad AFTER DELETE ON entries
+         BEGIN
+             INSERT INTO entry_fts (entry_fts, rowid, name)
+             VALUES ('delete', old.eid, old.name);
+         END''')
+    x('''CREATE TRIGGER entry_fts_au AFTER UPDATE ON entries
+         BEGIN
+             INSERT INTO entry_fts (entry_fts, rowid, name)
+             VALUES('delete', old.eid, old.name);
+             INSERT INTO entry_fts (rowid, name)
+             VALUES (new.eid, new.name);
+         END''')
+
     conn.commit()
     return conn
 

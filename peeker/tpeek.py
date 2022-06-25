@@ -16,7 +16,7 @@ def find(args):
     if args.regex:
         entries = db.entries.find(args.search[0], regex=True)
     else:
-        entries = db.entries.find(db.entries.percentageWrap(args.search[0]))
+        entries = db.entries.find(args.search[0])
 
     if not entries:
         print("No matches.")

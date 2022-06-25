@@ -60,21 +60,23 @@ class DbTests(utils.DbTestCase):
 
         # test find multiple on single entry
         e1eid = e1.eid
-        obj = db.entries.find(e1Name)
+        obj = db.entries.find('"' + e1Name + '"')
         assert obj[0].eid == e1eid
 
         # test findOne on single entry
-        obj = db.entries.findOne(e1Name)
+        obj = db.entries.findOne('"' + e1Name + '"')
         assert obj.eid == e1eid
 
-        # test globbing: should find all, since all have this word
-        assert len(db.entries.find("%Maudlin%")) == 3
-        assert len(db.entries.find("Maudlin")) != 3 # but not here, ofc
+        # full words count
+        assert len(db.entries.find("Maudlin")) == 3
 
-        # test findOne on multiple entries
+        # partial words don't count
+        assert len(db.entries.find("Maud")) != 3
+
+        # findOne raises an exception if multiple entries are found
         with self.assertRaises(db.entries.MultipleResultsUnexpectedError) \
                 as context:
-            db.entries.findOne("%Maudlin%")
+            db.entries.findOne("Maudlin")
         assert 'should not have returned multiple' in str(context.exception)
 
         # try changing and re-fetching
@@ -83,13 +85,13 @@ class DbTests(utils.DbTestCase):
         obj = db.entries.findOne(newName)
         assert obj.name == newName
 
-        # test fetching by id
+        # fetch by ID
         assert db.entries.Entry.byEid(e1eid).eid == e1.eid
 
-        # test allEntries
+        # fetch all entries in database
         assert len(db.entries.allEntries()) == 3
         for i in db.entries.allEntries():
-            assert i == e1 or i == e2 or i == e3
+            assert i in (e1, e2, e3)
 
         # fetching occurrences
         s1 = Source.makeNew('Chronic Book', (1,100), (5,80), 25, 'CD',
@@ -123,7 +125,7 @@ class DbTests(utils.DbTestCase):
         assert db.occurrences.Occurrence(o2.oid)
 
     def testAdvancedFindFeatures(self):
-        # globbing
+        # globbing / prefix search
         e1 = db.entries.Entry.makeNew("Melgreth, Maudia (_Maudlin_)",
                 classification=ec.PERSON)
         e2 = db.entries.Entry.makeNew('"the rational animal"',
@@ -131,25 +133,21 @@ class DbTests(utils.DbTestCase):
         e3 = db.entries.Entry.makeNew("_The Art of Computer Programming_",
                 classification=ec.TITLE)
 
-        assert len(db.entries.find("%t%")) == 3
-        assert len(db.entries.find("%t%", (ec.PERSON, ec.QUOTE, ec.TITLE))) == 3
-        assert len(db.entries.find("%t%", (ec.PERSON,))) == 1
+        assert len(db.entries.find("t*")) == 2
+        assert len(db.entries.find("t*",
+                                   classification=(ec.PERSON, ec.QUOTE, ec.TITLE))) == 2
+        assert len(db.entries.find("t*", (ec.QUOTE,))) == 1
 
+        # quote for literal punctuation and exact match
         e4 = db.entries.Entry.makeNew("An entry with a % in it",
                 classification=ec.ORD)
         e5 = db.entries.Entry.makeNew("An entry with a something else in it",
                 classification=ec.ORD)
-        assert len(db.entries.find("An entry with a % in it")) == 1
-        assert len(db.entries.find(
-            db.entries.percentageWrap("entry with a % in"))) == 1
+        assert len(db.entries.find('"An entry with a % in it"')) == 1
 
     def testDupeEntries(self):
         e1 = db.entries.Entry.makeNew("barf")
         assert db.entries.Entry.makeNew("barf") is None
-
-    def testPercentageWrap(self):
-        assert db.entries.percentageWrap("foo") == "%foo%"
-        assert db.entries.percentageWrap("f%oo") == "%f\\%oo%"
 
     def testSortKeyTransform(self):
         t = db.entries.sortKeyTransform

@@ -499,8 +499,6 @@ class MainWindow(QMainWindow):
                 # regex in search box is invalid
                 entries = []
         else:
-            #mungedSearch = db.entries.percentageWrap(self.search)
-            #mungedSearch = mungedSearch.replace(r'_', r'\_')
             entries = db.entries.find(self.search, classification,
                                       **self._getOccurrenceFilters())
         return entries

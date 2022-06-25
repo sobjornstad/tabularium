@@ -149,13 +149,10 @@ class RedirectsWindow(QDialog):
         When the text of the filterBox is changed, change the entries box
         to show only the matching items.
         """
-        mungedSearch = db.entries.percentageWrap(self.form.entriesFilterBox.text())
-        mungedSearch = mungedSearch.replace(r'_', r'\_')
-
         self.form.entriesList.clear()
         self.form.entriesList.addItems(
             i.name
-            for i in db.entries.find(mungedSearch)
+            for i in db.entries.find(self.form.entriesFilterBox.text())
         )
 
     def onRemap(self) -> None:

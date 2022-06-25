@@ -72,7 +72,7 @@ def importMindex(filename):
             sortKey = entryText.strip()
 
         # create, or find, entry
-        existingEntry = db.entries.findOne(entryText.strip())
+        existingEntry = db.entries.Entry.byName(entryText.strip())
         if not existingEntry:
             entry = Entry.makeNew(entryText, sortKey, EntryClassification.UNCLASSIFIED)
         else:

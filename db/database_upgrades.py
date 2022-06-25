@@ -2,7 +2,7 @@
 Schema upgrades (and downgrades).
 """
 
-#pylint: disable=missing-function-docstring
+#pylint: disable=missing-function-docstring, invalid-name
 
 from __future__ import annotations
 
@@ -40,40 +40,40 @@ def databaseDowngrade(from_: int, to: int):
 def upgrade_0_1(d: DatabaseConnection,
                 _statusCallback: UpgradeStatusCallback) -> None:
     x = d.cursor.execute
-    x('''CREATE INDEX IF NOT EXISTS
+    x('''CREATE INDEX
+         entries_by_name ON entries(name)''')
+    x('''CREATE INDEX
          occurrences_by_entry ON occurrences(eid)''')
-    x('''CREATE INDEX IF NOT EXISTS
+    x('''CREATE INDEX
          nearby_occurrences ON occurrences(vid, type)''')
 
-    # TODO: I think we can join on the rowid instead of duplicating the eid column
     x('''CREATE VIRTUAL TABLE entry_fts
          USING fts5(
             name,
-            eid UNINDEXED,
             content="entries",
             content_rowid="eid"
         )''')
     x('''CREATE TRIGGER entry_fts_ai AFTER INSERT ON entries
          BEGIN
-             INSERT INTO entry_fts (rowid, name, eid)
-             VALUES (new.eid, new.name, new.eid);
+             INSERT INTO entry_fts (rowid, name)
+             VALUES (new.eid, new.name);
          END''')
     x('''CREATE TRIGGER entry_fts_ad AFTER DELETE ON entries
          BEGIN
-             INSERT INTO entry_fts (entry_fts, rowid, name, eid)
-             VALUES ('delete', old.id, old.name, old.eid);
+             INSERT INTO entry_fts (entry_fts, rowid, name)
+             VALUES ('delete', old.eid, old.name);
          END''')
     x('''CREATE TRIGGER entry_fts_au AFTER UPDATE ON entries
          BEGIN
-             INSERT INTO entry_fts (entry_fts, rowid, name, eid)
-             VALUES('delete', old.id, old.name, old.eid);
-             INSERT INTO entry_fts (rowid, name, eid)
-             VALUES (new.eid, new.name, new.eid);
+             INSERT INTO entry_fts (entry_fts, rowid, name)
+             VALUES('delete', old.eid, old.name);
+             INSERT INTO entry_fts (rowid, name)
+             VALUES (new.eid, new.name);
          END''')
     # Populate entry_fts indexes for all existing entries.
     # NB: Must include 'rowid' in the insert or the db is silently corrupted!
-    x('''INSERT INTO entry_fts (rowid, name, eid)
-         SELECT eid, name, eid FROM entries''')
+    x('''INSERT INTO entry_fts (rowid, name)
+         SELECT eid, name FROM entries''')
 
     d.connection.commit()
 
@@ -81,6 +81,7 @@ def upgrade_0_1(d: DatabaseConnection,
 def downgrade_1_0(d: DatabaseConnection,
                   _statusCallback: UpgradeStatusCallback) -> None:
     x = d.cursor.execute
+    x('''DROP INDEX IF EXISTS entries_by_name''')
     x('''DROP INDEX IF EXISTS occurrences_by_entry''')
     x('''DROP INDEX IF EXISTS nearby_occurrences''')
 

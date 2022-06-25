@@ -332,7 +332,7 @@ def nameExists(name):
     We should not have entries with duplicate names, so this is a useful
     test. Returns a boolean.
     """
-    return bool(ind(name))
+    return bool(Entry.byName(name))
 
 
 # pylint: disable=too-many-arguments
@@ -405,7 +405,7 @@ def find(
                    INNER JOIN entries
                            ON entries.eid = occurrences.eid
                    INNER JOIN entry_fts
-                           ON entries.eid = entry_fts.eid
+                           ON entries.eid = entry_fts.rowid
                    WHERE {where}
                          AND entries.classification IN ({classifications})
                          {extra}
@@ -421,7 +421,7 @@ def find(
         searchTextParams = [search]
     elif search:
         textQuery = 'entry_fts MATCH ?'
-        joins = 'INNER JOIN entry_fts ON entries.eid = entry_fts.eid'
+        joins = 'INNER JOIN entry_fts ON entries.eid = entry_fts.rowid'
         searchTextParams = [search]
     else:
         textQuery = '1=1'
@@ -556,9 +556,6 @@ def allEntries():
                         FROM entries
                         ORDER BY sortkey COLLATE nocase''')
     return Entry.multiConstruct(d().cursor.fetchall())
-
-def percentageWrap(search):
-    return "%" + search.replace(r'%', r'\%') + "%"
 
 def sortKeyTransform(e):
     """
