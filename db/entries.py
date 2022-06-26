@@ -336,11 +336,13 @@ def nameExists(name):
     Check if an entry with the given /name/ already exists in the database.
     We should not have entries with duplicate names, so this is a useful
     test. Returns a boolean.
+
+    TODO: Should we disallow entries that differ only in case?
     """
     return bool(Entry.byName(name))
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments, too-many-locals
 def find(
     search: str,
     classification: Sequence[EntryClassification] = None,
@@ -511,6 +513,7 @@ def updateRedirectsTo(oldName: str, newName: str):
     d().checkAutosave()
 
 
+WARNED_OF_EDIT_DISTANCE = False
 def findPossibleMisspellings(name: str,
                              threshold: float = 0.80) -> List[Tuple[Entry, float]]:
     """
@@ -528,7 +531,19 @@ def findPossibleMisspellings(name: str,
     slow as it gets longer and the database gets larger, so it should be run in
     a background thread if it's updating as the user types or keystrokes will be
     slow as molasses.
+
+    TODO: The threshold would ideally be adjusted based on the length of the name,
+    as the raw similarity score moves proportionally slower with longer names.
     """
+    if not d().hasEditDistance:
+        global WARNED_OF_EDIT_DISTANCE
+        if not WARNED_OF_EDIT_DISTANCE:
+            print("Edit-distance library is not available, so Tabularium will not "
+                  "warn you of possibly misspelled entries. See the manual for "
+                  "details on how to compile the edit-distance extension.")
+            WARNED_OF_EDIT_DISTANCE = True
+        return []
+
     d().cursor.execute('''SELECT eid, lsim(?, name) as similarity
                             FROM entries
                            WHERE similarity > ?

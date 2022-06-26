@@ -40,7 +40,9 @@ class DatabaseConnection:
 
         self.cursor: sqlite.Cursor = self.connection.cursor() # type: ignore
         self.lastSavedTime: float = time.time() # type: ignore
+
         self.saveInterval = autosaveInterval
+        self.hasEditDistance = False
 
         self.regexSetup()
         self.editDistSetup()
@@ -76,12 +78,10 @@ class DatabaseConnection:
         """
         Configure SQLite to load bundled edit distance extensions.
         Do nothing if the extensions are not available.
-
-        TODO: We should check for the existence of the extensions when
-        calling them elsewhere.
         """
         EXTENSION_PATH = 'distlib/distlib_64.so'
         if os.path.exists(EXTENSION_PATH):
+            self.hasEditDistance = True
             self.connection.enable_load_extension(True)
             self.connection.load_extension(EXTENSION_PATH)
 
