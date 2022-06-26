@@ -539,8 +539,8 @@ def findPossibleMisspellings(name: str,
         global WARNED_OF_EDIT_DISTANCE
         if not WARNED_OF_EDIT_DISTANCE:
             print("Edit-distance library is not available, so Tabularium will not "
-                  "warn you of possibly misspelled entries. See the manual for "
-                  "details on how to compile the edit-distance extension.")
+                  "warn you of possibly misspelled entries. "
+                  "Run 'make' in the Tabularium directory to compile these extensions.")
             WARNED_OF_EDIT_DISTANCE = True
         return []
 

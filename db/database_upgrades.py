@@ -38,8 +38,9 @@ def databaseDowngrade(from_: int, to: int):
 
 @databaseUpgrade(0, 1)
 def upgrade_0_1(d: DatabaseConnection,
-                _statusCallback: UpgradeStatusCallback) -> None:
+                statusCallback: UpgradeStatusCallback) -> None:
     x = d.cursor.execute
+    statusCallback("Creating indexes...")
     x('''CREATE INDEX
          entries_by_name ON entries(name)''')
     x('''CREATE INDEX
@@ -47,6 +48,7 @@ def upgrade_0_1(d: DatabaseConnection,
     x('''CREATE INDEX
          nearby_occurrences ON occurrences(vid, type)''')
 
+    statusCallback("Creating full-text search table...")
     x('''CREATE VIRTUAL TABLE entry_fts
          USING fts5(
             name,
@@ -72,10 +74,14 @@ def upgrade_0_1(d: DatabaseConnection,
          END''')
     # Populate entry_fts indexes for all existing entries.
     # NB: Must include 'rowid' in the insert or the db is silently corrupted!
+    statusCallback("Rebuilding full-text search index...")
     x('''INSERT INTO entry_fts (rowid, name)
          SELECT eid, name FROM entries''')
 
     d.connection.commit()
+
+    statusCallback("Vacuuming database...")
+    x('''VACUUM''')
 
 @databaseDowngrade(1, 0)
 def downgrade_1_0(d: DatabaseConnection,

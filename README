@@ -28,6 +28,10 @@ Before running Tabularium, you need to build the UI from the XML descriptions.
 This can be done by running `designer/makeForms.sh`. After that, you should be
 set to start Tabularium by running `./tabularium`.
 
+If you want Tabularium to warn you about entries you're creating that may be
+misspelled versions of existing ones, you need to download and install the
+SQLite edit-distance extensions by running `make` in the Tabularium directory.
+
 If you'd like Tabularium to be available system-wide, you can place the entire
 directory anywhere convenient and then create a symlink to the `tabularium`
 executable in `/usr/bin/`.

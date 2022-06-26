@@ -1,3 +1,72 @@
+Changes in 0.3.0
+================
+
+I spent a 24-hour period hacking on things that annoyed me,
+and this is the result.
+
+New features
+------------
+
+* Tabularium now uses SQLite's full-text search engine
+  rather than a simple substring search over the entire database.
+  Incremental searches with regex mode off should be noticeably faster now.
+  However, the search syntax has changed.
+  Important notes:
+  - Matching is **whole-word** and case-insensitive,
+    so `cat` will find "Cat" and "cat" but not "dedicate".
+    (If you need to find an arbitrary part of a word,
+     you can still use regex mode for that.)
+  - The order of search terms does not matter.
+  - To force multiple words to appear together,
+    or include punctuation (including commas),
+    put your search in `"quotes, double"`.
+  - To find words beginning with a string, use `*`:
+    `cat*` finds "cat" and "caterwaul".
+    (For performance reasons, `*cat` doesn't work as you might expect.
+     If you need to find words or entries *ending* in `cat`, do a regex search.)
+  - To force a search term to come at the beginning of an entry's name, use `^`:
+    `^cat` finds the entries "cat" and "cat food" but not "animals, cat".
+  - Use AND, OR, and NOT between search terms for boolean logic.
+* When the syntax of your search is invalid in either full-text or regex mode),
+  the search box will turn red and a note will appear in the status bar.
+  (I wish I could show more details about the problem, but SQLite unfortunately
+   does not provide them.)
+* When creating or editing entries,
+  Tabularium will now search for duplicates
+  and entries with similar names that you might be misspelling
+  as you type. You will need to run `make` in the Tabularium directory once
+  to install some SQLite extensions to get the fuzzy matching.
+* When adding occurrences, errors in your UOF are identified as you type.
+* If editing an entry and trying to change its name
+  to that of an entry that already exists,
+  Tabularium will now offer to merge the entries for you.
+* When you rename an entry,
+  any redirects to it are now automatically renamed to avoid broken links.
+* Existing broken redirects can be easily found and corrected using the new
+  Broken Redirects Tool (found on the Tools menu).
+* You can now double-click on sources and volumes to edit them
+  in the source and volume managers.
+* Tabularium now shows a note in the status bar when there are entry or occurrence limits active
+  so you don't forget.
+
+Bugs fixed
+----------
+
+* Don't allow choosing "multiple volumes" checkbox without actually allowing multiple volumes to be selected.
+* Fix sort key reverting to the automatic sort key anytime you edited an entry.
+
+Internal
+--------
+
+* Implemented entry and occurrence caching, lazy-loading, indexes, and more carefully tuned SQL queries
+  for improved performance on large databases.
+* Somewhat reduced (but did not resolve) thrashing in the main window
+  when searches are repeatedly retriggered on changing filters.
+* Tabularium databases will now be upgraded automatically as the schema changes,
+  and can be manually downgraded through Python if need be.
+* Various under-the-hood refactoring and cleanup tasks.
+
+
 Changes in 0.2.0
 ================
 

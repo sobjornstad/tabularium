@@ -1,6 +1,7 @@
 # Copyright (c) 2022 Soren Bjornstad <contact@sorenbjornstad.com>
 
 from enum import Enum
+import sqlite3
 import time
 from typing import List
 from PyQt5.QtCore import Qt, QObject
@@ -150,10 +151,15 @@ class RedirectsWindow(QDialog):
         to show only the matching items.
         """
         self.form.entriesList.clear()
-        self.form.entriesList.addItems(
-            i.name
-            for i in db.entries.find(self.form.entriesFilterBox.text())
-        )
+        try:
+            self.form.entriesList.addItems(
+                i.name
+                for i in db.entries.find(self.form.entriesFilterBox.text())
+            )
+            self.form.entriesFilterBox.setStyleSheet("")
+        except sqlite3.OperationalError:
+            # regex in search box is invalid
+            self.form.entriesFilterBox.setStyleSheet("background-color: indianred;")
 
     def onRemap(self) -> None:
         """
