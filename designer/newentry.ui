@@ -224,7 +224,7 @@
      <item row="3" column="1" rowspan="2" colspan="3">
       <widget class="QLabel" name="validationLabel">
        <property name="text">
-        <string>✔️ Looking great!
+        <string>✔️ Looking good!
 </string>
        </property>
        <property name="alignment">
@@ -283,7 +283,6 @@
    </item>
   </layout>
   <zorder></zorder>
-  <zorder>horizontalSpacer</zorder>
  </widget>
  <tabstops>
   <tabstop>nameBox</tabstop>
