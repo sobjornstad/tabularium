@@ -245,5 +245,5 @@ class RedirectsWindow(QDialog):
                                              RedirectTableCol.ENTRY.value).text()
 
         ae = ui.addentry.AddEntryWindow(self, self.mw.sh)
-        ae.initializeSortKeyCheck(newEntryName, newEntryName)
+        ae.setInitialText(newEntryName)
         ae.exec_()

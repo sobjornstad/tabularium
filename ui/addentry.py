@@ -76,7 +76,7 @@ class AddEntryWindow(QDialog):
         self.preparedOccurrence: Optional[str] = None # see .putRedirect()
         self.beforeEditingName: Optional[str] = None # see .setEditing()
         self.isEditing = False # see .setEditing()
-        self.initializeSortKeyCheck()
+        self._initializeSortKeyCheck()
 
         self.form.nameBox.textEdited.connect(self.maybeUpdateSortKey)
         self.form.nameBox.textEdited.connect(self.validateEntryName)
@@ -112,6 +112,16 @@ class AddEntryWindow(QDialog):
         name = to.name.replace(';', '\\;')
         self.preparedOccurrence = "see " + name
 
+    def setInitialText(self, initialText: str, initialSortKey: str = "") -> None:
+        """
+        Called prior to exec_() to provide initial entry text, for instance when
+        the user adds from the top bar or using the "Edit Based On" option.
+        """
+        self.beforeEditingName = initialText
+        self.form.nameBox.setText(initialText)
+        self.form.sortKeyBox.setText(initialSortKey if initialSortKey else initialText)
+        self._initializeSortKeyCheck(initialText, initialSortKey)
+
     def setEditing(self) -> None:
         """
         Called prior to exec_() to specify that we want to use this dialog to
@@ -129,18 +139,15 @@ class AddEntryWindow(QDialog):
         "Change the title of the window, prior to exec_()."
         self.setWindowTitle(title)
 
-    def initializeSortKeyCheck(self, name: str = "", sortKey: str = ""):
+    def _initializeSortKeyCheck(self, name: str = "", sortKey: str = ""):
         """
-        Get the stored value of the name/sort key into sync. See
-        maybeUpdateSortKey().
+        Set up the automatic sort key update behavior for this dialog.
 
-        If sortKey is given, the dialog will enter manual mode if the offered
+        If /sortKey/ is given, the dialog will enter manual mode if the offered
         sort key differs from what the automatic value would be. Otherwise, the
         dialog will enter automatic mode and regenerate the sort key based on the
         provided name.
         """
-        self.form.nameBox.setText(name)
-        self.form.sortKeyBox.setText(sortKey if sortKey else name)
         if sortKey and db.entries.sortKeyTransform(name) != sortKey:
             self.skManual = True
             self.form.autoButton.setChecked(False)

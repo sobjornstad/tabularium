@@ -1055,20 +1055,21 @@ class MainWindow(QMainWindow):
         """
         ae = ui.addentry.AddEntryWindow(self)
         if entry:
-            ae.initializeSortKeyCheck(entry.name, entry.sortKey)
+            ae.setInitialText(entry.name, entry.sortKey)
             ae.putClassification(entry)
-            ae.resetTitle("New Entry Based On '%s'" % entry.name)
-        if text:
-            print("yeah")
+            ae.resetTitle(f"New Entry Based On '{entry.name}'")
+        elif text:
             # by leaving the SK blank, we trigger automatic generation thereof
-            ae.initializeSortKeyCheck(text)
-        if redirTo:
+            ae.setInitialText(text)
+        elif redirTo:
             ae.putRedirect(redirTo)
-            ae.resetTitle("New Redirect To '%s'" % redirTo.name)
+            ae.resetTitle(f"New Redirect To '{redirTo.name}'")
+
         if edit:
             assert entry is not None, "Must specify entry when using edit=True"
             ae.setEditing()
-            ae.resetTitle("Edit Entry '%s'" % entry.name)
+            ae.resetTitle(f"Edit Entry '{entry.name}'")
+
         return ae.exec_()
 
     def onAddEntryBasedOn(self):
