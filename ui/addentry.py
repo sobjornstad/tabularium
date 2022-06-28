@@ -26,6 +26,56 @@ from ui.worker import Worker
 if TYPE_CHECKING:
     from ui.main import MainWindow
 
+
+class EntryValidationWorker(Worker):
+    """
+    Make database calls to check for issues with the entry name in the
+    background.
+    """
+    def __init__(self, parent: QWidget, entryText: str, editing: bool,
+                    beforeEditingName: str = None) -> None:
+        super().__init__(parent)
+        self.entryText = entryText
+        self.isEditing = editing
+        self.beforeEditingName = beforeEditingName
+
+        self.newLabel: Optional[str] = None
+        self.newStyleSheet: Optional[str] = None
+
+    def __repr__(self) -> str:
+        return (f"EntryValidationWorker( "
+                f"result={self.newLabel} {self.newStyleSheet})")
+
+    def process(self) -> None:
+        looksGood = "✔️ Looking good!\n"
+        with db.database.auxiliaryConnection():
+            if (db.entries.nameExists(self.entryText)
+                        and self.entryText != self.beforeEditingName):
+                self.newLabel = (
+                    "❗ There is an existing entry by this name.\n"
+                    "Press Enter to " + (
+                        "start a merge."
+                        if self.isEditing
+                        else "add occurrences to it."
+                    )
+                )
+                self.newStyleSheet = "background-color: lightblue"
+            elif m := db.entries.findPossibleMisspellings(self.entryText):
+                self.newLabel = (
+                    "❗ There "
+                    + ("is an existing entry with a similar name:\n"
+                    if len(m) == 1
+                    else "are existing entries with similar names:\n")
+                    + "; ".join(i[0].name for i in m)
+                )
+                self.newStyleSheet = "background-color: yellow"
+            else:
+                # don't force UI refresh if nothing has changed
+                if self.newLabel != looksGood:
+                    self.newLabel = looksGood
+                    self.newStyleSheet = ""
+
+
 class AddEntryWindow(QDialog):
     """
     Implementation of the add entry dialog. There are a number of ways this
@@ -71,6 +121,7 @@ class AddEntryWindow(QDialog):
         self.mw = parent
         self.sh = settings if settings else self.mw.sh  # type: ignore
         self.validationWorker = None
+        self.threadsWaitingForTermination: List[EntryValidationWorker] = []
 
         self.skManual = False # whether user has manually changed sk
         self.preparedOccurrence: Optional[str] = None # see .putRedirect()
@@ -203,56 +254,9 @@ class AddEntryWindow(QDialog):
         Check for potential problems with the presently entered entry name
         as the user types.
         """
-        class EntryValidationWorker(Worker):
-            """
-            Make database calls to check for issues with the entry name in the
-            background.
-            """
-            def __init__(self, parent: QWidget, entryText: str, editing: bool,
-                         beforeEditingName: str = None) -> None:
-                super().__init__(parent)
-                self.entryText = entryText
-                self.isEditing = editing
-                self.beforeEditingName = beforeEditingName
-
-                self.newLabel: Optional[str] = None
-                self.newStyleSheet: Optional[str] = None
-
-            def __repr__(self) -> str:
-                return (f"EntryValidationWorker( "
-                        f"result={self.newLabel} {self.newStyleSheet})")
-
-            def process(self) -> None:
-                looksGood = "✔️ Looking good!\n"
-                with db.database.auxiliaryConnection():
-                    if (db.entries.nameExists(self.entryText)
-                             and self.entryText != self.beforeEditingName):
-                        self.newLabel = (
-                            "❗ There is an existing entry by this name.\n"
-                            "Press Enter to " + (
-                                "start a merge."
-                                if self.isEditing
-                                else "add occurrences to it."
-                            )
-                        )
-                        self.newStyleSheet = "background-color: lightblue"
-                    elif m := db.entries.findPossibleMisspellings(self.entryText):
-                        self.newLabel = (
-                            "❗ There "
-                            + ("is an existing entry with a similar name:\n"
-                            if len(m) == 1
-                            else "are existing entries with similar names:\n")
-                            + "; ".join(i[0].name for i in m)
-                        )
-                        self.newStyleSheet = "background-color: yellow"
-                    else:
-                        # don't force UI refresh if nothing has changed
-                        if self.newLabel != looksGood:
-                            self.newLabel = looksGood
-                            self.newStyleSheet = ""
-
         if self.validationWorker is not None:
             self.validationWorker.finished.disconnect()
+            self.threadsWaitingForTermination.append(self.validationWorker)
         self.validationWorker = EntryValidationWorker(
             self, self.form.nameBox.text(),
             self.isEditing, self.beforeEditingName
@@ -266,6 +270,22 @@ class AddEntryWindow(QDialog):
         if self.validationWorker.newLabel:
             self.form.validationLabel.setText(self.validationWorker.newLabel)
             self.form.nameBox.setStyleSheet(self.validationWorker.newStyleSheet)
+
+    def joinWorkerThreads(self):
+        "Wait for all worker threads to complete."
+        if self.validationWorker is not None:
+            self.threadsWaitingForTermination.append(self.validationWorker)
+
+        for worker in self.threadsWaitingForTermination:
+            # we no longer care about the result
+            try:
+                worker.finished.disconnect()
+            except TypeError:
+                # disconnect() raises if there's no longer anything connected
+                pass
+        for worker in self.threadsWaitingForTermination:
+            if not worker.wait(5 * 1000):
+                worker.terminate()
 
     def accept(self):
         """
@@ -318,8 +338,13 @@ class AddEntryWindow(QDialog):
                 entry = existingEntry
             ac = ui.addoccurrence.AddOccWindow(self, entry, self.sh,
                                                self.preparedOccurrence)
+            self.joinWorkerThreads()
             super().accept()
             ac.exec_()
+
+    def reject(self) -> None:
+        self.joinWorkerThreads()
+        return super().reject()
 
     def _getSelectedClassif(self) -> db.entries.EntryClassification:
         """
