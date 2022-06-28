@@ -342,6 +342,45 @@ def nameExists(name):
     return bool(Entry.byName(name))
 
 
+def exciseUnquotedCommas(s: str) -> str:
+    """
+    Remove any commas that aren't inside double quotes from the string /s/.
+    This may be desirable because of the dual role of the filter box in the UI
+    in both searching for and creating entries -- the user won't want to leave
+    out this extremely common punctuation since then they'll have to edit it
+    again if they don't find anything, but if they leave it in FTS5 will error
+    without this adjustment.
+
+    >>> exciseUnquotedCommas('Bjornstad, Soren')
+    'Bjornstad Soren'
+
+    >>> exciseUnquotedCommas('"Bjornstad, Soren"')
+    '"Bjornstad, Soren"'
+
+    >>> exciseUnquotedCommas(",")
+    ''
+
+    >>> exciseUnquotedCommas('comma, and "comma, quoted"')
+    'comma and "comma, quoted"'
+
+    # a classic from Cross's _Indexing Books_
+    >>> exciseUnquotedCommas('"diet, anus, artificial, patients with, for"')
+    '"diet, anus, artificial, patients with, for"'
+
+    >>> exciseUnquotedCommas('diet, anus, artificial, patients with, for')
+    'diet anus artificial patients with for'
+    """
+    inQuotes = False
+    newStringParts = []
+    for i in s.split('"'):
+        if not inQuotes:
+            newStringParts.append(i.replace(',', ''))
+        else:
+            newStringParts.append(i)
+        inQuotes = not inQuotes
+    return '"'.join(newStringParts)
+
+
 # pylint: disable=too-many-arguments, too-many-locals
 def find(
     search: str,
@@ -356,7 +395,7 @@ def find(
     Get a list of Entries matching the given criteria.
 
     Arguments:
-        search - a glob to search for, using either standard SQLite or Python
+        search - a glob to search for, using either SQLite's fts5 or Python
             regex matching
         classification (optional, default all defined values) - a tuple of
             allowable values for the entry's classification
@@ -417,7 +456,7 @@ def find(
     elif search:
         textQuery = 'entry_fts MATCH ?'
         joins = 'INNER JOIN entry_fts ON entries.eid = entry_fts.rowid'
-        searchTextParams = [search]
+        searchTextParams = [exciseUnquotedCommas(search)]
     else:
         textQuery = '1=1'
         joins = ''

@@ -12,6 +12,7 @@ ui/forms/
 meta/coverage/
 .coverage
 *.html
+.vscode/*.log
 
 *.un~
 *.bak
