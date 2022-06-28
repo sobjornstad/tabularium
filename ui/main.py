@@ -20,7 +20,7 @@ from typing import Callable, Optional
 
 # for some reason pylint thinks these don't exist, but they work fine
 # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel, QListWidget
 from PyQt5.QtCore import QObject, Qt, QDateTime
 
 import db.analytics
@@ -437,6 +437,49 @@ class MainWindow(QMainWindow):
         wrapper(self._resetDateFormat, 'dateFormat')
 
         self._occurrenceFilterHandlers()
+
+
+    ### Custom keyboard handlers ###
+    def event(self, event) -> bool:
+        "Custom key mappings for the dialog."
+        def _listWidgetIsFocusedAndAtTopIndex(listWidget: QListWidget):
+            return listWidget.hasFocus() and listWidget.currentRow() == 0
+
+        sf = self.form
+
+        if event.type() == 51:  # keypress
+            # Down arrow when the filter box is focused
+            # selects item after currently selected in the entriesList.
+            if sf.searchBox.hasFocus() and event.key() == Qt.Key_Down:
+                sf.entriesList.setFocus()
+                # -1: because the down arrow gets applied again and we want to keep it
+                # in the same place, or select the top row if nothing selected yet.
+                targetRow = sf.entriesList.currentRow() - 1
+                sf.entriesList.setCurrentRow(targetRow)
+                return True
+            # Up arrow when the entriesList or occurrencesList is focused
+            # and at the top index selects the search box.
+            if (event.key() == Qt.Key_Up
+                    and (_listWidgetIsFocusedAndAtTopIndex(sf.entriesList)
+                         or _listWidgetIsFocusedAndAtTopIndex(sf.occurrencesList))):
+                sf.searchBox.selectAll()
+                sf.searchBox.setFocus()
+                return True
+            # Right arrow when the entriesList is focused selects the occurrencesList.
+            if (sf.entriesList.hasFocus()
+                    and event.key() == Qt.Key_Right):
+                # Highlight the first item if nothing is currently selected
+                if sf.occurrencesList.currentRow() == -1:
+                    sf.occurrencesList.setCurrentRow(0)
+                sf.occurrencesList.setFocus()
+                return True
+            # Left arrow when the occurrencesList is focused selects the entriesList.
+            if (sf.occurrencesList.hasFocus()
+                    and event.key() == Qt.Key_Left):
+                sf.entriesList.setFocus()
+                return True
+
+        return super().event(event)
 
 
     ### Setting, resetting, and filling the data windows ###
