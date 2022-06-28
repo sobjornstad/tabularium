@@ -1,3 +1,30 @@
+Changes in 0.3.1
+================
+
+This release fixes a few bugs introduced in 0.3.0:
+
+* Fix application crash when pressing Enter quickly
+  after typing a long entry name in the add box.
+  (Qt gets very unhappy if you allow a running thread to be garbage collected.)
+* Remove accidentally left-in debug console prints.
+* Fix inconsistent wording of the "looks good" message in the entry add dialog.
+* Fix entry name box indicating a duplicate when using "add based on".
+* Fix sort key being incorrectly set to manual mode when the text and sort key
+  were identical while adding or editing an entry in certain ways.
+* Fix wrong application version number.
+
+And two small new niceties:
+
+* When searching in full-text mode, commas are ignored in the top bar.
+  This makes the workflow of
+  "look for an existing entry or add it if it doesn't exist"
+  much easier if the entry to be potentially added contains commas.
+* The arrow keys can now be used to move among the search box,
+  entries list, and occurrences list (in the direction they appear on the screen).
+  Up/down arrows in the lists will select different items if possible,
+  and select the search box if you reach the top of the list.
+
+
 Changes in 0.3.0
 ================
 

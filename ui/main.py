@@ -50,7 +50,7 @@ import ui.tools_brokenredirects
 
 from ui.forms.main import Ui_MainWindow
 
-APPLICATION_VERSION = "0.2.0"
+APPLICATION_VERSION = "0.3.1"
 
 class MwEventFilter(QObject):
     """
