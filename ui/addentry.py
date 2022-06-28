@@ -133,10 +133,15 @@ class AddEntryWindow(QDialog):
         """
         Get the stored value of the name/sort key into sync. See
         maybeUpdateSortKey().
+
+        If sortKey is given, the dialog will enter manual mode if the offered
+        sort key differs from what the automatic value would be. Otherwise, the
+        dialog will enter automatic mode and regenerate the sort key based on the
+        provided name.
         """
         self.form.nameBox.setText(name)
         self.form.sortKeyBox.setText(sortKey if sortKey else name)
-        if db.entries.sortKeyTransform(name) != sortKey:
+        if sortKey and db.entries.sortKeyTransform(name) != sortKey:
             self.skManual = True
             self.form.autoButton.setChecked(False)
         else:

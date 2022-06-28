@@ -508,7 +508,7 @@ class MainWindow(QMainWindow):
     def fillOccurrences(self):
         """
         Fill the Occurrences box with all occurrences of the current entry,
-        assuming they match limit criteria. (Right now limits are ignored.)
+        assuming they match limit criteria.
         """
         self._resetForOccurrence()
         entry = self._fetchCurrentEntry()
@@ -1059,7 +1059,9 @@ class MainWindow(QMainWindow):
             ae.putClassification(entry)
             ae.resetTitle("New Entry Based On '%s'" % entry.name)
         if text:
-            ae.initializeSortKeyCheck(text, text)
+            print("yeah")
+            # by leaving the SK blank, we trigger automatic generation thereof
+            ae.initializeSortKeyCheck(text)
         if redirTo:
             ae.putRedirect(redirTo)
             ae.resetTitle("New Redirect To '%s'" % redirTo.name)
