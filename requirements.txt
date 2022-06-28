@@ -1,5 +1,8 @@
 pyqt5
 passlib
+python-magic
 
 mypy
 pylint
+pytest
+pytest-cov
