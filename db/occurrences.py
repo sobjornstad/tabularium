@@ -330,7 +330,6 @@ class Occurrence:
         d().checkAutosave()
 
     def delete(self):
-        print("deleting occurrence: ", self)
         d().cursor.execute('DELETE FROM occurrences WHERE oid=?', (self._oid,))
         self.evictFromCache(self._oid)
         d().checkAutosave()
